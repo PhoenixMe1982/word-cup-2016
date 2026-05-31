@@ -8,7 +8,7 @@
 }
 
 body {
-  background-color: #06080f;
+  background-color: #080c15;
   color: white;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   margin: 0;
@@ -28,7 +28,7 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 0; }
 
-/* Live pulse ring */
+/* Live pulse ring — sharp */
 .live-ring {
   position: relative;
 }
@@ -36,32 +36,19 @@ body {
   content: '';
   position: absolute;
   inset: -3px;
-  border-radius: inherit;
-  border: 2px solid #22c55e;
+  border-radius: 3px;
+  border: 2px solid #00ff88;
   animation: ringPulse 2s ease-out infinite;
 }
 @keyframes ringPulse {
   0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.6); }
+  100% { opacity: 0; transform: scale(1.5); }
 }
 
-/* Gradient borders */
+/* Gold border utility */
 .gold-border {
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  position: relative;
-}
-.gold-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, #FFD700, #FF8C00, #FFD700);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-  pointer-events: none;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 3px;
 }
 
 /* Shimmer effect */
@@ -85,28 +72,38 @@ body {
   padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
 }
 
-/* Trophy shimmer */
+/* Trophy glow */
 .trophy-glow {
   filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 20px #FFD70066);
 }
 
-/* Match card gradient */
+/* Sharp card utility */
+.sharp-card {
+  background: #161c2e;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 3px;
+}
+
+/* Match card gradients — sharp corners */
 .match-live-card {
   background: linear-gradient(135deg, #1a0a1a 0%, #0a1a2a 50%, #0a0a1a 100%);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  border-radius: 3px;
 }
 .match-finished-card {
   background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
 }
 .match-upcoming-card {
-  background: linear-gradient(135deg, #0f1728 0%, #1a2140 100%);
-  border: 1px solid rgba(255, 215, 0, 0.15);
+  background: linear-gradient(135deg, #0f1728 0%, #161c2e 100%);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 3px;
 }
 
-/* Group qualify row */
+/* Group qualify row — bolder borders */
 .qualify-1 { border-left: 3px solid #FFD700; }
-.qualify-2 { border-left: 3px solid #60a5fa; }
+.qualify-2 { border-left: 3px solid #00e5ff; }
 
 /* Transition smoothing */
 .tab-transition {
