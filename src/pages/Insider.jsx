@@ -1,19 +1,20 @@
 import { useState } from 'react'
 import { NEWS } from '../data.js'
 
-const CATEGORIES = ['Все', 'ИНСАЙД', 'АНАЛИЗ', 'РЕКОРД', 'ТРАВМА', 'ИСТОРИЯ', 'ТЕХНИКА']
+const CATEGORIES = ['Все', 'ИНСАЙД', 'АНАЛИЗ', 'РЕКОРД', 'ИСТОРИЯ', 'ТЕХНИКА']
 
 function NewsCard({ news, featured }) {
   return (
     <div
-      className="rounded-2xl overflow-hidden mb-3"
+      className="overflow-hidden mb-3"
       style={{
         background: featured
           ? 'linear-gradient(135deg, #1a0a0a 0%, #0a1520 100%)'
           : '#141929',
         border: featured
-          ? '1px solid rgba(230,57,70,0.3)'
-          : '1px solid rgba(255,255,255,0.05)',
+          ? '1px solid rgba(230,57,70,0.35)'
+          : '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 3,
       }}
     >
       {/* Featured image area */}
@@ -27,8 +28,8 @@ function NewsCard({ news, featured }) {
           <div className="text-7xl opacity-30 absolute">{news.emoji}</div>
           <div className="relative z-10 text-center px-4">
             <span
-              className="text-[10px] font-black px-2 py-1 rounded-full"
-              style={{ background: news.categoryColor + '33', color: news.categoryColor }}
+              className="text-[10px] font-black px-2 py-1 uppercase tracking-wider"
+              style={{ background: news.categoryColor + '33', color: news.categoryColor, borderRadius: 2 }}
             >
               {news.category}
             </span>
@@ -44,21 +45,24 @@ function NewsCard({ news, featured }) {
         {!featured && (
           <div className="flex items-center gap-2 mb-2">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="w-9 h-9 flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 3 }}
             >
               {news.emoji}
             </div>
             <div className="flex items-center gap-2">
               <span
-                className="text-[9px] font-black px-1.5 py-0.5 rounded"
-                style={{ background: news.categoryColor + '22', color: news.categoryColor }}
+                className="text-[9px] font-black px-1.5 py-0.5 uppercase tracking-wider"
+                style={{ background: news.categoryColor + '22', color: news.categoryColor, borderRadius: 2 }}
               >
                 {news.category}
               </span>
               {news.hot && (
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(230,57,70,0.2)', color: '#E63946' }}>
-                  🔥 ГОРЯЧО
+                <span
+                  className="text-[9px] font-black px-1.5 py-0.5 uppercase tracking-wider"
+                  style={{ background: 'rgba(230,57,70,0.2)', color: '#E63946', borderRadius: 2 }}
+                >
+                  🔥 Горячо
                 </span>
               )}
             </div>
@@ -76,8 +80,8 @@ function NewsCard({ news, featured }) {
             <span>👁 {news.views}</span>
           </div>
           <button
-            className="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors"
-            style={{ background: 'rgba(255,215,0,0.1)', color: '#FFD700' }}
+            className="text-[11px] font-black px-3 py-1.5 transition-colors uppercase tracking-wide"
+            style={{ background: 'rgba(255,215,0,0.12)', color: '#FFD700', borderRadius: 3, border: '1px solid rgba(255,215,0,0.2)' }}
           >
             Читать →
           </button>
@@ -104,27 +108,27 @@ export default function Insider() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-4"
-        style={{ background: 'linear-gradient(180deg, #1a0a0a 0%, #06080f 100%)' }}
+        style={{ background: 'linear-gradient(180deg, #1a0a0a 0%, #080c15 100%)', borderBottom: '1px solid rgba(230,57,70,0.12)' }}
       >
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-widest text-gray-500 mb-1">ЧМ 2026</p>
-            <h1 className="text-2xl font-black text-white">Инсайды</h1>
-            <p className="text-xs text-gray-400 mt-0.5">Новости и аналитика</p>
+            <p className="text-[10px] font-black tracking-widest text-gray-500 mb-1 uppercase">ЧМ 2026</p>
+            <h1 className="text-2xl font-black text-white uppercase tracking-wide">Инсайды</h1>
+            <p className="text-xs text-gray-400 mt-0.5 uppercase tracking-wider">Новости и аналитика</p>
           </div>
           <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-            style={{ background: 'rgba(230,57,70,0.15)', border: '1px solid rgba(230,57,70,0.3)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5"
+            style={{ background: 'rgba(230,57,70,0.15)', border: '1px solid rgba(230,57,70,0.35)', borderRadius: 3 }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#E63946] animate-pulse2" />
-            <span className="text-[10px] font-bold text-[#E63946]">{hotCount} горячих</span>
+            <span className="text-[10px] font-black text-[#E63946] uppercase tracking-wide">{hotCount} горячих</span>
           </div>
         </div>
 
         {/* Search */}
         <div
-          className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2.5"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+          className="mt-4 flex items-center gap-2 px-3 py-2.5"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3 }}
         >
           <span className="text-gray-500">🔍</span>
           <input
@@ -147,10 +151,12 @@ export default function Insider() {
             <button
               key={c}
               onClick={() => setCat(c)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
+              className="flex-shrink-0 px-3 py-1.5 text-xs font-black transition-all duration-200 uppercase tracking-wide"
               style={{
                 background: cat === c ? '#E63946' : 'rgba(255,255,255,0.06)',
                 color: cat === c ? '#fff' : '#9ca3af',
+                borderRadius: 3,
+                border: cat === c ? 'none' : '1px solid rgba(255,255,255,0.06)',
               }}
             >
               {c}
@@ -162,7 +168,7 @@ export default function Insider() {
       {/* News Grid */}
       <div className="px-4 mt-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 text-sm">Ничего не найдено</div>
+          <div className="text-center py-12 text-gray-500 text-sm uppercase tracking-wider">Ничего не найдено</div>
         ) : (
           filtered.map((n, i) => (
             <NewsCard key={n.id} news={n} featured={i === 0 && cat === 'Все' && !searchQ} />
