@@ -62,14 +62,14 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Bottom nav safe area */
+/* Bottom nav safe area — supports both iOS env() and Telegram --tg-safe-area-inset-bottom */
 .bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px));
 }
 
 /* Page content with bottom nav space */
 .page-content {
-  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(72px + max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px)));
 }
 
 /* Trophy glow */
