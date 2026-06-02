@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { TOP_SCORERS, TEAMS } from '../data.js'
+import { TEAMS } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 const MEDAL_COLORS = {
   1: { bg: 'linear-gradient(135deg,#FFD700,#FF8C00)', text: '#000' },
@@ -7,10 +8,9 @@ const MEDAL_COLORS = {
   3: { bg: 'linear-gradient(135deg,#CD7F32,#8B4513)', text: '#fff' },
 }
 
-function ScorerRow({ scorer }) {
+function ScorerRow({ scorer, maxGoals }) {
   const team = TEAMS[scorer.team]
   const medal = MEDAL_COLORS[scorer.rank]
-  const maxGoals = Math.max(TOP_SCORERS[0].goals, 1)
 
   return (
     <div
@@ -101,11 +101,13 @@ function ScorerRow({ scorer }) {
 }
 
 export default function Scorers() {
+  const { scorers } = useLiveData()
   const [view, setView] = useState('goals')
 
-  const sorted = [...TOP_SCORERS].sort((a, b) =>
+  const sorted = [...scorers].sort((a, b) =>
     view === 'goals' ? b.goals - a.goals : b.assists - a.assists
   ).map((s, i) => ({ ...s, rank: i + 1 }))
+  const maxGoals = Math.max(sorted[0]?.goals || 0, 1)
 
   return (
     <div className="page-content">
@@ -176,7 +178,7 @@ export default function Scorers() {
       {/* List */}
       <div className="px-4">
         {sorted.map((scorer) => (
-          <ScorerRow key={scorer.name} scorer={scorer} />
+          <ScorerRow key={scorer.name} scorer={scorer} maxGoals={maxGoals} />
         ))}
       </div>
     </div>

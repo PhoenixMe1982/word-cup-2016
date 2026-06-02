@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { MATCHES, TEAMS, NEWS, TICKER_ITEMS, TOURNAMENT, TOP_SCORERS } from '../data.js'
+import { TEAMS, TOURNAMENT } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 function LiveMinute({ base }) {
   const [min, setMin] = useState(parseInt(base) || 0)
@@ -86,10 +87,11 @@ function FinishedMatchCard({ match }) {
 }
 
 export default function Home({ onTab }) {
-  const liveMatches = MATCHES.filter((m) => m.status === 'live')
-  const finishedMatches = MATCHES.filter((m) => m.status === 'finished').slice(0, 5)
-  const upcomingMatches = MATCHES.filter((m) => m.status === 'upcoming').slice(0, 3)
-  const totalGoals = MATCHES.filter(m => m.status !== 'upcoming').reduce((s, m) => s + (m.scoreHome || 0) + (m.scoreAway || 0), 0)
+  const { matches, news, ticker, scorers } = useLiveData()
+  const liveMatches = matches.filter((m) => m.status === 'live')
+  const finishedMatches = matches.filter((m) => m.status === 'finished').slice(0, 5)
+  const upcomingMatches = matches.filter((m) => m.status === 'upcoming').slice(0, 3)
+  const totalGoals = matches.filter(m => m.status !== 'upcoming').reduce((s, m) => s + (m.scoreHome || 0) + (m.scoreAway || 0), 0)
 
   return (
     <div className="page-content px-4 pb-4">
@@ -129,7 +131,7 @@ export default function Home({ onTab }) {
           {[
             { v: liveMatches.length > 0 ? liveMatches.length : '—', l: 'Live матчей' },
             { v: totalGoals > 0 ? totalGoals : '—', l: 'Голов' },
-            { v: MATCHES.filter(m => m.status === 'finished').length || '—', l: 'Сыграно' },
+            { v: matches.filter(m => m.status === 'finished').length || '—', l: 'Сыграно' },
           ].map((s) => (
             <div key={s.l} className="text-center" style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 3, padding: '8px 4px', border: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="text-xl font-black text-white">{s.v}</div>
@@ -149,7 +151,7 @@ export default function Home({ onTab }) {
         </div>
         <div className="flex-1 overflow-hidden relative">
           <div className="flex whitespace-nowrap animate-ticker text-[11px] text-gray-300">
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            {[...ticker, ...ticker].map((item, i) => (
               <span key={i} className="px-6">{item}</span>
             ))}
           </div>
@@ -239,7 +241,7 @@ export default function Home({ onTab }) {
           className="p-4"
           style={{ background: 'linear-gradient(135deg, #1a1000 0%, #261a00 100%)', border: '1px solid rgba(255,215,0,0.35)', borderRadius: 3 }}
         >
-          {TOP_SCORERS.slice(0, 3).map((s) => (
+          {scorers.slice(0, 3).map((s) => (
             <div key={s.rank} className="flex items-center gap-3 py-2">
               <div
                 className={`w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0 rank-${s.rank}`}
@@ -273,7 +275,7 @@ export default function Home({ onTab }) {
           </button>
         </div>
         <div className="space-y-3">
-          {NEWS.filter((n) => n.hot).slice(0, 3).map((n) => (
+          {news.filter((n) => n.hot).slice(0, 3).map((n) => (
             <div
               key={n.id}
               className="p-3 flex gap-3 items-start"

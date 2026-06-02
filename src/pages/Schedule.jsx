@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MATCHES, TEAMS } from '../data.js'
+import { TEAMS } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 function StatusBadge({ status, time }) {
   if (status === 'live') {
@@ -85,10 +86,11 @@ const FILTERS = [
 const GROUP_KEYS = ['Все', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 
 export default function Schedule() {
+  const { matches } = useLiveData()
   const [statusFilter, setStatusFilter] = useState('all')
   const [groupFilter, setGroupFilter] = useState('Все')
 
-  const filtered = MATCHES.filter((m) => {
+  const filtered = matches.filter((m) => {
     if (statusFilter !== 'all' && m.status !== statusFilter) return false
     if (groupFilter !== 'Все' && m.group !== groupFilter) return false
     return true

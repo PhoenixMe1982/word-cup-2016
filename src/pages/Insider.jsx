@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NEWS } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 const CATEGORIES = ['Все', 'ИНСАЙД', 'АНАЛИЗ', 'РЕКОРД', 'ИСТОРИЯ', 'ТЕХНИКА']
 
@@ -92,16 +92,17 @@ function NewsCard({ news, featured }) {
 }
 
 export default function Insider() {
+  const { news } = useLiveData()
   const [cat, setCat] = useState('Все')
   const [searchQ, setSearchQ] = useState('')
 
-  const filtered = NEWS.filter((n) => {
+  const filtered = news.filter((n) => {
     if (cat !== 'Все' && n.category !== cat) return false
     if (searchQ && !n.title.toLowerCase().includes(searchQ.toLowerCase())) return false
     return true
   })
 
-  const hotCount = NEWS.filter((n) => n.hot).length
+  const hotCount = news.filter((n) => n.hot).length
 
   return (
     <div className="page-content">

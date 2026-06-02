@@ -1,4 +1,5 @@
-import { GOALKEEPERS, TEAMS } from '../data.js'
+import { TEAMS } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 const MAX_MINUTES = 270
 
@@ -144,7 +145,8 @@ function GKRow({ gk }) {
 }
 
 export default function Goalkeepers() {
-  const sorted = [...GOALKEEPERS].sort((a, b) => b.rating - a.rating)
+  const { goalkeepers } = useLiveData()
+  const sorted = [...goalkeepers].sort((a, b) => b.rating - a.rating)
     .map((g, i) => ({ ...g, rank: i + 1 }))
 
   const topGK = sorted[0]

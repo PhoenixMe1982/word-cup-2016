@@ -8,6 +8,7 @@ import History from './pages/History.jsx'
 import Insider from './pages/Insider.jsx'
 import Teams from './pages/Teams.jsx'
 import BottomNav from './components/BottomNav.jsx'
+import { LiveDataProvider } from './LiveDataContext.jsx'
 
 export default function App() {
   const [tab, setTab] = useState('home')
@@ -37,11 +38,13 @@ export default function App() {
   }
 
   return (
-    <div className="relative min-h-screen" style={{ background: '#080c15' }}>
-      <div className="tab-transition">
-        {pages[tab]}
+    <LiveDataProvider>
+      <div className="relative min-h-screen" style={{ background: '#080c15' }}>
+        <div className="tab-transition">
+          {pages[tab]}
+        </div>
+        <BottomNav active={tab} onTab={setTab} />
       </div>
-      <BottomNav active={tab} onTab={setTab} />
-    </div>
+    </LiveDataProvider>
   )
 }

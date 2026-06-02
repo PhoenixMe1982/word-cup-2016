@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { GROUPS, TEAMS } from '../data.js'
+import { TEAMS } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
-function GroupTable({ groupKey }) {
-  const group = GROUPS[groupKey]
+function GroupTable({ groupKey, groups }) {
+  const group = groups[groupKey]
   if (!group) return null
 
   const sorted = [...group.teams].sort((a, b) => {
@@ -86,6 +87,7 @@ function GroupTable({ groupKey }) {
 const GROUP_KEYS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 
 export default function Groups() {
+  const { groups } = useLiveData()
   const [selected, setSelected] = useState(null)
 
   const toShow = selected ? [selected] : GROUP_KEYS
@@ -149,7 +151,7 @@ export default function Groups() {
       {/* Tables */}
       <div className="px-4 mt-3">
         {toShow.map((key) => (
-          <GroupTable key={key} groupKey={key} />
+          <GroupTable key={key} groupKey={key} groups={groups} />
         ))}
       </div>
     </div>
