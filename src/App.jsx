@@ -6,6 +6,7 @@ import Goalkeepers from './pages/Goalkeepers.jsx'
 import Groups from './pages/Groups.jsx'
 import History from './pages/History.jsx'
 import Insider from './pages/Insider.jsx'
+import Teams from './pages/Teams.jsx'
 import BottomNav from './components/BottomNav.jsx'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
   const pages = {
     home: <Home onTab={setTab} />,
     schedule: <Schedule />,
+    teams: <Teams />,
     scorers: <Scorers />,
     goalkeepers: <Goalkeepers />,
     groups: <Groups />,
