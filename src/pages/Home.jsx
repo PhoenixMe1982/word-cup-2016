@@ -87,7 +87,7 @@ function FinishedMatchCard({ match }) {
 }
 
 export default function Home({ onTab }) {
-  const { matches, news, ticker, scorers } = useLiveData()
+  const { matches, ticker, scorers } = useLiveData()
   const liveMatches = matches.filter((m) => m.status === 'live')
   const finishedMatches = matches.filter((m) => m.status === 'finished').slice(0, 5)
   const upcomingMatches = matches.filter((m) => m.status === 'upcoming').slice(0, 3)
@@ -263,43 +263,6 @@ export default function Home({ onTab }) {
         </div>
       </section>
 
-      {/* Hot News */}
-      <section className="mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Горячие инсайды</h2>
-          <button onClick={() => onTab('insider')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
-            Все →
-          </button>
-        </div>
-        <div className="space-y-3">
-          {news.filter((n) => n.hot).slice(0, 3).map((n) => (
-            <div
-              key={n.id}
-              className="p-3 flex gap-3 items-start"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 3 }}
-            >
-              <div
-                className="w-10 h-10 flex items-center justify-center text-xl flex-shrink-0"
-                style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 3 }}
-              >
-                {n.emoji}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className="text-[9px] font-black px-1.5 py-0.5"
-                    style={{ background: n.categoryColor + '22', color: n.categoryColor, borderRadius: 2 }}
-                  >
-                    {n.category}
-                  </span>
-                  <span className="text-[9px]" style={{ color: '#9CA3AF' }}>{n.time}</span>
-                </div>
-                <p className="text-xs font-semibold leading-snug line-clamp-2" style={{ color: '#111827' }}>{n.title}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

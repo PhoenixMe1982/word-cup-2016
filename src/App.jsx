@@ -5,8 +5,8 @@ import Scorers from './pages/Scorers.jsx'
 import Goalkeepers from './pages/Goalkeepers.jsx'
 import Groups from './pages/Groups.jsx'
 import History from './pages/History.jsx'
-import Insider from './pages/Insider.jsx'
 import Teams from './pages/Teams.jsx'
+import AllTimeScorers from './pages/AllTimeScorers.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import { LiveDataProvider } from './LiveDataContext.jsx'
 
@@ -34,7 +34,7 @@ export default function App() {
     goalkeepers: <Goalkeepers />,
     groups: <Groups />,
     history: <History />,
-    insider: <Insider />,
+    alltimescorers: <AllTimeScorers />,
   }
 
   return (

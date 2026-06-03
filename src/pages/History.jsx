@@ -133,7 +133,6 @@ export default function History() {
 
   const topChamps = Object.entries(champCount)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
 
   return (
     <div className="page-content">

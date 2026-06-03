@@ -5,8 +5,8 @@ const TABS = [
   { id: 'scorers',     icon: '⚽', label: 'Бомб.' },
   { id: 'goalkeepers', icon: '🧤', label: 'Вратари' },
   { id: 'groups',      icon: '🏟️', label: 'Группы' },
-  { id: 'history',     icon: '🏆', label: 'История' },
-  { id: 'insider',     icon: '📰', label: 'Инсайды' },
+  { id: 'history',         icon: '🏆', label: 'История' },
+  { id: 'alltimescorers', icon: '🏅', label: 'Рекорды' },
 ]
 
 export default function BottomNav({ active, onTab }) {
