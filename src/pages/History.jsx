@@ -7,30 +7,29 @@ function HistoryCard({ wc, onClick, isSelected }) {
       onClick={onClick}
       className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 mb-3"
       style={{
-        background: isSelected
-          ? 'linear-gradient(135deg, #1a1000 0%, #261a00 100%)'
-          : '#141929',
+        background: '#FFFFFF',
         border: isSelected
-          ? '1px solid rgba(255,215,0,0.4)'
-          : '1px solid rgba(255,255,255,0.05)',
+          ? '1px solid rgba(201,168,0,0.35)'
+          : '1px solid rgba(0,0,0,0.07)',
         transform: isSelected ? 'scale(1.01)' : 'scale(1)',
+        boxShadow: isSelected ? '0 4px 16px rgba(201,168,0,0.12)' : '0 1px 6px rgba(0,0,0,0.07)',
       }}
     >
       {/* Header */}
       <div
         className="p-4 flex items-center gap-3"
-        style={{ borderBottom: isSelected ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+        style={{ borderBottom: isSelected ? '1px solid rgba(0,0,0,0.07)' : 'none' }}
       >
         {/* Year badge */}
         <div
           className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center flex-shrink-0"
           style={{
             background: isSelected
-              ? 'linear-gradient(135deg, #FFD700, #FF8C00)'
-              : 'rgba(255,215,0,0.08)',
+              ? 'linear-gradient(135deg, #C9A800, #9A8000)'
+              : 'rgba(201,168,0,0.10)',
           }}
         >
-          <span className="text-xs font-bold" style={{ color: isSelected ? '#000' : '#FFD700' }}>
+          <span className="text-xs font-bold" style={{ color: isSelected ? '#FFFFFF' : '#C9A800' }}>
             {wc.year}
           </span>
         </div>
@@ -39,15 +38,15 @@ function HistoryCard({ wc, onClick, isSelected }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg">{wc.winnerFlag}</span>
-            <span className="text-base font-black text-white">{wc.winner}</span>
-            <span className="text-xs text-gray-600">чемпион</span>
+            <span className="text-base font-black" style={{ color: '#111827' }}>{wc.winner}</span>
+            <span className="text-xs" style={{ color: '#9CA3AF' }}>чемпион</span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-gray-400">
+          <div className="flex items-center gap-2 text-[11px]" style={{ color: '#6B7280' }}>
             <span>{wc.flag} {wc.host}</span>
             <span>·</span>
             <span>Финал: {wc.score}</span>
           </div>
-          <div className="text-[11px] text-gray-500 mt-0.5">
+          <div className="text-[11px] mt-0.5" style={{ color: '#9CA3AF' }}>
             vs {wc.runnerUpFlag} {wc.runnerUp}
           </div>
         </div>
@@ -62,12 +61,12 @@ function HistoryCard({ wc, onClick, isSelected }) {
           {/* Scorer */}
           <div
             className="rounded-xl p-3 flex items-center gap-3"
-            style={{ background: 'rgba(255,215,0,0.06)' }}
+            style={{ background: 'rgba(201,168,0,0.07)' }}
           >
             <span className="text-xl">👟</span>
             <div>
-              <div className="text-[10px] text-gray-500 font-bold mb-0.5">ЛУЧШИЙ БОМБАРДИР</div>
-              <div className="text-xs font-bold text-white">{wc.topScorer}</div>
+              <div className="text-[10px] font-bold mb-0.5" style={{ color: '#9CA3AF' }}>ЛУЧШИЙ БОМБАРДИР</div>
+              <div className="text-xs font-bold" style={{ color: '#111827' }}>{wc.topScorer}</div>
             </div>
           </div>
 
@@ -81,10 +80,10 @@ function HistoryCard({ wc, onClick, isSelected }) {
               <div
                 key={s.label}
                 className="rounded-xl p-2 text-center"
-                style={{ background: 'rgba(255,255,255,0.04)' }}
+                style={{ background: 'rgba(0,0,0,0.04)' }}
               >
-                <div className="text-sm font-black text-white">{s.value}</div>
-                <div className="text-[9px] text-gray-500">{s.label}</div>
+                <div className="text-sm font-black" style={{ color: '#111827' }}>{s.value}</div>
+                <div className="text-[9px]" style={{ color: '#9CA3AF' }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -92,10 +91,10 @@ function HistoryCard({ wc, onClick, isSelected }) {
           {/* Fact */}
           <div
             className="rounded-xl p-3"
-            style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.1)' }}
+            style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)' }}
           >
-            <div className="text-[10px] font-bold mb-1" style={{ color: '#00D4FF' }}>⚡ ИСТОРИЧЕСКИЙ ФАКТ</div>
-            <p className="text-xs text-gray-300 leading-relaxed">{wc.fact}</p>
+            <div className="text-[10px] font-bold mb-1" style={{ color: '#0EA5E9' }}>⚡ ИСТОРИЧЕСКИЙ ФАКТ</div>
+            <p className="text-xs leading-relaxed" style={{ color: '#374151' }}>{wc.fact}</p>
           </div>
         </div>
       )}
@@ -141,20 +140,20 @@ export default function History() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-5"
-        style={{ background: 'linear-gradient(160deg, #0d0a1a 0%, #06080f 100%)' }}
+        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-widest text-gray-500 mb-1">1930 – 2022</p>
-            <h1 className="text-2xl font-black text-white">История ЧМ</h1>
-            <p className="text-xs text-gray-400 mt-0.5">22 турнира · 88 лет футбола</p>
+            <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#9CA3AF' }}>1930 – 2022</p>
+            <h1 className="text-2xl font-black" style={{ color: '#111827' }}>История ЧМ</h1>
+            <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>22 турнира · 88 лет футбола</p>
           </div>
           <div className="text-5xl trophy-glow">🏆</div>
         </div>
 
         {/* Top Champions */}
         <div className="mt-4">
-          <div className="text-[10px] font-bold tracking-widest text-gray-500 mb-2">РЕКОРДНЫЕ ЧЕМПИОНЫ</div>
+          <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#9CA3AF' }}>РЕКОРДНЫЕ ЧЕМПИОНЫ</div>
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {topChamps.map(([name, count], i) => {
               const wc = HISTORY.find((w) => w.winner === name)
@@ -163,14 +162,14 @@ export default function History() {
                   key={name}
                   className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl"
                   style={{
-                    background: i === 0 ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.05)',
-                    border: i === 0 ? '1px solid rgba(255,215,0,0.25)' : '1px solid rgba(255,255,255,0.05)',
+                    background: i === 0 ? 'rgba(201,168,0,0.10)' : 'rgba(0,0,0,0.04)',
+                    border: i === 0 ? '1px solid rgba(201,168,0,0.25)' : '1px solid rgba(0,0,0,0.07)',
                   }}
                 >
                   <span className="text-lg">{wc?.winnerFlag}</span>
                   <div>
-                    <div className="text-[10px] font-black text-white">{name}</div>
-                    <div className="text-[9px]" style={{ color: i === 0 ? '#FFD700' : '#6b7280' }}>
+                    <div className="text-[10px] font-black" style={{ color: '#111827' }}>{name}</div>
+                    <div className="text-[9px]" style={{ color: i === 0 ? '#C9A800' : '#6B7280' }}>
                       {count}× чемпион
                     </div>
                   </div>
@@ -190,8 +189,9 @@ export default function History() {
               onClick={() => setEra(e.id)}
               className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
               style={{
-                background: era === e.id ? '#FFD700' : 'rgba(255,255,255,0.06)',
-                color: era === e.id ? '#000' : '#9ca3af',
+                background: era === e.id ? '#C9A800' : 'rgba(0,0,0,0.05)',
+                color: era === e.id ? '#FFFFFF' : '#6B7280',
+                border: era === e.id ? 'none' : '1px solid rgba(0,0,0,0.08)',
               }}
             >
               {e.label}
@@ -206,7 +206,7 @@ export default function History() {
           {/* Timeline line */}
           <div
             className="absolute left-7 top-0 bottom-0 w-px"
-            style={{ background: 'rgba(255,215,0,0.1)' }}
+            style={{ background: 'rgba(201,168,0,0.2)' }}
           />
 
           {[...filtered].reverse().map((wc, idx) => (
@@ -216,8 +216,8 @@ export default function History() {
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0 relative z-10"
                   style={{
-                    background: selected === wc.year ? '#FFD700' : 'rgba(255,215,0,0.3)',
-                    boxShadow: selected === wc.year ? '0 0 0 3px rgba(255,215,0,0.2)' : 'none',
+                    background: selected === wc.year ? '#C9A800' : 'rgba(201,168,0,0.35)',
+                    boxShadow: selected === wc.year ? '0 0 0 3px rgba(201,168,0,0.2)' : 'none',
                   }}
                 />
               </div>

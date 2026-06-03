@@ -39,7 +39,7 @@ export default function App() {
 
   return (
     <LiveDataProvider>
-      <div className="relative min-h-screen" style={{ background: '#080c15' }}>
+      <div className="relative min-h-screen" style={{ background: '#F5F6FA' }}>
         <div className="tab-transition">
           {pages[tab]}
         </div>

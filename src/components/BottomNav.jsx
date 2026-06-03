@@ -14,8 +14,8 @@ export default function BottomNav({ active, onTab }) {
     <nav
       className="bottom-nav fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 flex"
       style={{
-        background: 'rgba(10,14,28,0.97)',
-        borderTop: '1px solid rgba(255,215,0,0.12)',
+        background: 'rgba(255,255,255,0.97)',
+        borderTop: '1px solid rgba(0,0,0,0.08)',
         backdropFilter: 'blur(16px)',
       }}
     >
@@ -31,7 +31,7 @@ export default function BottomNav({ active, onTab }) {
             {isActive && (
               <span
                 className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 rounded-b-full"
-                style={{ width: '60%', background: '#FFD700' }}
+                style={{ width: '60%', background: '#C9A800' }}
               />
             )}
             <span className={`text-lg transition-transform duration-200 ${isActive ? 'scale-110' : 'scale-100 opacity-60'}`}>
@@ -39,7 +39,7 @@ export default function BottomNav({ active, onTab }) {
             </span>
             <span
               className="text-[9px] font-medium truncate w-full text-center px-0.5"
-              style={{ color: isActive ? '#FFD700' : '#6b7280' }}
+              style={{ color: isActive ? '#C9A800' : '#9CA3AF' }}
             >
               {t.label}
             </span>
