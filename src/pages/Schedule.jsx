@@ -6,15 +6,15 @@ function StatusBadge({ status, time }) {
   if (status === 'live') {
     return (
       <div className="flex items-center gap-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-live animate-pulse2" />
-        <span className="text-[10px] font-bold text-live">{time}</span>
+        <span className="w-1.5 h-1.5 rounded-full animate-pulse2" style={{ background: '#16A34A' }} />
+        <span className="text-[10px] font-bold" style={{ color: '#16A34A' }}>{time}</span>
       </div>
     )
   }
   if (status === 'finished') {
-    return <span className="text-[10px] text-gray-500 uppercase tracking-wide">Завершён</span>
+    return <span className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Завершён</span>
   }
-  return <span className="text-[10px] font-bold" style={{ color: '#FFD700' }}>{time}</span>
+  return <span className="text-[10px] font-bold" style={{ color: '#C9A800' }}>{time}</span>
 }
 
 function MatchRow({ match }) {
@@ -28,7 +28,7 @@ function MatchRow({ match }) {
       className={`p-3 ${isLive ? 'match-live-card' : isUpcoming ? 'match-upcoming-card' : 'match-finished-card'}`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] font-black tracking-widest text-gray-500 uppercase">
+        <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: '#9CA3AF' }}>
           Группа {match.group}
         </span>
         <StatusBadge status={match.status} time={match.time} />
@@ -38,33 +38,33 @@ function MatchRow({ match }) {
         {/* Home */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="text-2xl flex-shrink-0">{home.flag}</span>
-          <span className="text-sm font-bold text-white truncate uppercase">{home.name}</span>
+          <span className="text-sm font-bold truncate uppercase" style={{ color: '#111827' }}>{home.name}</span>
         </div>
 
         {/* Score */}
         <div className="flex-shrink-0 text-center px-2">
           {isUpcoming ? (
-            <span className="text-sm font-black text-gray-500">vs</span>
+            <span className="text-sm font-black" style={{ color: '#9CA3AF' }}>vs</span>
           ) : (
             <div className="flex items-center gap-1">
-              <span className="text-xl font-black score-number text-white">{match.scoreHome}</span>
-              <span className="text-gray-600">:</span>
-              <span className="text-xl font-black score-number text-white">{match.scoreAway}</span>
+              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
+              <span style={{ color: '#9CA3AF' }}>:</span>
+              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
             </div>
           )}
         </div>
 
         {/* Away */}
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-          <span className="text-sm font-bold text-white truncate text-right uppercase">{away.name}</span>
+          <span className="text-sm font-bold truncate text-right uppercase" style={{ color: '#111827' }}>{away.name}</span>
           <span className="text-2xl flex-shrink-0">{away.flag}</span>
         </div>
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-gray-600">📍 {match.venue}</span>
+        <span className="text-[10px]" style={{ color: '#9CA3AF' }}>📍 {match.venue}</span>
         {!isUpcoming && match.goals && match.goals.length > 0 && (
-          <div className="flex gap-2 text-[10px] text-gray-500">
+          <div className="flex gap-2 text-[10px]" style={{ color: '#6B7280' }}>
             {match.goals.slice(0, 2).map((g, i) => (
               <span key={i}>⚽ {g.player} {g.minute}'</span>
             ))}
@@ -108,10 +108,10 @@ export default function Schedule() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-4"
-        style={{ background: 'linear-gradient(180deg, #0d1a3a 0%, #080c15 100%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
-        <h1 className="text-2xl font-black text-white mb-1 uppercase tracking-wide">Расписание</h1>
-        <p className="text-xs text-gray-400 uppercase tracking-wider">ЧМ 2026 · Групповой этап</p>
+        <h1 className="text-2xl font-black mb-1 uppercase tracking-wide" style={{ color: '#111827' }}>Расписание</h1>
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>ЧМ 2026 · Групповой этап</p>
       </div>
 
       {/* Status Filter */}
@@ -123,10 +123,10 @@ export default function Schedule() {
               onClick={() => setStatusFilter(f.id)}
               className="flex-shrink-0 px-3 py-1.5 text-xs font-black transition-all duration-200 uppercase tracking-wide"
               style={{
-                background: statusFilter === f.id ? '#FFD700' : 'rgba(255,255,255,0.06)',
-                color: statusFilter === f.id ? '#000' : '#9ca3af',
+                background: statusFilter === f.id ? '#C9A800' : 'rgba(0,0,0,0.05)',
+                color: statusFilter === f.id ? '#FFFFFF' : '#6B7280',
                 borderRadius: 3,
-                border: statusFilter === f.id ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                border: statusFilter === f.id ? 'none' : '1px solid rgba(0,0,0,0.08)',
               }}
             >
               {f.label}
@@ -142,9 +142,9 @@ export default function Schedule() {
               onClick={() => setGroupFilter(g)}
               className="flex-shrink-0 w-8 h-8 text-xs font-black transition-all duration-200 uppercase"
               style={{
-                background: groupFilter === g ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.04)',
-                color: groupFilter === g ? '#FFD700' : '#6b7280',
-                border: groupFilter === g ? '1px solid rgba(255,215,0,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                background: groupFilter === g ? 'rgba(201,168,0,0.15)' : 'rgba(0,0,0,0.04)',
+                color: groupFilter === g ? '#C9A800' : '#6B7280',
+                border: groupFilter === g ? '1px solid rgba(201,168,0,0.35)' : '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 3,
               }}
             >
@@ -159,8 +159,8 @@ export default function Schedule() {
         {Object.entries(byDate).map(([date, matches]) => (
           <div key={date}>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-xs font-black text-gray-400 uppercase tracking-wider">{date}</span>
-              <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <span className="text-xs font-black uppercase tracking-wider" style={{ color: '#6B7280' }}>{date}</span>
+              <div className="flex-1 h-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
             </div>
             <div className="space-y-2">
               {matches.map((m) => (
@@ -170,7 +170,7 @@ export default function Schedule() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-gray-500 text-sm uppercase tracking-wider">Матчи не найдены</div>
+          <div className="text-center py-12 text-sm uppercase tracking-wider" style={{ color: '#9CA3AF' }}>Матчи не найдены</div>
         )}
       </div>
     </div>

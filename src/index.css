@@ -8,8 +8,8 @@
 }
 
 body {
-  background-color: #080c15;
-  color: white;
+  background-color: #F5F6FA;
+  color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   margin: 0;
   padding: 0;
@@ -37,7 +37,7 @@ body {
   position: absolute;
   inset: -3px;
   border-radius: 3px;
-  border: 2px solid #00ff88;
+  border: 2px solid #16A34A;
   animation: ringPulse 2s ease-out infinite;
 }
 @keyframes ringPulse {
@@ -47,7 +47,7 @@ body {
 
 /* Gold border utility */
 .gold-border {
-  border: 1px solid rgba(255, 215, 0, 0.35);
+  border: 1px solid rgba(201, 168, 0, 0.35);
   border-radius: 3px;
 }
 
@@ -74,36 +74,51 @@ body {
 
 /* Trophy glow */
 .trophy-glow {
-  filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 20px #FFD70066);
+  filter: drop-shadow(0 0 8px #C9A800) drop-shadow(0 0 20px rgba(201,168,0,0.4));
+}
+
+/* Card utility */
+.card {
+  background: #FFFFFF;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 /* Sharp card utility */
 .sharp-card {
-  background: #161c2e;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 3px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
-/* Match card gradients — sharp corners */
+/* Match card styles — light theme */
 .match-live-card {
-  background: linear-gradient(135deg, #1a0a1a 0%, #0a1a2a 50%, #0a0a1a 100%);
-  border: 1px solid rgba(0, 255, 136, 0.35);
+  background: #FFFFFF;
+  border-left: 3px solid #16A34A;
+  border-top: 1px solid rgba(0,0,0,0.07);
+  border-right: 1px solid rgba(0,0,0,0.07);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
   border-radius: 3px;
+  box-shadow: 0 2px 16px rgba(22,163,74,0.10);
 }
 .match-finished-card {
-  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.07);
   border-radius: 3px;
 }
 .match-upcoming-card {
-  background: linear-gradient(135deg, #0f1728 0%, #161c2e 100%);
-  border: 1px solid rgba(255, 215, 0, 0.35);
+  background: #FFFFFF;
+  border-left: 3px solid #C9A800;
+  border-top: 1px solid rgba(0,0,0,0.07);
+  border-right: 1px solid rgba(0,0,0,0.07);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
   border-radius: 3px;
 }
 
 /* Group qualify row — bolder borders */
-.qualify-1 { border-left: 3px solid #FFD700; }
-.qualify-2 { border-left: 3px solid #00e5ff; }
+.qualify-1 { border-left: 3px solid #C9A800; }
+.qualify-2 { border-left: 3px solid #0EA5E9; }
 
 /* Transition smoothing */
 .tab-transition {
@@ -118,7 +133,7 @@ body {
 .stat-bar {
   height: 4px;
   border-radius: 2px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.08);
   overflow: hidden;
 }
 .stat-bar-fill {
@@ -139,4 +154,4 @@ body {
 .rank-1 { background: linear-gradient(135deg, #FFD700, #FF8C00); }
 .rank-2 { background: linear-gradient(135deg, #C0C0C0, #808080); }
 .rank-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); }
-.rank-other { background: rgba(255,255,255,0.1); }
+.rank-other { background: rgba(0,0,0,0.07); }

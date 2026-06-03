@@ -5,15 +5,15 @@ export default {
     extend: {
       colors: {
         bg: {
-          deep: '#06080f',
-          dark: '#0d1120',
-          card: '#141929',
-          hover: '#1c2440',
+          deep: '#F5F6FA',
+          dark: '#ECEDF2',
+          card: '#FFFFFF',
+          hover: '#F0F1F5',
         },
         gold: {
-          DEFAULT: '#FFD700',
-          dark: '#C9A800',
-          light: '#FFE566',
+          DEFAULT: '#C9A800',
+          dark: '#9A8000',
+          light: '#E8C800',
         },
         live: '#22c55e',
         accent: {

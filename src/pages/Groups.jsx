@@ -15,24 +15,24 @@ function GroupTable({ groupKey, groups }) {
   return (
     <div
       className="overflow-hidden mb-4"
-      style={{ background: '#141929', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3 }}
+      style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
     >
       {/* Header */}
       <div
         className="px-4 py-3 flex items-center justify-between"
-        style={{ background: 'rgba(255,215,0,0.07)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ background: 'rgba(201,168,0,0.08)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}
       >
-        <span className="font-black text-sm uppercase tracking-wide" style={{ color: '#FFD700' }}>
+        <span className="font-black text-sm uppercase tracking-wide" style={{ color: '#C9A800' }}>
           {group.name}
         </span>
-        <div className="grid grid-cols-7 gap-0 text-[9px] text-gray-500 font-black uppercase tracking-wider">
+        <div className="grid grid-cols-7 gap-0 text-[9px] font-black uppercase tracking-wider" style={{ color: '#6B7280' }}>
           <span className="w-5 text-center">П</span>
           <span className="w-5 text-center">В</span>
           <span className="w-5 text-center">Н</span>
           <span className="w-5 text-center">П</span>
           <span className="w-5 text-center">ГЗ</span>
           <span className="w-5 text-center">ГП</span>
-          <span className="w-6 text-center text-gray-300">О</span>
+          <span className="w-6 text-center" style={{ color: '#111827' }}>О</span>
         </div>
       </div>
 
@@ -44,16 +44,16 @@ function GroupTable({ groupKey, groups }) {
         return (
           <div
             key={row.code}
-            className={`px-4 py-2.5 flex items-center border-b border-white/[0.03] last:border-0 ${borderClass}`}
-            style={{ background: qualifies ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+            className={`px-4 py-2.5 flex items-center last:border-0 ${borderClass}`}
+            style={{ background: qualifies ? 'rgba(201,168,0,0.03)' : 'transparent', borderBottom: '1px solid rgba(0,0,0,0.05)' }}
           >
             {/* Rank */}
             <div
               className="w-5 h-5 flex items-center justify-center text-[10px] font-black mr-2 flex-shrink-0"
               style={{
                 borderRadius: 2,
-                background: idx === 0 ? 'rgba(255,215,0,0.2)' : idx === 1 ? 'rgba(0,229,255,0.15)' : 'rgba(255,255,255,0.05)',
-                color: idx === 0 ? '#FFD700' : idx === 1 ? '#00e5ff' : '#6b7280',
+                background: idx === 0 ? 'rgba(201,168,0,0.15)' : idx === 1 ? 'rgba(14,165,233,0.12)' : 'rgba(0,0,0,0.05)',
+                color: idx === 0 ? '#C9A800' : idx === 1 ? '#0EA5E9' : '#6B7280',
               }}
             >
               {idx + 1}
@@ -62,17 +62,17 @@ function GroupTable({ groupKey, groups }) {
             {/* Team */}
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <span className="text-base">{team?.flag}</span>
-              <span className="text-xs font-bold text-white truncate uppercase">{team?.name}</span>
+              <span className="text-xs font-bold truncate uppercase" style={{ color: '#111827' }}>{team?.name}</span>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-7 gap-0 text-[11px]">
               {[row.p, row.w, row.d, row.l, row.gf, row.ga].map((v, i) => (
-                <span key={i} className="w-5 text-center text-gray-400">{v}</span>
+                <span key={i} className="w-5 text-center" style={{ color: '#6B7280' }}>{v}</span>
               ))}
               <span
                 className="w-6 text-center font-black"
-                style={{ color: row.pts > 0 ? '#fff' : '#4b5563' }}
+                style={{ color: row.pts > 0 ? '#111827' : '#9CA3AF' }}
               >
                 {row.pts}
               </span>
@@ -97,19 +97,19 @@ export default function Groups() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-4"
-        style={{ background: 'linear-gradient(180deg, #0d1a3a 0%, #080c15 100%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
-        <h1 className="text-2xl font-black text-white mb-1 uppercase tracking-wide">Группы</h1>
-        <p className="text-xs text-gray-400 uppercase tracking-wider">12 групп · 48 команд</p>
+        <h1 className="text-2xl font-black mb-1 uppercase tracking-wide" style={{ color: '#111827' }}>Группы</h1>
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>12 групп · 48 команд</p>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 mt-3 text-[10px] text-gray-500">
+        <div className="flex items-center gap-4 mt-3 text-[10px]" style={{ color: '#9CA3AF' }}>
           <div className="flex items-center gap-1.5">
-            <div className="w-1 h-4" style={{ background: '#FFD700' }} />
+            <div className="w-1 h-4" style={{ background: '#C9A800' }} />
             <span className="uppercase tracking-wide">1-е место</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-1 h-4" style={{ background: '#00e5ff' }} />
+            <div className="w-1 h-4" style={{ background: '#0EA5E9' }} />
             <span className="uppercase tracking-wide">2-е место (выход)</span>
           </div>
         </div>
@@ -122,10 +122,10 @@ export default function Groups() {
             onClick={() => setSelected(null)}
             className="flex-shrink-0 px-3 py-1.5 text-xs font-black transition-all duration-200 uppercase tracking-wide"
             style={{
-              background: selected === null ? '#FFD700' : 'rgba(255,255,255,0.06)',
-              color: selected === null ? '#000' : '#9ca3af',
+              background: selected === null ? '#C9A800' : 'rgba(0,0,0,0.05)',
+              color: selected === null ? '#FFFFFF' : '#6B7280',
               borderRadius: 3,
-              border: selected === null ? 'none' : '1px solid rgba(255,255,255,0.06)',
+              border: selected === null ? 'none' : '1px solid rgba(0,0,0,0.08)',
             }}
           >
             Все
@@ -136,9 +136,9 @@ export default function Groups() {
               onClick={() => setSelected(selected === g ? null : g)}
               className="flex-shrink-0 w-9 h-8 text-xs font-black transition-all duration-200 uppercase"
               style={{
-                background: selected === g ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.04)',
-                color: selected === g ? '#FFD700' : '#6b7280',
-                border: selected === g ? '1px solid rgba(255,215,0,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                background: selected === g ? 'rgba(201,168,0,0.15)' : 'rgba(0,0,0,0.04)',
+                color: selected === g ? '#C9A800' : '#6B7280',
+                border: selected === g ? '1px solid rgba(201,168,0,0.35)' : '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 3,
               }}
             >

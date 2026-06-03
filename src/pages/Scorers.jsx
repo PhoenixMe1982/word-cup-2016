@@ -16,19 +16,24 @@ function ScorerRow({ scorer, maxGoals }) {
     <div
       className="p-4 mb-2 relative overflow-hidden"
       style={{
-        background: scorer.rank <= 3
-          ? 'linear-gradient(135deg, #1a1500 0%, #201c00 100%)'
-          : '#141929',
-        border: scorer.rank === 1
-          ? '1px solid rgba(255,215,0,0.5)'
-          : scorer.rank <= 3
-          ? '1px solid rgba(255,215,0,0.2)'
-          : '1px solid rgba(255,255,255,0.06)',
+        background: '#FFFFFF',
+        borderLeft: scorer.rank <= 3 ? '2px solid #C9A800' : '2px solid transparent',
+        border: scorer.rank <= 3
+          ? undefined
+          : '1px solid rgba(0,0,0,0.07)',
         borderRadius: 3,
+        boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
       }}
     >
-      {scorer.rank === 1 && (
-        <div className="absolute top-0 right-0 text-4xl opacity-10 pointer-events-none pr-2 pt-1">⚽</div>
+      {scorer.rank <= 3 && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            border: '1px solid rgba(0,0,0,0.07)',
+            borderLeft: '2px solid #C9A800',
+            borderRadius: 3,
+          }}
+        />
       )}
 
       <div className="flex items-center gap-3">
@@ -39,34 +44,26 @@ function ScorerRow({ scorer, maxGoals }) {
             borderRadius: 3,
             ...(medal
               ? { background: medal.bg, color: medal.text }
-              : { background: 'rgba(255,255,255,0.07)', color: '#9ca3af' }),
+              : { background: 'rgba(0,0,0,0.07)', color: '#6B7280' }),
           }}
         >
           {scorer.rank <= 3 ? ['🥇', '🥈', '🥉'][scorer.rank - 1] : scorer.rank}
         </div>
 
-        {/* Avatar */}
-        <div
-          className="w-10 h-10 flex items-center justify-center text-xl flex-shrink-0"
-          style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 3 }}
-        >
-          {scorer.avatar}
-        </div>
-
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-black text-white truncate uppercase">{scorer.name}</span>
+            <span className="text-sm font-black truncate uppercase" style={{ color: '#111827' }}>{scorer.name}</span>
             {scorer.rank === 1 && (
               <span
                 className="text-[9px] font-black px-1.5 py-0.5"
-                style={{ background: '#FFD700', color: '#000', borderRadius: 2 }}
+                style={{ background: '#C9A800', color: '#FFFFFF', borderRadius: 2 }}
               >
                 ТОП
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-[10px] text-gray-500">
+          <div className="flex items-center gap-2 text-[10px]" style={{ color: '#6B7280' }}>
             <span>{team?.flag} {team?.name}</span>
             <span>·</span>
             <span>{scorer.club}</span>
@@ -77,7 +74,7 @@ function ScorerRow({ scorer, maxGoals }) {
               className="stat-bar-fill"
               style={{
                 width: scorer.goals > 0 ? `${(scorer.goals / maxGoals) * 100}%` : '4px',
-                background: scorer.rank === 1 ? '#FFD700' : scorer.rank <= 3 ? '#FF8C00' : '#00D4FF',
+                background: scorer.rank === 1 ? '#C9A800' : scorer.rank <= 3 ? '#9A8000' : '#0EA5E9',
               }}
             />
           </div>
@@ -86,12 +83,12 @@ function ScorerRow({ scorer, maxGoals }) {
         {/* Stats */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-black score-number" style={{ color: scorer.rank === 1 ? '#FFD700' : '#fff' }}>
+            <span className="text-3xl font-black score-number" style={{ color: scorer.rank === 1 ? '#C9A800' : '#111827' }}>
               {scorer.goals}
             </span>
-            <span className="text-[10px] text-gray-500">гол</span>
+            <span className="text-[10px]" style={{ color: '#9CA3AF' }}>гол</span>
           </div>
-          <div className="text-[10px] text-gray-500">
+          <div className="text-[10px]" style={{ color: '#6B7280' }}>
             {scorer.assists} пас · {scorer.matches} матч
           </div>
         </div>
@@ -114,13 +111,13 @@ export default function Scorers() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-5"
-        style={{ background: 'linear-gradient(160deg, #1a1000 0%, #080c15 100%)', borderBottom: '1px solid rgba(255,215,0,0.15)' }}
+        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-[10px] font-black tracking-widest text-gray-500 mb-1 uppercase">ЧМ 2026</p>
-            <h1 className="text-2xl font-black text-white uppercase tracking-wide">Бомбардиры</h1>
-            <p className="text-xs text-gray-400 mt-0.5 uppercase tracking-wider">Претенденты на Золотую бутсу</p>
+            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
+            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Бомбардиры</h1>
+            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Претенденты на Золотую бутсу</p>
           </div>
           <div className="text-5xl">⚽</div>
         </div>
@@ -128,23 +125,22 @@ export default function Scorers() {
         {/* Leader Card */}
         <div
           className="mt-4 p-4 flex items-center gap-4"
-          style={{ background: 'linear-gradient(135deg, #261a00, #1a1200)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 3 }}
+          style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
         >
-          <div className="text-4xl">{sorted[0]?.avatar}</div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#FFD700' }}>Фаворит — Золотая бутса</div>
-            <div className="text-lg font-black text-white truncate uppercase">{sorted[0]?.name}</div>
-            <div className="text-xs text-gray-400">{TEAMS[sorted[0]?.team]?.flag} {sorted[0]?.club}</div>
+            <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#C9A800' }}>Фаворит — Золотая бутса</div>
+            <div className="text-lg font-black truncate uppercase" style={{ color: '#111827' }}>{sorted[0]?.name}</div>
+            <div className="text-xs" style={{ color: '#6B7280' }}>{TEAMS[sorted[0]?.team]?.flag} {sorted[0]?.club}</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-black" style={{ color: '#FFD700' }}>
+            <div className="text-4xl font-black" style={{ color: '#C9A800' }}>
               {sorted[0]?.goals > 0 ? sorted[0].goals : '—'}
             </div>
-            <div className="text-[10px] text-gray-500">голов</div>
+            <div className="text-[10px]" style={{ color: '#9CA3AF' }}>голов</div>
           </div>
         </div>
 
-        <div className="mt-2 text-center text-[10px] text-gray-600 uppercase tracking-wider">
+        <div className="mt-2 text-center text-[10px] uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
           Турнир стартует 11 июня · Голы ещё не забиты
         </div>
       </div>
@@ -153,7 +149,7 @@ export default function Scorers() {
       <div className="px-4 mt-3 mb-3">
         <div
           className="flex p-1"
-          style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 3, border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'rgba(0,0,0,0.05)', borderRadius: 3, border: '1px solid rgba(0,0,0,0.08)' }}
         >
           {[
             { id: 'goals', label: '⚽ Голы' },
@@ -164,8 +160,8 @@ export default function Scorers() {
               onClick={() => setView(v.id)}
               className="flex-1 py-2 text-xs font-black transition-all duration-200 uppercase tracking-wide"
               style={{
-                background: view === v.id ? '#FFD700' : 'transparent',
-                color: view === v.id ? '#000' : '#6b7280',
+                background: view === v.id ? '#C9A800' : 'transparent',
+                color: view === v.id ? '#FFFFFF' : '#6B7280',
                 borderRadius: 2,
               }}
             >
