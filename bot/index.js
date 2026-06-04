@@ -91,11 +91,11 @@ async function broadcast(sendFn) {
 // ── Telegram initData validation ───────────────────────────────────────────
 
 function validateInitData(initData) {
-  if (!initData) return null
+  if (!initData) { console.log('[auth] no initData'); return null }
   try {
     const params = new URLSearchParams(initData)
     const hash = params.get('hash')
-    if (!hash) return null
+    if (!hash) { console.log('[auth] no hash'); return null }
     params.delete('hash')
     const checkStr = Array.from(params.entries())
       .sort(([a], [b]) => a.localeCompare(b))
@@ -103,10 +103,12 @@ function validateInitData(initData) {
       .join('\n')
     const secret = crypto.createHmac('sha256', 'WebAppData').update(TOKEN).digest()
     const expected = crypto.createHmac('sha256', secret).update(checkStr).digest('hex')
-    if (hash !== expected) return null
+    const match = hash === expected
+    console.log(`[auth] token=${TOKEN.slice(0,10)} hash_match=${match}`)
+    if (!match) return null
     const user = params.get('user')
     return user ? JSON.parse(user) : null
-  } catch { return null }
+  } catch (e) { console.log('[auth] error:', e.message); return null }
 }
 
 // ── Scoring ────────────────────────────────────────────────────────────────
