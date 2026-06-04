@@ -355,7 +355,11 @@ bot.start({
   onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`),
 }).catch((err) => {
   console.error('Bot crashed:', err.message)
-  process.exit(1)
+  if (err.message?.includes('409')) {
+    console.error('409 Conflict — another instance running. API server stays up.')
+  } else {
+    process.exit(1)
+  }
 })
 
 const PORT = process.env.PORT || 10000
