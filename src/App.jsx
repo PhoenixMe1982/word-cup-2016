@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react'
 import Home from './pages/Home.jsx'
 import Schedule from './pages/Schedule.jsx'
-import Scorers from './pages/Scorers.jsx'
-import Goalkeepers from './pages/Goalkeepers.jsx'
-import Groups from './pages/Groups.jsx'
 import History from './pages/History.jsx'
-import Teams from './pages/Teams.jsx'
-import AllTimeScorers from './pages/AllTimeScorers.jsx'
-import Prediction from './pages/Prediction.jsx'
+import WorldCup from './pages/WorldCup.jsx'
+import PlayPage from './pages/PlayPage.jsx'
+import Leaderboard from './pages/Leaderboard.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import PredictionPanel from './components/PredictionPanel.jsx'
 import { LiveDataProvider } from './LiveDataContext.jsx'
@@ -39,22 +36,19 @@ export default function App() {
   }
 
   const pages = {
-    home: <Home onTab={setTab} />,
-    schedule: <Schedule />,
-    teams: <Teams />,
-    scorers: <Scorers />,
-    goalkeepers: <Goalkeepers />,
-    groups: <Groups />,
-    history: <History />,
-    alltimescorers: <AllTimeScorers />,
-    prediction: <Prediction />,
+    home:        <Home onTab={setTab} />,
+    play:        <PlayPage />,
+    schedule:    <Schedule />,
+    worldcup:   <WorldCup />,
+    history:    <History />,
+    leaderboard: <Leaderboard />,
   }
 
   return (
     <LiveDataProvider>
       <div className="relative min-h-screen" style={{ background: '#F5F6FA' }}>
         <div className="tab-transition">
-          {pages[tab]}
+          {pages[tab] ?? pages.home}
         </div>
         <BottomNav active={tab} onTab={setTab} />
 
@@ -74,7 +68,6 @@ export default function App() {
                 paddingBottom: 'env(safe-area-inset-bottom, 16px)',
               }}
             >
-              {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(0,0,0,0.15)' }} />
               </div>
