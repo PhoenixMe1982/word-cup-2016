@@ -2,6 +2,44 @@ import { useState, useEffect } from 'react'
 import { TEAMS, TOURNAMENT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
+const API = (import.meta.env.VITE_API_URL || 'https://wc2026-bot.onrender.com').replace(/\/$/, '')
+
+function UserAvatar({ onTab }) {
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
+  const name = tgUser?.first_name || 'Игрок'
+  const photoUrl = tgUser?.photo_url
+  const initial = name[0]?.toUpperCase() || '?'
+  const [pts, setPts] = useState(null)
+  const [rank, setRank] = useState(null)
+
+  useEffect(() => {
+    const initData = window.Telegram?.WebApp?.initData
+    if (!initData) return
+    fetch(API + '/api/me', { headers: { 'x-telegram-init-data': initData } })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) { setPts(d.pts); setRank(d.rank) } })
+      .catch(() => {})
+  }, [])
+
+  return (
+    <button onClick={() => onTab('leaderboard')} className="flex flex-col items-center gap-0.5">
+      <div
+        className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
+        style={{ background: 'linear-gradient(135deg,#C9A800,#f0c400)', border: '2px solid rgba(201,168,0,0.25)' }}
+      >
+        {photoUrl
+          ? <img src={photoUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none' }} />
+          : <span className="text-base font-black" style={{ color: '#fff' }}>{initial}</span>
+        }
+      </div>
+      <div className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: '#111827' }}>{name}</div>
+      <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
+        {pts !== null ? `${pts} очк` : rank !== null ? `#${rank}` : 'Лидерборд'}
+      </div>
+    </button>
+  )
+}
+
 function LiveMinute({ base }) {
   const [min, setMin] = useState(parseInt(base) || 0)
   useEffect(() => {
@@ -117,10 +155,7 @@ export default function Home({ onTab }) {
               2026™
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-5xl trophy-glow">🏆</div>
-            <div className="text-[10px] mt-1 uppercase tracking-wider" style={{ color: '#9CA3AF' }}>11 июня 2026</div>
-          </div>
+          <UserAvatar onTab={onTab} />
         </div>
 
         {/* Stats strip */}
@@ -230,7 +265,7 @@ export default function Home({ onTab }) {
       <section className="mb-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Претенденты на Золотую бутсу</h2>
-          <button onClick={() => onTab('scorers')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+          <button onClick={() => onTab('worldcup')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
             Топ-15 →
           </button>
         </div>
