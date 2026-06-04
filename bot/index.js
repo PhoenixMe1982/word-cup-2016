@@ -10,7 +10,8 @@ const USERS_FILE = path.join(__dirname, 'users.json')
 // Upstash Redis — persists across Render redeploys (set UPSTASH_REDIS_REST_URL + _TOKEN)
 const REDIS_URL   = (process.env.UPSTASH_REDIS_REST_URL || '').trim()
 const REDIS_TOKEN = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim()
-const USERS_KEY   = 'wc2026_users'
+const KEY_PREFIX  = (process.env.REDIS_KEY_PREFIX || '').trim()
+const USERS_KEY   = `${KEY_PREFIX}wc2026_users`
 
 if (!TOKEN) { console.error('BOT_TOKEN not set'); process.exit(1) }
 
