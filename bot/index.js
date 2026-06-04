@@ -130,8 +130,13 @@ bot.command('help', (ctx) => {
   )
 })
 
-bot.start()
-console.log(`✅ WC2026 Bot running | App: ${APP_URL}`)
+bot.start({
+  onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL}`),
+}).catch((err) => {
+  // 409 happens when a previous instance is still polling — exit so Render restarts cleanly
+  console.error('Bot crashed:', err.message)
+  process.exit(1)
+})
 
 // HTTP-сервер нужен для Render Web Service (free tier)
 const http = require('http')
