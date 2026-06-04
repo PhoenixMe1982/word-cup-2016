@@ -17,12 +17,15 @@ async function sharePrediction(picks) {
     const team = TEAMS[picks[key]]
     return `${medal} ${team?.flag || ''} ${team?.name || ''}`
   })
-  const fullText = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup\n\n⚽ World Cup 2026 Fan App\n${APP_URL}`
+  const predText = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup`
+  const fullText = `${predText}\n\n⚽ World Cup 2026 Fan App\n${APP_URL}`
 
-  // Inside Telegram Mini App — opens the Telegram contact/channel picker
+  // Inside Telegram Mini App — t.me/share/url requires `url` param to open the contact picker
   const tg = window.Telegram?.WebApp
   if (tg?.openTelegramLink) {
-    tg.openTelegramLink(`https://t.me/share/url?text=${encodeURIComponent(fullText)}`)
+    tg.openTelegramLink(
+      `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(predText)}`
+    )
     return true
   }
 
