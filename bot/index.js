@@ -132,3 +132,10 @@ bot.command('help', (ctx) => {
 
 bot.start()
 console.log(`✅ WC2026 Bot running | App: ${APP_URL}`)
+
+// HTTP-сервер нужен для Render Web Service (free tier)
+const http = require('http')
+const PORT = process.env.PORT || 10000
+http.createServer((_, res) => { res.writeHead(200); res.end('OK') }).listen(PORT, () => {
+  console.log(`🌐 Health server on port ${PORT}`)
+})
