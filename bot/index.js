@@ -207,6 +207,10 @@ app.post('/api/predict', withAuth, async (req, res) => {
     const score = await redisExec('ZSCORE', K.leaderboard, userId)
     if (score === null) await redisExec('ZADD', K.leaderboard, 0, userId)
 
+    // Save user profile so leaderboard shows real name
+    const { first_name, username } = req.tgUser
+    await saveUser(userId, first_name, username)
+
     res.json({ ok: true })
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
