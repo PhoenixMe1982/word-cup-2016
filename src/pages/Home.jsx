@@ -2,11 +2,24 @@ import { useState, useEffect } from 'react'
 import { TEAMS, TOURNAMENT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
+const API = (import.meta.env.VITE_API_URL || 'https://wc2026-bot.onrender.com').replace(/\/$/, '')
+
 function UserAvatar({ onTab }) {
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
   const name = tgUser?.first_name || 'Игрок'
   const photoUrl = tgUser?.photo_url
   const initial = name[0]?.toUpperCase() || '?'
+  const [pts, setPts] = useState(null)
+  const [rank, setRank] = useState(null)
+
+  useEffect(() => {
+    const initData = window.Telegram?.WebApp?.initData
+    if (!initData) return
+    fetch(API + '/api/me', { headers: { 'x-telegram-init-data': initData } })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) { setPts(d.pts); setRank(d.rank) } })
+      .catch(() => {})
+  }, [])
 
   return (
     <button onClick={() => onTab('leaderboard')} className="flex flex-col items-center gap-0.5">
@@ -20,7 +33,9 @@ function UserAvatar({ onTab }) {
         }
       </div>
       <div className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: '#111827' }}>{name}</div>
-      <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Лидерборд</div>
+      <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
+        {pts !== null ? `${pts} очк` : rank !== null ? `#${rank}` : 'Лидерборд'}
+      </div>
     </button>
   )
 }
