@@ -699,14 +699,14 @@ export const HISTORY = [
   {
     year: 1934, host: 'Италия', flag: '🇮🇹', winner: 'Италия', winnerFlag: '🇮🇹',
     runnerUp: 'Чехословакия', runnerUpFlag: '🇨🇿', score: '2:1 д.в.',
-    topScorer: 'О. Шаффер (Австрия/Венгрия) — 4 гола',
+    topScorer: 'О. Неедлы (Чехословакия) — 5 голов',
     teams: 16, goals: 70, attendance: '363 000',
     fact: 'Первый турнир с квалификационными матчами. Уругвай отказался участвовать в знак протеста.',
   },
   {
     year: 1938, host: 'Франция', flag: '🇫🇷', winner: 'Италия', winnerFlag: '🇮🇹',
     runnerUp: 'Венгрия', runnerUpFlag: '🇭🇺', score: '4:2',
-    topScorer: 'Л. Сентотти (Бразилия) — 7 голов',
+    topScorer: 'Леонидас (Бразилия) — 7 голов',
     teams: 15, goals: 84, attendance: '374 835',
     fact: 'Италия стала первой командой, защитившей титул чемпиона мира.',
   },
@@ -741,7 +741,7 @@ export const HISTORY = [
   {
     year: 1966, host: 'Англия', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', winner: 'Англия', winnerFlag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
     runnerUp: 'ФРГ', runnerUpFlag: '🇩🇪', score: '4:2 д.в.',
-    topScorer: 'Э. Хёрст (Англия) — 4 гола',
+    topScorer: 'Эусебио (Португалия) — 9 голов',
     teams: 16, goals: 89, attendance: '1 614 677',
     fact: 'Знаменитый «гол Хёрста» в финале — до сих пор споры, пересек ли мяч линию.',
   },
@@ -790,7 +790,7 @@ export const HISTORY = [
   {
     year: 1994, host: 'США', flag: '🇺🇸', winner: 'Бразилия', winnerFlag: '🇧🇷',
     runnerUp: 'Италия', runnerUpFlag: '🇮🇹', score: '0:0 (3:2 пен.)',
-    topScorer: 'О. Салас, Х.Л. Клинсманн и др. — 6 голов',
+    topScorer: 'О. Саленко (Россия), Х. Стоичков (Болгария) — 6 голов',
     teams: 24, goals: 141, attendance: '3 587 538',
     fact: 'Рекорд посещаемости. Роберто Баджо промахнулся с пенальти в финале.',
   },
