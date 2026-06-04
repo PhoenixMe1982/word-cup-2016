@@ -19,6 +19,14 @@ async function sharePrediction(picks) {
   })
   const fullText = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup\n\n⚽ World Cup 2026 Fan App\n${APP_URL}`
 
+  // Inside Telegram Mini App — opens the Telegram contact/channel picker
+  const tg = window.Telegram?.WebApp
+  if (tg?.openTelegramLink) {
+    tg.openTelegramLink(`https://t.me/share/url?text=${encodeURIComponent(fullText)}`)
+    return true
+  }
+
+  // Outside Telegram (regular browser) — native OS share sheet
   if (navigator.share) {
     try {
       await navigator.share({ text: fullText, title: '⚽ World Cup 2026 Fan App' })
@@ -27,6 +35,7 @@ async function sharePrediction(picks) {
       if (e.name === 'AbortError') return false
     }
   }
+
   await navigator.clipboard?.writeText(fullText)
   return true
 }
