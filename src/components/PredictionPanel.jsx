@@ -17,20 +17,21 @@ function sharePrediction(picks) {
     const team = TEAMS[picks[key]]
     return `${medal} ${team?.flag || ''} ${team?.name || ''}`
   })
-  const text = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup`
+  const baseText = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup`
+  // URL goes at the END of text — Telegram auto-generates link preview from it.
+  // Using the `url` param would prepend the raw URL to the top of the message.
+  const tgText = `${baseText}\n\n⚽ World Cup 2026 Fan App\n${APP_URL}`
 
   const tg = window.Telegram?.WebApp
   if (tg?.openTelegramLink) {
-    tg.openTelegramLink(
-      `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(text)}`
-    )
+    tg.openTelegramLink(`https://t.me/share/url?text=${encodeURIComponent(tgText)}`)
     return
   }
   if (navigator.share) {
-    navigator.share({ text, url: APP_URL, title: '⚽ World Cup 2026 Fan App' }).catch(() => {})
+    navigator.share({ text: baseText, url: APP_URL, title: '⚽ World Cup 2026 Fan App' }).catch(() => {})
     return
   }
-  navigator.clipboard?.writeText(`${text}\n\n${APP_URL}`)
+  navigator.clipboard?.writeText(tgText)
 }
 
 export default function PredictionPanel({ onClose, asPage = false }) {
