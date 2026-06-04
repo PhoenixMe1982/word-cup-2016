@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { TEAMS, TOURNAMENT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
-const API = (import.meta.env.VITE_API_URL || 'https://wc2026-bot.onrender.com').replace(/\/$/, '')
+const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
 function UserAvatar({ onTab }) {
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user

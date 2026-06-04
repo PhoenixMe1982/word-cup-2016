@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TEAMS, MATCHES } from '../data.js'
 
-const API = (import.meta.env.VITE_API_URL || 'https://wc2026-bot.onrender.com').replace(/\/$/, '')
+const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
 function getInitData() {
   return window.Telegram?.WebApp?.initData || ''
