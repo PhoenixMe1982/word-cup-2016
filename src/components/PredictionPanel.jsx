@@ -27,7 +27,7 @@ function sharePrediction(picks) {
     return
   }
   if (navigator.share) {
-    navigator.share({ text, url: APP_URL, title: 'ЧМ 2026 — Мой прогноз' }).catch(() => {})
+    navigator.share({ text, url: APP_URL, title: '⚽ World Cup 2026 Fan App' }).catch(() => {})
     return
   }
   navigator.clipboard?.writeText(`${text}\n\n${APP_URL}`)
