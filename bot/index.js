@@ -7,36 +7,62 @@ const ADMIN_ID = parseInt(process.env.ADMIN_ID, 10)
 const APP_URL  = (process.env.APP_URL || 'https://phoenixme1982.github.io/word-cup-2016/').trim()
 const USERS_FILE = path.join(__dirname, 'users.json')
 
+// Upstash Redis — persists across Render redeploys (set UPSTASH_REDIS_REST_URL + _TOKEN)
+const REDIS_URL   = (process.env.UPSTASH_REDIS_REST_URL || '').trim()
+const REDIS_TOKEN = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim()
+const USERS_KEY   = 'wc2026_users'
+
 if (!TOKEN) { console.error('BOT_TOKEN not set'); process.exit(1) }
 
 const bot = new Bot(TOKEN)
 
 // ── Storage ────────────────────────────────────────────────────────────────
 
-function loadUsers() {
+async function redisExec(cmd, ...args) {
+  const res = await fetch(REDIS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([cmd, ...args]),
+  })
+  return (await res.json()).result
+}
+
+async function loadUsers() {
+  if (REDIS_URL && REDIS_TOKEN) {
+    const data = await redisExec('GET', USERS_KEY)
+    return data ? JSON.parse(data) : {}
+  }
   try { return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')) }
   catch { return {} }
 }
 
-function saveUser(chatId, firstName, username) {
-  const users = loadUsers()
+async function persistUsers(users) {
+  if (REDIS_URL && REDIS_TOKEN) {
+    await redisExec('SET', USERS_KEY, JSON.stringify(users))
+    return
+  }
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2))
+}
+
+async function saveUser(chatId, firstName, username) {
+  const users = await loadUsers()
   if (!users[chatId]) {
     users[chatId] = { chatId, firstName, username, joinedAt: new Date().toISOString() }
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2))
+    await persistUsers(users)
     console.log(`New user: ${firstName} (@${username}) — total: ${Object.keys(users).length}`)
   }
 }
 
-function removeUser(chatId) {
-  const users = loadUsers()
+async function removeUser(chatId) {
+  const users = await loadUsers()
   delete users[chatId]
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2))
+  await persistUsers(users)
 }
 
 // ── Broadcast helper ───────────────────────────────────────────────────────
 
 async function broadcast(sendFn) {
-  const users = loadUsers()
+  const users = await loadUsers()
   const ids = Object.keys(users)
   let sent = 0, failed = 0
 
@@ -45,7 +71,7 @@ async function broadcast(sendFn) {
       await sendFn(id)
       sent++
     } catch (e) {
-      if (e.error_code === 403) removeUser(id)
+      if (e.error_code === 403) await removeUser(id)
       failed++
     }
     await new Promise(r => setTimeout(r, 50))
@@ -61,18 +87,19 @@ const appKeyboard = (label = '📊 Открыть приложение') => ({
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
-bot.command('start', (ctx) => {
+bot.command('start', async (ctx) => {
   const { id, first_name, username } = ctx.from
-  saveUser(id, first_name, username)
+  await saveUser(id, first_name, username)
   return ctx.reply(
     `🏆 *FIFA World Cup 2026*\n\nПривет, ${first_name}\\! Следи за всеми матчами, группами, бомбардирами и сделай прогноз на победителя\\.`,
     { parse_mode: 'MarkdownV2', ...appKeyboard('🔮 Открыть приложение') }
   )
 })
 
-bot.command('stats', (ctx) => {
+bot.command('stats', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
-  const count = Object.keys(loadUsers()).length
+  const users = await loadUsers()
+  const count = Object.keys(users).length
   return ctx.reply(`👥 Подписчиков: *${count}*`, { parse_mode: 'Markdown' })
 })
 
@@ -131,9 +158,8 @@ bot.command('help', (ctx) => {
 })
 
 bot.start({
-  onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL}`),
+  onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`),
 }).catch((err) => {
-  // 409 happens when a previous instance is still polling — exit so Render restarts cleanly
   console.error('Bot crashed:', err.message)
   process.exit(1)
 })
