@@ -10,6 +10,8 @@ const POSITIONS = [
 
 const STORAGE_KEY = 'wc2026_prediction'
 
+const APP_URL = 'https://phoenixme1982.github.io/word-cup-2016/'
+
 function sharePrediction(picks) {
   const lines = POSITIONS.map(({ key, medal }) => {
     const team = TEAMS[picks[key]]
@@ -19,14 +21,16 @@ function sharePrediction(picks) {
 
   const tg = window.Telegram?.WebApp
   if (tg?.openTelegramLink) {
-    tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/&text=${encodeURIComponent(text)}`)
+    tg.openTelegramLink(
+      `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(text)}`
+    )
     return
   }
   if (navigator.share) {
-    navigator.share({ text, title: 'ЧМ 2026 — Мой прогноз' }).catch(() => {})
+    navigator.share({ text, url: APP_URL, title: 'ЧМ 2026 — Мой прогноз' }).catch(() => {})
     return
   }
-  navigator.clipboard?.writeText(text)
+  navigator.clipboard?.writeText(`${text}\n\n${APP_URL}`)
 }
 
 export default function PredictionPanel({ onClose, asPage = false }) {
