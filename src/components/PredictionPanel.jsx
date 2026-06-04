@@ -21,7 +21,6 @@ function sharePrediction(picks) {
 
   const tg = window.Telegram?.WebApp
   if (tg?.openTelegramLink) {
-    // url param → Telegram shows OG preview card with title "World Cup 2026 Fan App"
     tg.openTelegramLink(
       `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(text)}`
     )
