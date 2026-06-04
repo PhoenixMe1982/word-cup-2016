@@ -12,26 +12,23 @@ const STORAGE_KEY = 'wc2026_prediction'
 
 const APP_URL = 'https://phoenixme1982.github.io/word-cup-2016/'
 
-function sharePrediction(picks) {
+async function sharePrediction(picks) {
   const lines = POSITIONS.map(({ key, medal }) => {
     const team = TEAMS[picks[key]]
     return `${medal} ${team?.flag || ''} ${team?.name || ''}`
   })
-  const baseText = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup`
-  // URL goes at the END of text — Telegram auto-generates link preview from it.
-  // Using the `url` param would prepend the raw URL to the top of the message.
-  const tgText = `${baseText}\n\n⚽ World Cup 2026 Fan App\n${APP_URL}`
+  const fullText = `🏆 Мой прогноз на ЧМ 2026:\n${lines.join('\n')}\n\n#ЧМ2026 #WC2026 #FIFAWorldCup\n\n⚽ World Cup 2026 Fan App\n${APP_URL}`
 
-  const tg = window.Telegram?.WebApp
-  if (tg?.openTelegramLink) {
-    tg.openTelegramLink(`https://t.me/share/url?text=${encodeURIComponent(tgText)}`)
-    return
-  }
   if (navigator.share) {
-    navigator.share({ text: baseText, url: APP_URL, title: '⚽ World Cup 2026 Fan App' }).catch(() => {})
-    return
+    try {
+      await navigator.share({ text: fullText, title: '⚽ World Cup 2026 Fan App' })
+      return true
+    } catch (e) {
+      if (e.name === 'AbortError') return false
+    }
   }
-  navigator.clipboard?.writeText(tgText)
+  await navigator.clipboard?.writeText(fullText)
+  return true
 }
 
 export default function PredictionPanel({ onClose, asPage = false }) {
@@ -58,10 +55,12 @@ export default function PredictionPanel({ onClose, asPage = false }) {
     setSearch('')
   }
 
-  const handleShare = () => {
-    sharePrediction(picks)
-    setShared(true)
-    setTimeout(() => setShared(false), 3000)
+  const handleShare = async () => {
+    const ok = await sharePrediction(picks)
+    if (ok) {
+      setShared(true)
+      setTimeout(() => setShared(false), 3000)
+    }
   }
 
   const handleReset = () => {
