@@ -40,6 +40,21 @@ export default function Leaderboard() {
   const [error, setError] = useState(null)
   const inTg = isTelegram()
 
+  function shareLeaderboard() {
+    const top3 = entries.slice(0, 3).map((e, i) => {
+      const medal = ['🥇', '🥈', '🥉'][i]
+      return `${medal} ${e.firstName || 'Игрок'} — ${e.pts} оч.`
+    }).join('\n')
+    const myLine = me ? `\n📊 Ты: #${me.rank || '?'} · ${me.pts} оч.` : ''
+    const text = `🏆 Лидерборд ЧМ 2026\n${top3}${myLine}\n📲 Играй: @Mundial_26_bot`
+    const url = 'https://t.me/Mundial_26_bot'
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
+    } else {
+      navigator.clipboard?.writeText(text).catch(() => {})
+    }
+  }
+
   const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
     ? String(window.Telegram.WebApp.initDataUnsafe.user.id)
     : null
@@ -79,7 +94,18 @@ export default function Leaderboard() {
             <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Лидерборд</h1>
             <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Рейтинг игроков</p>
           </div>
-          <div className="text-5xl">🏅</div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-5xl">🏅</div>
+            {entries.length > 0 && (
+              <button
+                onClick={shareLeaderboard}
+                className="px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5"
+                style={{ background: 'rgba(201,168,0,0.1)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.25)' }}
+              >
+                📤 Поделиться
+              </button>
+            )}
+          </div>
         </div>
 
         {me && (

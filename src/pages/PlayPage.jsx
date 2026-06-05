@@ -64,7 +64,7 @@ function PointsBadge({ pts }) {
   )
 }
 
-function MatchCard({ match, result, myPred, onSave, saving }) {
+function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
   const isSettled = !!result
@@ -91,14 +91,34 @@ function MatchCard({ match, result, myPred, onSave, saving }) {
     if (ok) setSaved(true)
   }
 
+  function handleShare(e) {
+    e.stopPropagation()
+    let text
+    if (result && myPred) {
+      const pts = myPred.pts ?? calcPointsLocal(myPred, result)
+      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${result.home}:${result.away} ${away.name} ${away.flag}\n🔮 Мой прогноз: ${myPred.home}:${myPred.away} (+${pts} оч.)\n📲 @Mundial_26_bot`
+    } else if (myPred && saved) {
+      text = `🔮 Прогноз ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${myPred.home}:${myPred.away} ${away.name} ${away.flag}\n📲 Угадывай счёт: @Mundial_26_bot`
+    } else {
+      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} vs ${away.name} ${away.flag}\n📅 ${match.date} · ${match.time}\n📲 @Mundial_26_bot`
+    }
+    const url = 'https://t.me/Mundial_26_bot'
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
+    } else {
+      navigator.clipboard?.writeText(text).catch(() => {})
+    }
+  }
+
   return (
     <div
-      className="p-3 mb-2"
+      onClick={onSelect}
+      className="p-3 mb-2 cursor-pointer"
       style={{
         background: '#FFFFFF',
-        border: '1px solid rgba(0,0,0,0.07)',
+        border: isSelected ? '1.5px solid rgba(201,168,0,0.4)' : '1px solid rgba(0,0,0,0.07)',
         borderRadius: 8,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+        boxShadow: isSelected ? '0 2px 12px rgba(201,168,0,0.12)' : '0 1px 4px rgba(0,0,0,0.05)',
       }}
     >
       {/* Match meta */}
@@ -130,17 +150,15 @@ function MatchCard({ match, result, myPred, onSave, saving }) {
           <span className="text-xs font-bold uppercase truncate" style={{ color: '#111827' }}>{home.name}</span>
         </div>
 
-        {/* Score area */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Score area — stop propagation so clicks here don't toggle card selection */}
+        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           {isSettled ? (
             <>
-              {/* Actual result */}
               <div className="flex items-center gap-1">
                 <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{result.home}</span>
                 <span className="text-sm" style={{ color: '#9CA3AF' }}>:</span>
                 <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{result.away}</span>
               </div>
-              {/* User's prediction pts */}
               {myPred != null && <PointsBadge pts={myPred.pts} />}
             </>
           ) : (
@@ -178,6 +196,19 @@ function MatchCard({ match, result, myPred, onSave, saving }) {
           <span className="font-black" style={{ color: '#6B7280' }}>{myPred.home} : {myPred.away}</span>
         </div>
       )}
+
+      {/* Share button — shown when card is selected */}
+      {isSelected && (
+        <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+          <button
+            onClick={handleShare}
+            className="w-full py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5"
+            style={{ background: 'rgba(201,168,0,0.1)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.25)' }}
+          >
+            📤 Поделиться прогнозом
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -191,6 +222,7 @@ export default function PlayPage() {
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState('all')
   const [stats, setStats] = useState(null)
+  const [selectedMatch, setSelectedMatch] = useState(null)
   const inTg = isTelegram()
 
   const loadData = useCallback(async () => {
@@ -342,15 +374,25 @@ export default function PlayPage() {
           const predWithPts = result && pred
             ? { ...pred, pts: pred.pts ?? calcPointsLocal(pred, result) }
             : pred
+          const isSelected = selectedMatch === match.id
           return (
-            <MatchCard
+            <div
               key={match.id}
-              match={match}
-              result={result}
-              myPred={inTg ? (predWithPts ?? null) : null}
-              onSave={handleSave}
-              saving={saving}
-            />
+              style={{
+                opacity: selectedMatch && !isSelected ? 0.55 : 1,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              <MatchCard
+                match={match}
+                result={result}
+                myPred={inTg ? (predWithPts ?? null) : null}
+                onSave={handleSave}
+                saving={saving}
+                isSelected={isSelected}
+                onSelect={() => setSelectedMatch(isSelected ? null : match.id)}
+              />
+            </div>
           )
         })}
       </div>
