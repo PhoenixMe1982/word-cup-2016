@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import Home from './pages/Home.jsx'
-import Schedule from './pages/Schedule.jsx'
 import History from './pages/History.jsx'
 import WorldCup from './pages/WorldCup.jsx'
 import PlayPage from './pages/PlayPage.jsx'
@@ -13,9 +12,20 @@ const SEEN_KEY = 'wc2026_predictionSeen'
 
 export default function App() {
   const [tab, setTab] = useState('home')
+  const [worldcupSub, setWorldcupSub] = useState('groups')
   const [showPredictionModal, setShowPredictionModal] = useState(
     () => !localStorage.getItem(SEEN_KEY)
   )
+
+  function handleTab(t) {
+    if (typeof t === 'string' && t.includes('.')) {
+      const [main, sub] = t.split('.')
+      setTab(main)
+      if (main === 'worldcup') setWorldcupSub(sub)
+    } else {
+      setTab(t)
+    }
+  }
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
@@ -36,10 +46,9 @@ export default function App() {
   }
 
   const pages = {
-    home:        <Home onTab={setTab} />,
+    home:        <Home onTab={handleTab} />,
     play:        <PlayPage />,
-    schedule:    <Schedule />,
-    worldcup:   <WorldCup />,
+    worldcup:   <WorldCup initialSub={worldcupSub} onSubChange={setWorldcupSub} />,
     history:    <History />,
     leaderboard: <Leaderboard />,
   }
@@ -50,7 +59,7 @@ export default function App() {
         <div className="tab-transition">
           {pages[tab] ?? pages.home}
         </div>
-        <BottomNav active={tab} onTab={setTab} />
+        <BottomNav active={tab} onTab={handleTab} />
 
         {/* First-visit prediction modal */}
         {showPredictionModal && (

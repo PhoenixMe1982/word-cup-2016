@@ -1,7 +1,41 @@
 import { useState } from 'react'
 import { HISTORY } from '../data.js'
+import { SQUADS } from '../data/squads.js'
+
+function SquadPanel({ squad }) {
+  return (
+    <div className="ml-5 mt-1.5 p-2.5 rounded-lg space-y-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
+      {squad.coach && (
+        <div className="text-[10px] font-bold mb-1" style={{ color: '#6B7280' }}>
+          🎩 {squad.coach}
+        </div>
+      )}
+      {squad.players.map((p, i) => (
+        <div key={i} className="text-[10px] leading-relaxed" style={{ color: '#374151' }}>• {p}</div>
+      ))}
+    </div>
+  )
+}
 
 function HistoryCard({ wc, onClick, isSelected }) {
+  const [squadView, setSquadView] = useState(null)
+
+  function toggleSquad(role, e) {
+    e.stopPropagation()
+    setSquadView(squadView === role ? null : role)
+  }
+
+  const yearSquads = SQUADS[wc.year]
+
+  const podiumRows = [
+    { role: 'winner',   medal: '🥇', name: wc.winner,   flag: wc.winnerFlag,   extra: wc.score  },
+    { role: 'runnerUp', medal: '🥈', name: wc.runnerUp,  flag: wc.runnerUpFlag, extra: null      },
+    ...(wc.third ? [
+      { role: 'third',  medal: '🥉', name: wc.third,    flag: wc.thirdFlag,    extra: null      },
+      { role: 'fourth', medal: '4.',  name: wc.fourth,   flag: wc.fourthFlag,   extra: null      },
+    ] : []),
+  ]
+
   return (
     <div
       onClick={onClick}
@@ -69,36 +103,42 @@ function HistoryCard({ wc, onClick, isSelected }) {
       {/* Expanded details */}
       {isSelected && (
         <div className="px-4 pb-4 space-y-3">
-          {/* Podium */}
+          {/* Podium with squad taps */}
           <div className="rounded-xl p-3" style={{ background: 'rgba(201,168,0,0.07)' }}>
             <div className="text-[10px] font-bold mb-2" style={{ color: '#9CA3AF' }}>ИТОГОВЫЕ МЕСТА</div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🥇</span>
-                <span className="text-base">{wc.winnerFlag}</span>
-                <span className="text-xs font-black" style={{ color: '#111827' }}>{wc.winner}</span>
-                <span className="text-[10px] ml-auto font-mono font-bold" style={{ color: '#C9A800' }}>{wc.score}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-base">🥈</span>
-                <span className="text-base">{wc.runnerUpFlag}</span>
-                <span className="text-xs font-bold" style={{ color: '#374151' }}>{wc.runnerUp}</span>
-              </div>
-              {wc.third && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🥉</span>
-                    <span className="text-base">{wc.thirdFlag}</span>
-                    <span className="text-xs" style={{ color: '#6B7280' }}>{wc.third}</span>
+            <div className="space-y-1">
+              {podiumRows.map(({ role, medal, name, flag, extra }) => {
+                const hasSquad = !!(yearSquads?.[role])
+                const isOpen = squadView === role
+                return (
+                  <div key={role}>
+                    <div
+                      className={`flex items-center gap-2 py-1 rounded-lg ${hasSquad ? 'cursor-pointer active:opacity-70' : ''}`}
+                      style={{ paddingLeft: 4, paddingRight: 4 }}
+                      onClick={hasSquad ? (e) => toggleSquad(role, e) : undefined}
+                    >
+                      <span className="text-base w-5 text-center flex-shrink-0">{medal}</span>
+                      <span className="text-base">{flag}</span>
+                      <span className="text-xs font-bold flex-1" style={{ color: '#111827' }}>{name}</span>
+                      {extra && (
+                        <span className="text-[10px] font-mono font-bold" style={{ color: '#C9A800' }}>{extra}</span>
+                      )}
+                      {hasSquad && (
+                        <span className="text-[9px] font-black" style={{ color: isOpen ? '#C9A800' : '#9CA3AF' }}>
+                          {isOpen ? '▲' : '👥'}
+                        </span>
+                      )}
+                    </div>
+                    {isOpen && yearSquads?.[role] && (
+                      <SquadPanel squad={yearSquads[role]} />
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs w-5 text-center font-black" style={{ color: '#9CA3AF' }}>4.</span>
-                    <span className="text-base">{wc.fourthFlag}</span>
-                    <span className="text-xs" style={{ color: '#9CA3AF' }}>{wc.fourth}</span>
-                  </div>
-                </>
-              )}
+                )
+              })}
             </div>
+            {yearSquads && (
+              <div className="text-[8px] mt-2" style={{ color: '#C0C7D0' }}>Нажми на сборную, чтобы увидеть состав</div>
+            )}
           </div>
 
           {/* Scorer */}
@@ -150,12 +190,12 @@ export default function History() {
   const [era, setEra] = useState('all')
 
   const eras = [
-    { id: 'all', label: 'Все' },
-    { id: '1930s', label: '1930–50е' },
-    { id: '1960s', label: '1960–70е' },
-    { id: '1980s', label: '1980–90е' },
+    { id: 'all',   label: 'Все'      },
+    { id: '2020s', label: '2020+'    },
     { id: '2000s', label: '2000–10е' },
-    { id: '2020s', label: '2020+' },
+    { id: '1980s', label: '1980–90е' },
+    { id: '1960s', label: '1960–70е' },
+    { id: '1930s', label: '1930–50е' },
   ]
 
   const filtered = HISTORY.filter((wc) => {
@@ -246,15 +286,12 @@ export default function History() {
       {/* Timeline */}
       <div className="px-4 mt-3">
         <div className="relative">
-          {/* Timeline line */}
           <div
             className="absolute left-7 top-0 bottom-0 w-px"
             style={{ background: 'rgba(201,168,0,0.2)' }}
           />
-
-          {[...filtered].reverse().map((wc, idx) => (
+          {[...filtered].reverse().map((wc) => (
             <div key={wc.year} className="relative flex gap-3 mb-1">
-              {/* Dot */}
               <div className="flex flex-col items-center w-14 flex-shrink-0 pt-4">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0 relative z-10"
@@ -264,7 +301,6 @@ export default function History() {
                   }}
                 />
               </div>
-              {/* Card */}
               <div className="flex-1 min-w-0">
                 <HistoryCard
                   wc={wc}
