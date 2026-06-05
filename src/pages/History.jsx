@@ -185,9 +185,70 @@ function HistoryCard({ wc, onClick, isSelected }) {
   )
 }
 
+function ChampModal({ name, years, flag, onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="mx-6 rounded-2xl overflow-hidden w-full max-w-xs"
+        style={{ background: '#FFFFFF', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="px-5 pt-5 pb-4"
+          style={{ background: 'linear-gradient(135deg, #C9A800, #9A8000)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">{flag}</span>
+            <div>
+              <div className="text-lg font-black text-white">{name}</div>
+              <div className="text-xs text-white opacity-80">{years.length}× чемпион мира</div>
+            </div>
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="text-[10px] font-bold tracking-widest mb-3" style={{ color: '#9CA3AF' }}>ГОДЫ ПОБЕД</div>
+          <div className="flex flex-wrap gap-2">
+            {years.map((y) => (
+              <div
+                key={y}
+                className="px-3 py-1.5 rounded-xl text-sm font-black"
+                style={{ background: 'rgba(201,168,0,0.10)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.25)' }}
+              >
+                🏆 {y}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-sm font-black"
+            style={{ background: 'rgba(0,0,0,0.06)', color: '#6B7280' }}
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function History() {
   const [selected, setSelected] = useState(null)
   const [era, setEra] = useState('all')
+  const [selectedChamp, setSelectedChamp] = useState(null)
+
+  // Build champ years map — merge ФРГ into Германия
+  const champYears = HISTORY.reduce((acc, wc) => {
+    const name = wc.winner === 'ФРГ' ? 'Германия' : wc.winner
+    if (!acc[name]) acc[name] = { years: [], flag: wc.winnerFlag }
+    acc[name].years.push(wc.year)
+    return acc
+  }, {})
 
   const eras = [
     { id: 'all',   label: 'Все'      },
@@ -243,7 +304,8 @@ export default function History() {
               return (
                 <div
                   key={name}
-                  className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl"
+                  onClick={() => setSelectedChamp(name)}
+                  className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer active:opacity-70 transition-opacity"
                   style={{
                     background: i === 0 ? 'rgba(201,168,0,0.10)' : 'rgba(0,0,0,0.04)',
                     border: i === 0 ? '1px solid rgba(201,168,0,0.25)' : '1px solid rgba(0,0,0,0.07)',
@@ -312,6 +374,15 @@ export default function History() {
           ))}
         </div>
       </div>
+
+      {selectedChamp && champYears[selectedChamp] && (
+        <ChampModal
+          name={selectedChamp}
+          years={[...champYears[selectedChamp].years].sort((a, b) => a - b)}
+          flag={champYears[selectedChamp].flag}
+          onClose={() => setSelectedChamp(null)}
+        />
+      )}
     </div>
   )
 }
