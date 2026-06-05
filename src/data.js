@@ -385,6 +385,7 @@ export const HISTORY = [
   {
     year: 1930, host: 'Уругвай', flag: '🇺🇾', winner: 'Уругвай', winnerFlag: '🇺🇾',
     runnerUp: 'Аргентина', runnerUpFlag: '🇦🇷', score: '4:2',
+    third: 'США', thirdFlag: '🇺🇸', fourth: 'Югославия', fourthFlag: '🇷🇸',
     topScorer: 'Г. Стабиле (Аргентина) — 8 голов',
     teams: 13, goals: 70, attendance: '434 000',
     fact: 'Первый в истории чемпионат мира. Уругвай победил у себя дома, Аргентина стала финалистом дебютного турнира.',
@@ -392,6 +393,7 @@ export const HISTORY = [
   {
     year: 1934, host: 'Италия', flag: '🇮🇹', winner: 'Италия', winnerFlag: '🇮🇹',
     runnerUp: 'Чехословакия', runnerUpFlag: '🇨🇿', score: '2:1 д.в.',
+    third: 'Германия', thirdFlag: '🇩🇪', fourth: 'Австрия', fourthFlag: '🇦🇹',
     topScorer: 'О. Неедлы (Чехословакия) — 5 голов',
     teams: 16, goals: 70, attendance: '363 000',
     fact: 'Первый турнир с квалификационными матчами. Уругвай отказался участвовать в знак протеста.',
@@ -399,6 +401,7 @@ export const HISTORY = [
   {
     year: 1938, host: 'Франция', flag: '🇫🇷', winner: 'Италия', winnerFlag: '🇮🇹',
     runnerUp: 'Венгрия', runnerUpFlag: '🇭🇺', score: '4:2',
+    third: 'Бразилия', thirdFlag: '🇧🇷', fourth: 'Швеция', fourthFlag: '🇸🇪',
     topScorer: 'Леонидас (Бразилия) — 7 голов',
     teams: 15, goals: 84, attendance: '374 835',
     fact: 'Италия стала первой командой, защитившей титул чемпиона мира.',
@@ -406,6 +409,7 @@ export const HISTORY = [
   {
     year: 1950, host: 'Бразилия', flag: '🇧🇷', winner: 'Уругвай', winnerFlag: '🇺🇾',
     runnerUp: 'Бразилия', runnerUpFlag: '🇧🇷', score: '2:1',
+    third: 'Швеция', thirdFlag: '🇸🇪', fourth: 'Испания', fourthFlag: '🇪🇸',
     topScorer: 'А. Адемир (Бразилия) — 9 голов',
     teams: 13, goals: 88, attendance: '1 337 000',
     fact: '«Мараканасо» — шокирующая победа Уругвая над Бразилией перед 200 000 болельщиков.',
@@ -413,6 +417,7 @@ export const HISTORY = [
   {
     year: 1954, host: 'Швейцария', flag: '🇨🇭', winner: 'ФРГ', winnerFlag: '🇩🇪',
     runnerUp: 'Венгрия', runnerUpFlag: '🇭🇺', score: '3:2',
+    third: 'Австрия', thirdFlag: '🇦🇹', fourth: 'Уругвай', fourthFlag: '🇺🇾',
     topScorer: 'С. Кочиш (Венгрия) — 11 голов',
     teams: 16, goals: 140, attendance: '943 000',
     fact: '«Чудо в Берне». Германия победила непобедимых венгров в финале — 3:2.',
@@ -420,6 +425,7 @@ export const HISTORY = [
   {
     year: 1958, host: 'Швеция', flag: '🇸🇪', winner: 'Бразилия', winnerFlag: '🇧🇷',
     runnerUp: 'Швеция', runnerUpFlag: '🇸🇪', score: '5:2',
+    third: 'Франция', thirdFlag: '🇫🇷', fourth: 'ФРГ', fourthFlag: '🇩🇪',
     topScorer: 'Ж. Фонтен (Франция) — 13 голов',
     teams: 16, goals: 126, attendance: '819 810',
     fact: '17-летний Пеле забил 6 голов. Рекорд Фонтена (13 голов) не побит по сей день.',
@@ -427,6 +433,7 @@ export const HISTORY = [
   {
     year: 1962, host: 'Чили', flag: '🇨🇱', winner: 'Бразилия', winnerFlag: '🇧🇷',
     runnerUp: 'Чехословакия', runnerUpFlag: '🇨🇿', score: '3:1',
+    third: 'Чили', thirdFlag: '🇨🇱', fourth: 'Югославия', fourthFlag: '🇷🇸',
     topScorer: 'Несколько игроков — 4 гола',
     teams: 16, goals: 89, attendance: '893 172',
     fact: 'Бразилия выиграла без травмированного Пеле. Гарринча стал главной звездой турнира.',
@@ -434,6 +441,7 @@ export const HISTORY = [
   {
     year: 1966, host: 'Англия', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', winner: 'Англия', winnerFlag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
     runnerUp: 'ФРГ', runnerUpFlag: '🇩🇪', score: '4:2 д.в.',
+    third: 'Португалия', thirdFlag: '🇵🇹', fourth: 'СССР', fourthFlag: '🇷🇺',
     topScorer: 'Эусебио (Португалия) — 9 голов',
     teams: 16, goals: 89, attendance: '1 614 677',
     fact: 'Знаменитый «гол Хёрста» в финале — до сих пор споры, пересек ли мяч линию.',
@@ -441,6 +449,7 @@ export const HISTORY = [
   {
     year: 1970, host: 'Мексика', flag: '🇲🇽', winner: 'Бразилия', winnerFlag: '🇧🇷',
     runnerUp: 'Италия', runnerUpFlag: '🇮🇹', score: '4:1',
+    third: 'ФРГ', thirdFlag: '🇩🇪', fourth: 'Уругвай', fourthFlag: '🇺🇾',
     topScorer: 'Г. Мюллер (ФРГ) — 10 голов',
     teams: 16, goals: 95, attendance: '1 673 975',
     fact: 'Бразилия — первая 3-кратная чемпионка. Пеле, Жаирзиньо, Ривелино — лучший состав в истории.',
@@ -448,6 +457,7 @@ export const HISTORY = [
   {
     year: 1974, host: 'ФРГ', flag: '🇩🇪', winner: 'ФРГ', winnerFlag: '🇩🇪',
     runnerUp: 'Нидерланды', runnerUpFlag: '🇳🇱', score: '2:1',
+    third: 'Польша', thirdFlag: '🇵🇱', fourth: 'Бразилия', fourthFlag: '🇧🇷',
     topScorer: 'Г. Лато (Польша) — 7 голов',
     teams: 16, goals: 97, attendance: '1 865 753',
     fact: 'Кройфф и «Тотальный футбол» — Нидерланды стали фаворитами. Германия Бекенбауэра выиграла финал.',
@@ -455,6 +465,7 @@ export const HISTORY = [
   {
     year: 1978, host: 'Аргентина', flag: '🇦🇷', winner: 'Аргентина', winnerFlag: '🇦🇷',
     runnerUp: 'Нидерланды', runnerUpFlag: '🇳🇱', score: '3:1 д.в.',
+    third: 'Бразилия', thirdFlag: '🇧🇷', fourth: 'Италия', fourthFlag: '🇮🇹',
     topScorer: 'М. Кемпес (Аргентина) — 6 голов',
     teams: 16, goals: 102, attendance: '1 610 215',
     fact: 'Марио Кемпес провёл блестящий финал.',
@@ -462,6 +473,7 @@ export const HISTORY = [
   {
     year: 1982, host: 'Испания', flag: '🇪🇸', winner: 'Италия', winnerFlag: '🇮🇹',
     runnerUp: 'ФРГ', runnerUpFlag: '🇩🇪', score: '3:1',
+    third: 'Польша', thirdFlag: '🇵🇱', fourth: 'Франция', fourthFlag: '🇫🇷',
     topScorer: 'П. Росси (Италия) — 6 голов',
     teams: 24, goals: 146, attendance: '2 109 723',
     fact: 'Паоло Росси — лучший бомбардир и игрок турнира.',
@@ -469,6 +481,7 @@ export const HISTORY = [
   {
     year: 1986, host: 'Мексика', flag: '🇲🇽', winner: 'Аргентина', winnerFlag: '🇦🇷',
     runnerUp: 'ФРГ', runnerUpFlag: '🇩🇪', score: '3:2',
+    third: 'Франция', thirdFlag: '🇫🇷', fourth: 'Бельгия', fourthFlag: '🇧🇪',
     topScorer: 'Г. Линекер (Англия) — 6 голов',
     teams: 24, goals: 132, attendance: '2 394 031',
     fact: '«Рука Бога» и «Гол века» — два гола Марадоны против Англии в четвертьфинале.',
@@ -476,6 +489,7 @@ export const HISTORY = [
   {
     year: 1990, host: 'Италия', flag: '🇮🇹', winner: 'ФРГ', winnerFlag: '🇩🇪',
     runnerUp: 'Аргентина', runnerUpFlag: '🇦🇷', score: '1:0',
+    third: 'Италия', thirdFlag: '🇮🇹', fourth: 'Англия', fourthFlag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
     topScorer: 'С. Скиллачи (Италия) — 6 голов',
     teams: 24, goals: 115, attendance: '2 516 215',
     fact: 'Слёзы Скиллачи и Гасконя. Финал выиграл пенальти Брема.',
@@ -483,6 +497,7 @@ export const HISTORY = [
   {
     year: 1994, host: 'США', flag: '🇺🇸', winner: 'Бразилия', winnerFlag: '🇧🇷',
     runnerUp: 'Италия', runnerUpFlag: '🇮🇹', score: '0:0 (3:2 пен.)',
+    third: 'Швеция', thirdFlag: '🇸🇪', fourth: 'Болгария', fourthFlag: '🇧🇬',
     topScorer: 'О. Саленко (Россия), Х. Стоичков (Болгария) — 6 голов',
     teams: 24, goals: 141, attendance: '3 587 538',
     fact: 'Рекорд посещаемости. Роберто Баджо промахнулся с пенальти в финале.',
@@ -490,6 +505,7 @@ export const HISTORY = [
   {
     year: 1998, host: 'Франция', flag: '🇫🇷', winner: 'Франция', winnerFlag: '🇫🇷',
     runnerUp: 'Бразилия', runnerUpFlag: '🇧🇷', score: '3:0',
+    third: 'Хорватия', thirdFlag: '🇭🇷', fourth: 'Нидерланды', fourthFlag: '🇳🇱',
     topScorer: 'Д. Суккер (Хорватия) — 6 голов',
     teams: 32, goals: 171, attendance: '2 785 100',
     fact: 'Зинедин Зидан дублем в финале. Дебют хорватов в 1/2 финала.',
@@ -497,6 +513,7 @@ export const HISTORY = [
   {
     year: 2002, host: 'Ю.Корея / Япония', flag: '🇰🇷🇯🇵', winner: 'Бразилия', winnerFlag: '🇧🇷',
     runnerUp: 'Германия', runnerUpFlag: '🇩🇪', score: '2:0',
+    third: 'Турция', thirdFlag: '🇹🇷', fourth: 'Ю.Корея', fourthFlag: '🇰🇷',
     topScorer: 'Роналдо (Бразилия) — 8 голов',
     teams: 32, goals: 161, attendance: '2 705 197',
     fact: 'R9 Роналдо — 8 голов и золото. Сенсации: Корея в топ-4.',
@@ -504,6 +521,7 @@ export const HISTORY = [
   {
     year: 2006, host: 'Германия', flag: '🇩🇪', winner: 'Италия', winnerFlag: '🇮🇹',
     runnerUp: 'Франция', runnerUpFlag: '🇫🇷', score: '1:1 (5:3 пен.)',
+    third: 'Германия', thirdFlag: '🇩🇪', fourth: 'Португалия', fourthFlag: '🇵🇹',
     topScorer: 'М. Клозе (Германия) — 5 голов',
     teams: 32, goals: 147, attendance: '3 359 439',
     fact: 'Знаменитый удар головой Зидана Матерацци и удаление в финале.',
@@ -511,6 +529,7 @@ export const HISTORY = [
   {
     year: 2010, host: 'ЮАР', flag: '🇿🇦', winner: 'Испания', winnerFlag: '🇪🇸',
     runnerUp: 'Нидерланды', runnerUpFlag: '🇳🇱', score: '1:0 д.в.',
+    third: 'Германия', thirdFlag: '🇩🇪', fourth: 'Уругвай', fourthFlag: '🇺🇾',
     topScorer: 'Т. Мюллер, Д. Форлан и др. — 5 голов',
     teams: 32, goals: 145, attendance: '3 178 856',
     fact: 'Первый ЧМ в Африке. Гол Иньесты в дополнительное время.',
@@ -518,6 +537,7 @@ export const HISTORY = [
   {
     year: 2014, host: 'Бразилия', flag: '🇧🇷', winner: 'Германия', winnerFlag: '🇩🇪',
     runnerUp: 'Аргентина', runnerUpFlag: '🇦🇷', score: '1:0 д.в.',
+    third: 'Нидерланды', thirdFlag: '🇳🇱', fourth: 'Бразилия', fourthFlag: '🇧🇷',
     topScorer: 'Х. Родригес (Колумбия) — 6 голов',
     teams: 32, goals: 171, attendance: '3 429 873',
     fact: '«Минейразо» 7:1 против Бразилии — самое большое унижение в истории.',
@@ -525,6 +545,7 @@ export const HISTORY = [
   {
     year: 2018, host: 'Россия', flag: '🇷🇺', winner: 'Франция', winnerFlag: '🇫🇷',
     runnerUp: 'Хорватия', runnerUpFlag: '🇭🇷', score: '4:2',
+    third: 'Бельгия', thirdFlag: '🇧🇪', fourth: 'Англия', fourthFlag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
     topScorer: 'Х. Кейн (Англия) — 6 голов',
     teams: 32, goals: 169, attendance: '3 031 768',
     fact: 'Хорватия впервые в финале! Мбаппе — MVP. 2 автогола в одном финале — рекорд.',
@@ -532,6 +553,7 @@ export const HISTORY = [
   {
     year: 2022, host: 'Катар', flag: '🇶🇦', winner: 'Аргентина', winnerFlag: '🇦🇷',
     runnerUp: 'Франция', runnerUpFlag: '🇫🇷', score: '3:3 (4:2 пен.)',
+    third: 'Хорватия', thirdFlag: '🇭🇷', fourth: 'Марокко', fourthFlag: '🇲🇦',
     topScorer: 'К. Мбаппе (Франция) — 8 голов',
     teams: 32, goals: 172, attendance: '3 404 252',
     fact: 'ЛУЧШИЙ ФИНАЛ ВСЕХ ВРЕМЁН! Месси получил Кубок — мечта осуществилась. Мбаппе — хет-трик в финале.',

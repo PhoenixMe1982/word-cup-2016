@@ -1,0 +1,27 @@
+name: Sync WC 2026 Results
+
+on:
+  schedule:
+    # Every 5 minutes — catches results within minutes of final whistle
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync match results from football-data.org
+        env:
+          FDORG_TOKEN: ${{ secrets.FDORG_TOKEN }}
+          BOT_TOKEN:   ${{ secrets.BOT_TOKEN }}
+          ADMIN_ID:    ${{ secrets.ADMIN_ID }}
+          API_URL:     https://word-cup-2016.onrender.com
+        run: node bot/sync-results.js

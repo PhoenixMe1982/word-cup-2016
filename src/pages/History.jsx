@@ -20,48 +20,91 @@ function HistoryCard({ wc, onClick, isSelected }) {
         className="p-4 flex items-center gap-3"
         style={{ borderBottom: isSelected ? '1px solid rgba(0,0,0,0.07)' : 'none' }}
       >
-        {/* Year badge */}
-        <div
-          className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center flex-shrink-0"
-          style={{
-            background: isSelected
-              ? 'linear-gradient(135deg, #C9A800, #9A8000)'
-              : 'rgba(201,168,0,0.10)',
-          }}
-        >
-          <span className="text-xs font-bold" style={{ color: isSelected ? '#FFFFFF' : '#C9A800' }}>
-            {wc.year}
+        {/* Year badge + host below */}
+        <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: 56 }}>
+          <div
+            className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center"
+            style={{
+              background: isSelected
+                ? 'linear-gradient(135deg, #C9A800, #9A8000)'
+                : 'rgba(201,168,0,0.10)',
+            }}
+          >
+            <span className="text-xs font-bold leading-tight" style={{ color: isSelected ? '#FFFFFF' : '#C9A800' }}>
+              {wc.year}
+            </span>
+            <span className="text-base leading-tight">{wc.flag}</span>
+          </div>
+          <span className="text-[8px] text-center leading-tight" style={{ color: '#9CA3AF', maxWidth: 56 }}>
+            {wc.host}
           </span>
         </div>
 
         {/* Main info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-lg">{wc.winnerFlag}</span>
-            <span className="text-base font-black" style={{ color: '#111827' }}>{wc.winner}</span>
-            <span className="text-xs" style={{ color: '#9CA3AF' }}>чемпион</span>
+            <span className="text-sm font-black" style={{ color: '#111827' }}>{wc.winner}</span>
+            <span className="text-[10px] font-bold" style={{ color: '#C9A800' }}>🏆</span>
           </div>
-          <div className="flex items-center gap-2 text-[11px]" style={{ color: '#6B7280' }}>
-            <span>{wc.flag} {wc.host}</span>
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: '#6B7280' }}>
+            <span>{wc.score}</span>
             <span>·</span>
-            <span>Финал: {wc.score}</span>
+            <span>{wc.runnerUpFlag} {wc.runnerUp}</span>
+            <span className="text-[9px]" style={{ color: '#9CA3AF' }}>🥈</span>
           </div>
-          <div className="text-[11px] mt-0.5" style={{ color: '#9CA3AF' }}>
-            vs {wc.runnerUpFlag} {wc.runnerUp}
-          </div>
+          {wc.third && (
+            <div className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: '#9CA3AF' }}>
+              <span>🥉 {wc.thirdFlag} {wc.third}</span>
+              <span>·</span>
+              <span>4. {wc.fourthFlag} {wc.fourth}</span>
+            </div>
+          )}
         </div>
 
-        {/* Trophy */}
-        <div className="text-2xl flex-shrink-0">{isSelected ? '🏆' : '🥇'}</div>
+        {/* Expand indicator */}
+        <div className="text-lg flex-shrink-0" style={{ color: '#9CA3AF' }}>{isSelected ? '▲' : '▼'}</div>
       </div>
 
       {/* Expanded details */}
       {isSelected && (
         <div className="px-4 pb-4 space-y-3">
+          {/* Podium */}
+          <div className="rounded-xl p-3" style={{ background: 'rgba(201,168,0,0.07)' }}>
+            <div className="text-[10px] font-bold mb-2" style={{ color: '#9CA3AF' }}>ИТОГОВЫЕ МЕСТА</div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🥇</span>
+                <span className="text-base">{wc.winnerFlag}</span>
+                <span className="text-xs font-black" style={{ color: '#111827' }}>{wc.winner}</span>
+                <span className="text-[10px] ml-auto font-mono font-bold" style={{ color: '#C9A800' }}>{wc.score}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-base">🥈</span>
+                <span className="text-base">{wc.runnerUpFlag}</span>
+                <span className="text-xs font-bold" style={{ color: '#374151' }}>{wc.runnerUp}</span>
+              </div>
+              {wc.third && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🥉</span>
+                    <span className="text-base">{wc.thirdFlag}</span>
+                    <span className="text-xs" style={{ color: '#6B7280' }}>{wc.third}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-5 text-center font-black" style={{ color: '#9CA3AF' }}>4.</span>
+                    <span className="text-base">{wc.fourthFlag}</span>
+                    <span className="text-xs" style={{ color: '#9CA3AF' }}>{wc.fourth}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Scorer */}
           <div
             className="rounded-xl p-3 flex items-center gap-3"
-            style={{ background: 'rgba(201,168,0,0.07)' }}
+            style={{ background: 'rgba(0,0,0,0.03)' }}
           >
             <span className="text-xl">👟</span>
             <div>
@@ -125,9 +168,10 @@ export default function History() {
     return true
   })
 
-  // Champions count
+  // Champions count — merge ФРГ into Германия
   const champCount = HISTORY.reduce((acc, wc) => {
-    acc[wc.winner] = (acc[wc.winner] || 0) + 1
+    const name = wc.winner === 'ФРГ' ? 'Германия' : wc.winner
+    acc[name] = (acc[name] || 0) + 1
     return acc
   }, {})
 
@@ -155,7 +199,7 @@ export default function History() {
           <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#9CA3AF' }}>РЕКОРДНЫЕ ЧЕМПИОНЫ</div>
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {topChamps.map(([name, count], i) => {
-              const wc = HISTORY.find((w) => w.winner === name)
+              const wc = HISTORY.find((w) => w.winner === name || (name === 'Германия' && w.winner === 'ФРГ'))
               return (
                 <div
                   key={name}
