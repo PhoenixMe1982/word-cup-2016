@@ -278,10 +278,22 @@ export default function Home({ onTab }) {
   const [expandedUpcoming, setExpandedUpcoming] = useState(null)
   const [upcomingPreds, setUpcomingPreds] = useState({})
   const [savingPred, setSavingPred] = useState(null)
+  const [dragX, setDragX] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
+  const swipeActive = useRef(false)
+  const swipeContainerRef = useRef(null)
+  const swipeWidth = useRef(320)
 
   const totalPages = Math.max(1, Math.ceil(upcomingMatches.length / PAGE_SIZE))
   const pageMatches = upcomingMatches.slice(upcomingPage * PAGE_SIZE, (upcomingPage + 1) * PAGE_SIZE)
+  const prevPageMatches = upcomingPage > 0
+    ? upcomingMatches.slice((upcomingPage - 1) * PAGE_SIZE, upcomingPage * PAGE_SIZE)
+    : []
+  const nextPageMatches = upcomingPage < totalPages - 1
+    ? upcomingMatches.slice((upcomingPage + 1) * PAGE_SIZE, (upcomingPage + 2) * PAGE_SIZE)
+    : []
 
   useEffect(() => {
     const initData = window.Telegram?.WebApp?.initData
@@ -298,15 +310,42 @@ export default function Home({ onTab }) {
   }
 
   function handleSwipeStart(e) {
+    swipeWidth.current = swipeContainerRef.current?.offsetWidth || 320
     touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    swipeActive.current = false
   }
 
-  function handleSwipeEnd(e) {
+  function handleSwipeMove(e) {
     if (touchStartX.current === null) return
-    const dx = e.changedTouches[0].clientX - touchStartX.current
-    if (dx < -40) goPage(1)
-    else if (dx > 40) goPage(-1)
+    const dx = e.touches[0].clientX - touchStartX.current
+    const dy = e.touches[0].clientY - touchStartY.current
+    if (!swipeActive.current) {
+      if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return
+      if (Math.abs(dy) > Math.abs(dx)) { touchStartX.current = null; return }
+      swipeActive.current = true
+    }
+    const atEdge = (dx > 0 && upcomingPage === 0) || (dx < 0 && upcomingPage >= totalPages - 1)
+    setDragX(atEdge ? dx * 0.15 : dx)
+  }
+
+  function handleSwipeEnd() {
+    if (touchStartX.current === null) return
+    const w = swipeWidth.current
+    const threshold = w * 0.25
+    setIsTransitioning(true)
+    if (dragX < -threshold && upcomingPage < totalPages - 1) {
+      setDragX(-w)
+      setTimeout(() => { goPage(1); setDragX(0); setIsTransitioning(false) }, 240)
+    } else if (dragX > threshold && upcomingPage > 0) {
+      setDragX(w)
+      setTimeout(() => { goPage(-1); setDragX(0); setIsTransitioning(false) }, 240)
+    } else {
+      setDragX(0)
+      setTimeout(() => setIsTransitioning(false), 200)
+    }
     touchStartX.current = null
+    swipeActive.current = false
   }
 
   async function handleSavePred(matchId, home, away) {
@@ -431,22 +470,58 @@ export default function Home({ onTab }) {
               </button>
             )}
           </div>
+          {/* 3-panel swipe carousel */}
           <div
-            className="space-y-2"
+            ref={swipeContainerRef}
+            style={{ overflow: 'hidden' }}
             onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
             onTouchEnd={handleSwipeEnd}
           >
-            {pageMatches.map((m) => (
-              <UpcomingMatchRow
-                key={m.id}
-                match={m}
-                isExpanded={expandedUpcoming === m.id}
-                onToggle={() => setExpandedUpcoming(expandedUpcoming === m.id ? null : m.id)}
-                pred={upcomingPreds[m.id]}
-                onSave={handleSavePred}
-                saving={savingPred}
-              />
-            ))}
+            <div
+              style={{
+                display: 'flex',
+                width: '300%',
+                transform: `translateX(calc(-33.333% + ${dragX}px))`,
+                transition: isTransitioning
+                  ? 'transform 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                  : 'none',
+                willChange: 'transform',
+              }}
+            >
+              {/* Prev page */}
+              <div style={{ width: '33.333%', paddingRight: 0 }}>
+                <div className="space-y-2">
+                  {prevPageMatches.map((m) => (
+                    <UpcomingMatchRow key={m.id} match={m} isExpanded={false} onToggle={() => {}} pred={upcomingPreds[m.id]} onSave={handleSavePred} saving={savingPred} />
+                  ))}
+                </div>
+              </div>
+              {/* Current page */}
+              <div style={{ width: '33.333%' }}>
+                <div className="space-y-2">
+                  {pageMatches.map((m) => (
+                    <UpcomingMatchRow
+                      key={m.id}
+                      match={m}
+                      isExpanded={expandedUpcoming === m.id}
+                      onToggle={() => setExpandedUpcoming(expandedUpcoming === m.id ? null : m.id)}
+                      pred={upcomingPreds[m.id]}
+                      onSave={handleSavePred}
+                      saving={savingPred}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Next page */}
+              <div style={{ width: '33.333%' }}>
+                <div className="space-y-2">
+                  {nextPageMatches.map((m) => (
+                    <UpcomingMatchRow key={m.id} match={m} isExpanded={false} onToggle={() => {}} pred={upcomingPreds[m.id]} onSave={handleSavePred} saving={savingPred} />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
           {totalPages > 1 && (
             <button
