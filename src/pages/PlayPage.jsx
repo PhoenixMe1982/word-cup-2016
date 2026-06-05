@@ -166,18 +166,28 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
               <ScoreInput value={homeVal} onChange={setHomeVal} disabled={false} />
               <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>:</span>
               <ScoreInput value={awayVal} onChange={setAwayVal} disabled={false} />
-              <button
-                onClick={handleSave}
-                disabled={!canSubmit || (saved && !hasChanged)}
-                className="w-10 h-10 rounded-lg text-sm font-black flex items-center justify-center flex-shrink-0 transition-opacity"
-                style={{
-                  background: canSubmit && (!saved || hasChanged) ? '#C9A800' : 'rgba(0,0,0,0.06)',
-                  color: canSubmit && (!saved || hasChanged) ? '#fff' : '#9CA3AF',
-                  cursor: canSubmit && (!saved || hasChanged) ? 'pointer' : 'default',
-                }}
-              >
-                {saving === match.id ? '…' : saved && !hasChanged ? '✓' : '→'}
-              </button>
+              {saved && !hasChanged ? (
+                <button
+                  onClick={handleShare}
+                  className="w-10 h-10 rounded-lg text-base flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(201,168,0,0.12)', border: '1px solid rgba(201,168,0,0.3)', color: '#C9A800' }}
+                >
+                  📤
+                </button>
+              ) : (
+                <button
+                  onClick={handleSave}
+                  disabled={!canSubmit}
+                  className={`w-10 h-10 rounded-lg text-lg font-black flex items-center justify-center flex-shrink-0 ${canSubmit ? 'animate-bounce' : ''}`}
+                  style={{
+                    background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)',
+                    color: canSubmit ? '#fff' : '#9CA3AF',
+                    cursor: canSubmit ? 'pointer' : 'default',
+                  }}
+                >
+                  {saving === match.id ? '…' : canSubmit ? '⚽' : '→'}
+                </button>
+              )}
             </>
           )}
         </div>
@@ -197,18 +207,6 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
         </div>
       )}
 
-      {/* Share button — shown when card is selected */}
-      {isSelected && (
-        <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-          <button
-            onClick={handleShare}
-            className="w-full py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5"
-            style={{ background: 'rgba(201,168,0,0.1)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.25)' }}
-          >
-            📤 Поделиться прогнозом
-          </button>
-        </div>
-      )}
     </div>
   )
 }

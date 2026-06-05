@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Groups from './Groups.jsx'
 import Scorers from './Scorers.jsx'
 import Goalkeepers from './Goalkeepers.jsx'
 import Teams from './Teams.jsx'
 import AllTimeScorers from './AllTimeScorers.jsx'
+import Schedule from './Schedule.jsx'
 
 const SUB_TABS = [
   { id: 'groups',      label: 'Группы'     },
@@ -11,10 +12,20 @@ const SUB_TABS = [
   { id: 'goalkeepers', label: 'Вратари'    },
   { id: 'teams',       label: 'Сборные'    },
   { id: 'records',     label: 'Рекорды'    },
+  { id: 'schedule',    label: 'Матчи'      },
 ]
 
-export default function WorldCup() {
-  const [sub, setSub] = useState('groups')
+export default function WorldCup({ initialSub = 'groups', onSubChange }) {
+  const [sub, setSub] = useState(initialSub)
+
+  useEffect(() => {
+    setSub(initialSub)
+  }, [initialSub])
+
+  function handleSub(id) {
+    setSub(id)
+    onSubChange?.(id)
+  }
 
   const content = {
     groups:      <Groups />,
@@ -22,6 +33,7 @@ export default function WorldCup() {
     goalkeepers: <Goalkeepers />,
     teams:       <Teams />,
     records:     <AllTimeScorers />,
+    schedule:    <Schedule embedded />,
   }
 
   return (
@@ -42,7 +54,7 @@ export default function WorldCup() {
           {SUB_TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => setSub(t.id)}
+              onClick={() => handleSub(t.id)}
               className="flex-shrink-0 px-4 py-3 text-[11px] font-bold uppercase tracking-wide relative whitespace-nowrap"
               style={{ color: sub === t.id ? '#C9A800' : '#9CA3AF' }}
             >

@@ -55,7 +55,6 @@ function LiveMatchCard({ match }) {
   return (
     <div className="match-live-card p-4 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,#16A34A,transparent)' }} />
-
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full animate-pulse2" style={{ background: '#16A34A' }} />
@@ -63,13 +62,11 @@ function LiveMatchCard({ match }) {
         </div>
         <span className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Группа {match.group} · {match.venue.split(',')[0]}</span>
       </div>
-
       <div className="flex items-center justify-between">
         <div className="flex flex-col items-center gap-1 flex-1">
           <span className="text-3xl">{home.flag}</span>
           <span className="text-xs font-bold uppercase" style={{ color: '#111827' }}>{home.name}</span>
         </div>
-
         <div className="flex flex-col items-center px-4">
           <div className="flex items-center gap-2">
             <span className="text-4xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
@@ -78,13 +75,11 @@ function LiveMatchCard({ match }) {
           </div>
           <LiveMinute base={match.time} />
         </div>
-
         <div className="flex flex-col items-center gap-1 flex-1">
           <span className="text-3xl">{away.flag}</span>
           <span className="text-xs font-bold uppercase" style={{ color: '#111827' }}>{away.name}</span>
         </div>
       </div>
-
       {match.goals.length > 0 && (
         <div className="mt-3 pt-3 space-y-1" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
           {match.goals.map((g, i) => (
@@ -124,22 +119,129 @@ function FinishedMatchCard({ match }) {
   )
 }
 
+function UpcomingPredictionPanel({ match, predictions, onSave, saving }) {
+  const pred = predictions?.[match.id]
+  const [homeVal, setHomeVal] = useState(pred?.home ?? '')
+  const [awayVal, setAwayVal] = useState(pred?.away ?? '')
+  const [saved, setSaved] = useState(!!pred)
+
+  useEffect(() => {
+    if (pred) { setHomeVal(pred.home); setAwayVal(pred.away); setSaved(true) }
+  }, [pred])
+
+  const canSubmit = homeVal !== '' && awayVal !== '' && saving !== match.id
+  const hasChanged = saved && (homeVal !== pred?.home || awayVal !== pred?.away)
+  const inTg = !!window.Telegram?.WebApp?.initData
+
+  async function handleSave() {
+    if (!canSubmit) return
+    const ok = await onSave(match.id, Number(homeVal), Number(awayVal))
+    if (ok) setSaved(true)
+  }
+
+  if (!inTg) {
+    return (
+      <div className="mt-2 px-3 py-2 rounded-xl text-xs text-center" style={{ background: 'rgba(201,168,0,0.07)', color: '#C9A800' }}>
+        📱 Открой в Telegram, чтобы сделать прогноз
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-2 p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', boxShadow: '0 2px 8px rgba(201,168,0,0.08)' }}>
+      <div className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: '#9CA3AF' }}>Твой прогноз</div>
+      {saved && !hasChanged ? (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px]" style={{ color: '#6B7280' }}>Прогноз:</span>
+            <span className="text-base font-black" style={{ color: '#C9A800' }}>{pred?.home} : {pred?.away}</span>
+            <span className="text-[10px]" style={{ color: '#16A34A' }}>✓</span>
+          </div>
+          <button
+            onClick={() => setSaved(false)}
+            className="text-[10px] font-bold uppercase px-2 py-1 rounded"
+            style={{ background: 'rgba(0,0,0,0.05)', color: '#6B7280' }}
+          >
+            Изменить
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 justify-center">
+          <input
+            type="number" min="0" max="20"
+            value={homeVal}
+            onChange={e => { const v = e.target.value; setHomeVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
+            className="w-12 h-12 text-center text-xl font-black rounded-xl outline-none"
+            style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+          />
+          <span className="text-lg font-bold" style={{ color: '#9CA3AF' }}>:</span>
+          <input
+            type="number" min="0" max="20"
+            value={awayVal}
+            onChange={e => { const v = e.target.value; setAwayVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
+            className="w-12 h-12 text-center text-xl font-black rounded-xl outline-none"
+            style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+          />
+          <button
+            onClick={handleSave}
+            disabled={!canSubmit}
+            className="flex-1 py-3 rounded-xl text-sm font-black ml-1"
+            style={{
+              background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)',
+              color: canSubmit ? '#fff' : '#9CA3AF',
+            }}
+          >
+            {saving === match.id ? '…' : saved && hasChanged ? 'Обновить' : 'Сохранить'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Home({ onTab }) {
   const { matches, ticker, scorers } = useLiveData()
   const liveMatches = matches.filter((m) => m.status === 'live')
   const finishedMatches = matches.filter((m) => m.status === 'finished').slice(0, 5)
-  const upcomingMatches = matches.filter((m) => m.status === 'upcoming').slice(0, 3)
+  const upcomingMatches = matches.filter((m) => m.status === 'upcoming').slice(0, 8)
   const totalGoals = matches.filter(m => m.status !== 'upcoming').reduce((s, m) => s + (m.scoreHome || 0) + (m.scoreAway || 0), 0)
+
+  const [expandedUpcoming, setExpandedUpcoming] = useState(null)
+  const [upcomingPreds, setUpcomingPreds] = useState({})
+  const [savingPred, setSavingPred] = useState(null)
+
+  useEffect(() => {
+    const initData = window.Telegram?.WebApp?.initData
+    if (!initData) return
+    fetch(API + '/api/my-predictions', { headers: { 'x-telegram-init-data': initData } })
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setUpcomingPreds(d || {}))
+      .catch(() => {})
+  }, [])
+
+  async function handleSavePred(matchId, home, away) {
+    const initData = window.Telegram?.WebApp?.initData
+    if (!initData) return false
+    setSavingPred(matchId)
+    try {
+      const res = await fetch(API + '/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-telegram-init-data': initData },
+        body: JSON.stringify({ matchId, home, away }),
+      })
+      if (!res.ok) return false
+      setUpcomingPreds(prev => ({ ...prev, [matchId]: { home, away } }))
+      return true
+    } catch { return false }
+    finally { setSavingPred(null) }
+  }
 
   return (
     <div className="page-content px-4 pb-4">
       {/* Hero Header */}
       <div
         className="relative overflow-hidden mb-4 -mx-4 px-4 pt-12 pb-6"
-        style={{
-          background: '#FFFFFF',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
-        }}
+        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="relative flex items-center justify-between">
           <div>
@@ -198,7 +300,7 @@ export default function Home({ onTab }) {
               <span className="w-2.5 h-2.5 rounded-full animate-pulse2" style={{ background: '#16A34A' }} />
               <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Идут сейчас</h2>
             </div>
-            <button onClick={() => onTab('schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+            <button onClick={() => onTab('worldcup.schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
               Все →
             </button>
           </div>
@@ -210,37 +312,83 @@ export default function Home({ onTab }) {
         </section>
       )}
 
-      {/* Upcoming Matches */}
+      {/* Upcoming Matches — horizontal scroll-snap slider */}
       {upcomingMatches.length > 0 && (
         <section className="mb-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Ближайшие матчи</h2>
-            <button onClick={() => onTab('schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+            <button onClick={() => onTab('worldcup.schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
               Расписание →
             </button>
           </div>
-          <div className="space-y-2">
+          <div
+            className="flex gap-3 overflow-x-auto pb-2 no-scrollbar"
+            style={{
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              marginLeft: '-1rem',
+              marginRight: '-1rem',
+              paddingLeft: '1rem',
+              paddingRight: '1rem',
+            }}
+          >
             {upcomingMatches.map((m) => {
               const home = TEAMS[m.home]
               const away = TEAMS[m.away]
+              const isExpanded = expandedUpcoming === m.id
+              const hasPred = !!(upcomingPreds[m.id])
               return (
-                <div key={m.id} className="match-upcoming-card p-3 flex items-center gap-3">
-                  <div className="text-[10px] w-20 flex-shrink-0 leading-tight">
-                    <div className="uppercase font-bold" style={{ color: '#6B7280' }}>{m.date}</div>
-                    <div style={{ color: '#C9A800' }}>{m.time}</div>
+                <div
+                  key={m.id}
+                  className="flex-shrink-0 cursor-pointer"
+                  style={{ scrollSnapAlign: 'start', width: '72vw', maxWidth: 260 }}
+                  onClick={() => setExpandedUpcoming(isExpanded ? null : m.id)}
+                >
+                  <div
+                    className="p-3"
+                    style={{
+                      background: '#FFFFFF',
+                      border: isExpanded ? '1.5px solid rgba(201,168,0,0.45)' : '1px solid rgba(0,0,0,0.07)',
+                      borderRadius: 10,
+                      boxShadow: isExpanded ? '0 2px 12px rgba(201,168,0,0.12)' : '0 1px 4px rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    <div className="text-[9px] text-center font-bold uppercase mb-2" style={{ color: '#6B7280' }}>
+                      {m.date} · <span style={{ color: '#C9A800' }}>{m.time}</span>
+                      {hasPred && <span className="ml-1" style={{ color: '#16A34A' }}>✓</span>}
+                    </div>
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                        <span className="text-3xl">{home.flag}</span>
+                        <span className="text-[9px] font-bold uppercase text-center leading-tight truncate w-full" style={{ color: '#111827' }}>{home.name}</span>
+                      </div>
+                      <div className="text-xs font-black flex-shrink-0 px-1" style={{ color: '#9CA3AF' }}>vs</div>
+                      <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                        <span className="text-3xl">{away.flag}</span>
+                        <span className="text-[9px] font-bold uppercase text-center leading-tight truncate w-full" style={{ color: '#111827' }}>{away.name}</span>
+                      </div>
+                    </div>
+                    <div className="text-[8px] text-center mt-1.5 uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
+                      Гр.{m.group} · {isExpanded ? 'Скрыть ▲' : 'Прогноз ▼'}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
-                    <span className="text-lg">{home.flag}</span>
-                    <span className="text-xs font-bold uppercase truncate" style={{ color: '#111827' }}>{home.name}</span>
-                    <span className="text-xs font-bold" style={{ color: '#9CA3AF' }}>vs</span>
-                    <span className="text-xs font-bold uppercase truncate" style={{ color: '#111827' }}>{away.name}</span>
-                    <span className="text-lg">{away.flag}</span>
-                  </div>
-                  <div className="text-[9px] uppercase tracking-wide flex-shrink-0" style={{ color: '#9CA3AF' }}>Гр.{m.group}</div>
                 </div>
               )
             })}
           </div>
+
+          {/* Inline prediction panel for selected match */}
+          {expandedUpcoming && (() => {
+            const m = upcomingMatches.find(x => x.id === expandedUpcoming)
+            return m ? (
+              <UpcomingPredictionPanel
+                match={m}
+                predictions={upcomingPreds}
+                onSave={handleSavePred}
+                saving={savingPred}
+              />
+            ) : null
+          })()}
         </section>
       )}
 
@@ -249,7 +397,7 @@ export default function Home({ onTab }) {
         <section className="mb-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Последние результаты</h2>
-            <button onClick={() => onTab('schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+            <button onClick={() => onTab('worldcup.schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
               Ещё →
             </button>
           </div>
@@ -265,7 +413,7 @@ export default function Home({ onTab }) {
       <section className="mb-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Претенденты на Золотую бутсу</h2>
-          <button onClick={() => onTab('worldcup')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+          <button onClick={() => onTab('worldcup.scorers')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
             Топ-15 →
           </button>
         </div>
@@ -297,7 +445,6 @@ export default function Home({ onTab }) {
           </div>
         </div>
       </section>
-
     </div>
   )
 }

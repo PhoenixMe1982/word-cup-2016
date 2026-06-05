@@ -1,7 +1,6 @@
 const TABS = [
   { id: 'home',        icon: '🏠', label: 'Главная'   },
   { id: 'play',        icon: '🎯', label: 'Играть'    },
-  { id: 'schedule',    icon: '📅', label: 'Матчи'     },
   { id: 'worldcup',   icon: '🌐', label: 'ЧМ'        },
   { id: 'history',    icon: '📚', label: 'История'   },
   { id: 'leaderboard',icon: '🏅', label: 'Лидерборд' },
@@ -25,8 +24,8 @@ export default function BottomNav({ active, onTab }) {
             <button
               key={t.id}
               onClick={() => onTab(t.id)}
-              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-all duration-200 relative"
-              style={{ minHeight: 56 }}
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-1 transition-all duration-200 relative"
+              style={{ minHeight: 80 }}
             >
               {isActive && (
                 <span
@@ -34,7 +33,7 @@ export default function BottomNav({ active, onTab }) {
                   style={{ width: '50%', background: '#C9A800' }}
                 />
               )}
-              <span className={`text-lg transition-transform duration-200 ${isActive ? 'scale-110' : 'scale-100 opacity-50'}`}>
+              <span className={`text-3xl transition-transform duration-200 ${isActive ? 'scale-110' : 'scale-100 opacity-50'}`}>
                 {t.icon}
               </span>
               <span
