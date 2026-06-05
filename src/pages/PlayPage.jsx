@@ -221,6 +221,7 @@ export default function PlayPage() {
   const [filter, setFilter] = useState('all')
   const [stats, setStats] = useState(null)
   const [selectedMatch, setSelectedMatch] = useState(null)
+  const [loading, setLoading] = useState(true)
   const inTg = isTelegram()
 
   const loadData = useCallback(async () => {
@@ -241,6 +242,7 @@ export default function PlayPage() {
         setError(e.message)
       }
     }
+    setLoading(false)
   }, [inTg])
 
   useEffect(() => { loadData() }, [loadData])
@@ -275,6 +277,21 @@ export default function PlayPage() {
   const settledWithPred = myPreds
     ? Object.entries(myPreds).filter(([id]) => results[id]).length
     : 0
+
+  if (loading) return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" style={{ background: '#F5F6FA' }}>
+      <div
+        className="w-14 h-14 rounded-full border-4 mb-4"
+        style={{
+          borderColor: 'rgba(201,168,0,0.2)',
+          borderTopColor: '#C9A800',
+          animation: 'spin 0.8s linear infinite',
+        }}
+      />
+      <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>Загрузка прогнозов…</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
 
   return (
     <div className="page-content pb-4">
