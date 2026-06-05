@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TEAMS, TOURNAMENT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { toLocalDateTime } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -206,6 +207,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
   const hasPred = !!pred
+  const { time: localTime, date: localDate } = toLocalDateTime(match.date, match.time)
 
   return (
     <div>
@@ -228,7 +230,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
           {/* Center */}
           <div className="flex-shrink-0 text-center" style={{ minWidth: 40 }}>
             <div className="text-[9px] font-black uppercase" style={{ color: '#9CA3AF' }}>vs</div>
-            <div className="text-[9px] font-bold" style={{ color: '#C9A800' }}>{match.time}</div>
+            <div className="text-[9px] font-bold" style={{ color: '#C9A800' }}>{localTime}</div>
           </div>
           {/* Away */}
           <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
@@ -242,7 +244,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
           </div>
         </div>
         <div className="px-3 pb-2 text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
-          {match.date} · Гр. {match.group}
+          {localDate} · Гр. {match.group}
         </div>
 
         {/* Prediction panel — inline inside card */}
@@ -276,6 +278,7 @@ export default function Home({ onTab }) {
   const [expandedUpcoming, setExpandedUpcoming] = useState(null)
   const [upcomingPreds, setUpcomingPreds] = useState({})
   const [savingPred, setSavingPred] = useState(null)
+  const touchStartX = useRef(null)
 
   const totalPages = Math.max(1, Math.ceil(upcomingMatches.length / PAGE_SIZE))
   const pageMatches = upcomingMatches.slice(upcomingPage * PAGE_SIZE, (upcomingPage + 1) * PAGE_SIZE)
@@ -292,6 +295,18 @@ export default function Home({ onTab }) {
   function goPage(dir) {
     setUpcomingPage(p => Math.max(0, Math.min(totalPages - 1, p + dir)))
     setExpandedUpcoming(null)
+  }
+
+  function handleSwipeStart(e) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleSwipeEnd(e) {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (dx < -40) goPage(1)
+    else if (dx > 40) goPage(-1)
+    touchStartX.current = null
   }
 
   async function handleSavePred(matchId, home, away) {
@@ -391,32 +406,24 @@ export default function Home({ onTab }) {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Ближайшие матчи</h2>
             {totalPages > 1 ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => goPage(-1)}
-                  disabled={upcomingPage === 0}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black transition-opacity"
-                  style={{
-                    background: upcomingPage === 0 ? 'rgba(0,0,0,0.04)' : 'rgba(201,168,0,0.12)',
-                    color: upcomingPage === 0 ? '#C0C7D0' : '#C9A800',
-                  }}
-                >
-                  ‹
-                </button>
-                <span className="text-[10px] font-bold" style={{ color: '#9CA3AF' }}>
-                  {upcomingPage + 1} / {totalPages}
-                </span>
-                <button
-                  onClick={() => goPage(1)}
-                  disabled={upcomingPage >= totalPages - 1}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black transition-opacity"
-                  style={{
-                    background: upcomingPage >= totalPages - 1 ? 'rgba(0,0,0,0.04)' : 'rgba(201,168,0,0.12)',
-                    color: upcomingPage >= totalPages - 1 ? '#C0C7D0' : '#C9A800',
-                  }}
-                >
-                  ›
-                </button>
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: Math.min(totalPages, 10) }).map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: i === upcomingPage ? 14 : 6,
+                      height: 6,
+                      borderRadius: 3,
+                      background: i === upcomingPage ? '#C9A800' : 'rgba(0,0,0,0.15)',
+                      transition: 'width 0.2s, background 0.2s',
+                    }}
+                  />
+                ))}
+                {totalPages > 10 && (
+                  <span className="text-[9px] font-bold ml-1" style={{ color: '#9CA3AF' }}>
+                    {upcomingPage + 1}/{totalPages}
+                  </span>
+                )}
               </div>
             ) : (
               <button onClick={() => onTab('worldcup.schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
@@ -424,7 +431,11 @@ export default function Home({ onTab }) {
               </button>
             )}
           </div>
-          <div className="space-y-2">
+          <div
+            className="space-y-2"
+            onTouchStart={handleSwipeStart}
+            onTouchEnd={handleSwipeEnd}
+          >
             {pageMatches.map((m) => (
               <UpcomingMatchRow
                 key={m.id}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { TEAMS } from '../data.js'
 import { H2H_DATA } from '../data/h2hData.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { toLocalDateTime } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -9,7 +10,7 @@ function getInitData() {
   return window.Telegram?.WebApp?.initData || ''
 }
 
-function StatusBadge({ status, time }) {
+function StatusBadge({ status, time, date }) {
   if (status === 'live') {
     return (
       <div className="flex items-center gap-1">
@@ -21,7 +22,8 @@ function StatusBadge({ status, time }) {
   if (status === 'finished') {
     return <span className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Завершён</span>
   }
-  return <span className="text-[10px] font-bold" style={{ color: '#C9A800' }}>{time}</span>
+  const localTime = date ? toLocalDateTime(date, time).time : time
+  return <span className="text-[10px] font-bold" style={{ color: '#C9A800' }}>{localTime}</span>
 }
 
 function H2HPanel({ match }) {
@@ -232,7 +234,7 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
           Группа {match.group}
         </span>
         <div className="flex items-center gap-2">
-          <StatusBadge status={match.status} time={match.time} />
+          <StatusBadge status={match.status} time={match.time} date={match.date} />
           {isUpcoming && (
             <span className="text-[10px]" style={{ color: '#C9A800' }}>
               {isExpanded ? '▲' : '▼'}
