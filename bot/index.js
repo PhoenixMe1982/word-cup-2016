@@ -350,9 +350,44 @@ bot.command('help', (ctx) => {
     `/score m01 2:1 — зафиксировать результат матча\n\n` +
     `/send текст — рассылка текста\n\n` +
     `/result 🇫🇷 Франция 2:1 🇧🇷 Бразилия — объявление результата\n\n` +
-    `/photo url | подпись — рассылка с фото`,
+    `/photo url | подпись — рассылка с фото\n\n` +
+    `💡 *Или просто отправь любое сообщение/фото — автоматически уйдёт всем*`,
     { parse_mode: 'Markdown' }
   )
+})
+
+// Any non-command message from admin → broadcast to all subscribers
+bot.on('message', async (ctx) => {
+  if (ctx.from?.id !== ADMIN_ID) return
+  if (ctx.message.text?.startsWith('/')) return
+
+  await ctx.reply('⏳ Рассылка...')
+
+  let broadcastFn
+
+  if (ctx.message.photo) {
+    const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id
+    const caption = ctx.message.caption || ''
+    broadcastFn = (id) => bot.api.sendPhoto(id, fileId, {
+      caption, parse_mode: 'Markdown', ...appKeyboard('📲 Открыть приложение'),
+    })
+  } else if (ctx.message.text) {
+    const text = ctx.message.text
+    broadcastFn = (id) => bot.api.sendMessage(id, text, {
+      parse_mode: 'Markdown', ...appKeyboard(),
+    })
+  } else if (ctx.message.video) {
+    const fileId = ctx.message.video.file_id
+    const caption = ctx.message.caption || ''
+    broadcastFn = (id) => bot.api.sendVideo(id, fileId, {
+      caption, parse_mode: 'Markdown', ...appKeyboard('📲 Открыть приложение'),
+    })
+  } else {
+    return ctx.reply('⚠️ Поддерживаются текст, фото и видео')
+  }
+
+  const { sent, failed, total } = await broadcast(broadcastFn)
+  return ctx.reply(`✅ Готово: ${sent}/${total} отправлено, ${failed} ошибок`)
 })
 
 bot.start({
