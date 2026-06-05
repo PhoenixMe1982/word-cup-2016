@@ -121,8 +121,16 @@ function calcPoints(pred, result) {
 }
 
 async function settleMatch(matchId, homeScore, awayScore) {
-  const result = { home: homeScore, away: awayScore, settledAt: new Date().toISOString() }
   const results = (await rget(K.results)) || {}
+
+  // Idempotency guard — same score already settled, skip to avoid double-counting
+  const existing = results[matchId]
+  if (existing && existing.home === homeScore && existing.away === awayScore) {
+    console.log(`[settle] ${matchId} already settled ${homeScore}:${awayScore}, skip`)
+    return 0
+  }
+
+  const result = { home: homeScore, away: awayScore, settledAt: new Date().toISOString() }
   results[matchId] = result
   await rset(K.results, results)
 
@@ -136,6 +144,7 @@ async function settleMatch(matchId, homeScore, awayScore) {
       await rset(K.upreds(userId), upreds)
     }
   }
+  console.log(`[settle] ${matchId} → ${homeScore}:${awayScore}, processed ${Object.keys(matchPreds).length} predictions`)
   return Object.keys(matchPreds).length
 }
 
