@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TEAMS } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
 
 const POSITIONS = [
   { key: 'p1', medal: '🥇', label: '1 место — Чемпион', color: '#C9A800' },
@@ -98,7 +98,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
       {asPage && (
         <div
           className="-mx-4 px-4 pt-12 pb-5 mb-4"
-          style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+          style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
         >
           <div className="flex items-end justify-between">
             <div>

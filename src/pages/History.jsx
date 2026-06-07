@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { HISTORY } from '../data.js'
+import { HISTORY, HEADER_BANNER_STYLE } from '../data.js'
 import { SQUADS } from '../data/squads.js'
 
 function SquadPanel({ squad }) {
@@ -284,7 +284,7 @@ export default function History() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-5"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>

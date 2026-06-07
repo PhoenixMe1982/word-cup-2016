@@ -13,6 +13,16 @@ export const TOURNAMENT = {
   motto: 'We Are 16',
 };
 
+// Фоновый баннер для шапок страниц — белый градиент поверх картинки
+// держит текст читаемым, а cover/center/no-repeat корректно адаптируют
+// изображение под любую ширину экрана и плотность пикселей.
+export const HEADER_BANNER_STYLE = {
+  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.94) 55%, rgba(255,255,255,0.99) 100%), url('${import.meta.env.BASE_URL}header-banner.jpg')`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+};
+
 // Календарь стадий турнира — для прогресс-бара на главной.
 // Даты группового этапа — по факту первого/последнего матча тура (см. MATCHES);
 // даты плей-офф — по официальному календарю ЧМ-2026.

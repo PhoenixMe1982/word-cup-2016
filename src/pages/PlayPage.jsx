@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { TEAMS, MATCHES } from '../data.js'
+import { TEAMS, MATCHES, HEADER_BANNER_STYLE } from '../data.js'
 import { toLocalDateTime } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
@@ -300,7 +300,7 @@ export default function PlayPage() {
       {/* Header */}
       <div
         className="-mx-0 px-4 pt-12 pb-4 mb-4"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between mb-3">
           <div>

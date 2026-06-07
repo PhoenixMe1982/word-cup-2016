@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { HEADER_BANNER_STYLE } from '../data.js'
 import Groups from './Groups.jsx'
 import Scorers from './Scorers.jsx'
 import Goalkeepers from './Goalkeepers.jsx'
@@ -41,7 +42,7 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
       {/* Sticky sub-nav */}
       <div
         className="sticky top-0 z-10"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="px-4 pt-12 pb-0 flex items-end justify-between">
           <div>

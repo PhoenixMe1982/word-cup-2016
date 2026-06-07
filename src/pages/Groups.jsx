@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TEAMS } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
 function GroupTable({ groupKey, groups }) {
@@ -97,7 +97,7 @@ export default function Groups() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-4"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <h1 className="text-2xl font-black mb-1 uppercase tracking-wide" style={{ color: '#111827' }}>Группы</h1>
         <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>12 групп · 48 команд</p>

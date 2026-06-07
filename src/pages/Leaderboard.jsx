@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { HEADER_BANNER_STYLE } from '../data.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -86,7 +87,7 @@ export default function Leaderboard() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-5 mb-4"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>

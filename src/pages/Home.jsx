@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { TEAMS, TOURNAMENT, MATCHES } from '../data.js'
+import { TEAMS, TOURNAMENT, MATCHES, HEADER_BANNER_STYLE } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 import { toLocalDateTime, matchUTCDate } from '../utils.js'
 import CountdownTimer from '../components/CountdownTimer.jsx'
@@ -376,7 +376,7 @@ export default function Home({ onTab }) {
       {/* Hero Header */}
       <div
         className="relative overflow-hidden mb-4 -mx-4 px-4 pt-12 pb-6"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="relative flex items-center justify-between">
           <div>

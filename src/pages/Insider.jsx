@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { HEADER_BANNER_STYLE } from '../data.js'
 
 const CATEGORIES = ['Все', 'ИНСАЙД', 'АНАЛИЗ', 'РЕКОРД', 'ИСТОРИЯ', 'ТЕХНИКА']
 
@@ -108,7 +109,7 @@ export default function Insider() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-4"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>

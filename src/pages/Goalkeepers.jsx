@@ -1,4 +1,4 @@
-import { TEAMS } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
 const MAX_MINUTES = 270
@@ -156,7 +156,7 @@ export default function Goalkeepers() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-5"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>

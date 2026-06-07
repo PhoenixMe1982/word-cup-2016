@@ -1,4 +1,4 @@
-import { TEAMS } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
 
 const ALL_TIME_SCORERS = [
   { rank: 1,  name: 'Мирослав Клозе',      nat: 'GER', goals: 16, years: '2002–2014', active: false, note: 'Рекордсмен ЧМ' },
@@ -111,7 +111,7 @@ export default function AllTimeScorers() {
       {/* Header */}
       <div
         className="px-4 pt-12 pb-5"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
           <div>
