@@ -342,7 +342,7 @@ export default function Schedule({ embedded = false }) {
   })
 
   const byDate = filtered.reduce((acc, m) => {
-    const key = m.status === 'live' ? '🔴 Идёт сейчас' : m.date
+    const key = m.status === 'live' ? '🔴 Идёт сейчас' : toLocalDateTime(m.date, m.time).date
     if (!acc[key]) acc[key] = []
     acc[key].push(m)
     return acc

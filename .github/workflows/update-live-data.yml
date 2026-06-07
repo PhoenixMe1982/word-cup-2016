@@ -1,0 +1,39 @@
+name: Update Live Data
+
+on:
+  schedule:
+    # Every 5 minutes — keeps live-data.json in sync with football-data.org
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate live-data.json from football-data.org
+        env:
+          FDORG_TOKEN: ${{ secrets.FDORG_TOKEN }}
+        run: node bot/update-live-data.js
+
+      - name: Commit and push if live-data.json changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- public/live-data.json; then
+            echo "No changes to live-data.json"
+          else
+            git add public/live-data.json
+            git commit -m "chore: auto-update live-data.json"
+            git push
+          fi

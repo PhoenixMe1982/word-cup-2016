@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { TEAMS, TOURNAMENT } from '../data.js'
+import { TEAMS, TOURNAMENT, MATCHES } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime } from '../utils.js'
+import { toLocalDateTime, matchUTCDate } from '../utils.js'
+import CountdownTimer from '../components/CountdownTimer.jsx'
+import TournamentProgressBar from '../components/TournamentProgressBar.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
+
+const KICKOFF = matchUTCDate(MATCHES[0].date, MATCHES[0].time)
+const KICKOFF_LOCAL = toLocalDateTime(MATCHES[0].date, MATCHES[0].time)
 
 const PAGE_SIZE = 3
 
@@ -101,9 +106,10 @@ function LiveMatchCard({ match }) {
 function FinishedMatchCard({ match }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
+  const { date: localDate } = toLocalDateTime(match.date, match.time)
   return (
     <div className="match-finished-card p-3 flex items-center gap-3">
-      <div className="text-[10px] w-12 text-center flex-shrink-0" style={{ color: '#9CA3AF' }}>{match.date}</div>
+      <div className="text-[10px] w-12 text-center flex-shrink-0" style={{ color: '#9CA3AF' }}>{localDate}</div>
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span className="text-lg">{home.flag}</span>
         <span className="text-xs truncate font-semibold uppercase" style={{ color: '#111827' }}>{home.name}</span>
@@ -401,6 +407,14 @@ export default function Home({ onTab }) {
           ))}
         </div>
       </div>
+
+      {/* Countdown to kickoff — disappears once the tournament starts */}
+      {KICKOFF && (
+        <CountdownTimer target={KICKOFF} title="До старта ЧМ-2026" subtitle={`${KICKOFF_LOCAL.date} · ${KICKOFF_LOCAL.time}`} />
+      )}
+
+      {/* Tournament progress — group stage rounds → playoff rounds → final */}
+      <TournamentProgressBar />
 
       {/* Live Ticker */}
       <div

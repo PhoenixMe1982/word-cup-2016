@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TEAMS, MATCHES } from '../data.js'
+import { toLocalDateTime } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -84,6 +85,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 
   const canSubmit = homeVal !== '' && awayVal !== '' && !isSettled && !saving
   const hasChanged = saved && (homeVal !== myPred?.home || awayVal !== myPred?.away)
+  const { time: localTime, date: localDate } = toLocalDateTime(match.date, match.time)
 
   async function handleSave() {
     if (!canSubmit) return
@@ -100,7 +102,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
     } else if (myPred && saved) {
       text = `🔮 Прогноз ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${myPred.home}:${myPred.away} ${away.name} ${away.flag}\n📲 Угадывай счёт: @Mundial_26_bot`
     } else {
-      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} vs ${away.name} ${away.flag}\n📅 ${match.date} · ${match.time}\n📲 @Mundial_26_bot`
+      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} vs ${away.name} ${away.flag}\n📅 ${localDate} · ${localTime}\n📲 @Mundial_26_bot`
     }
     const url = 'https://t.me/Mundial_26_bot'
     if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -124,7 +126,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
       {/* Match meta */}
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: '#9CA3AF' }}>
-          Группа {match.group} · {match.date} · {match.time}
+          Группа {match.group} · {localDate} · {localTime}
         </span>
         {isSettled && myPred != null && (
           <span

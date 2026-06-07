@@ -13,6 +13,38 @@ export const TOURNAMENT = {
   motto: 'We Are 16',
 };
 
+// Календарь стадий турнира — для прогресс-бара на главной.
+// Даты группового этапа — по факту первого/последнего матча тура (см. MATCHES);
+// даты плей-офф — по официальному календарю ЧМ-2026.
+export const TOURNAMENT_STAGES = [
+  { id: 'r1',    label: '1 круг', start: '2026-06-11', end: '2026-06-17' },
+  { id: 'r2',    label: '2 круг', start: '2026-06-18', end: '2026-06-23' },
+  { id: 'r3',    label: '3 круг', start: '2026-06-24', end: '2026-06-27' },
+  { id: 'r32',   label: '1/16',   start: '2026-06-28', end: '2026-07-03' },
+  { id: 'r16',   label: '1/8',    start: '2026-07-04', end: '2026-07-07' },
+  { id: 'qf',    label: '1/4',    start: '2026-07-09', end: '2026-07-11' },
+  { id: 'sf',    label: '1/2',    start: '2026-07-14', end: '2026-07-15' },
+  { id: 'final', label: 'Финал',  start: '2026-07-19', end: '2026-07-19' },
+];
+
+// Доля пройденного пути по стадиям турнира (0..1), на текущий момент.
+// Между стадиями (выходные дни) — предыдущая стадия считается завершённой.
+export function tournamentProgress(stages = TOURNAMENT_STAGES, now = new Date()) {
+  const t = now.getTime();
+  const first = new Date(`${stages[0].start}T00:00:00Z`).getTime();
+  if (t <= first) return 0;
+  const lastEnd = new Date(`${stages[stages.length - 1].end}T23:59:59Z`).getTime();
+  if (t >= lastEnd) return 1;
+
+  for (let i = 0; i < stages.length; i++) {
+    const start = new Date(`${stages[i].start}T00:00:00Z`).getTime();
+    const end = new Date(`${stages[i].end}T23:59:59Z`).getTime();
+    if (t < start) return i / stages.length;
+    if (t <= end) return (i + (t - start) / Math.max(1, end - start)) / stages.length;
+  }
+  return 1;
+}
+
 export const TEAMS = {
   // Group A
   MEX: { name: 'Мексика',         flag: '🇲🇽', group: 'A' },
