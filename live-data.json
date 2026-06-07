@@ -1,5 +1,213 @@
 {
-  "_updated": "2026-06-02",
-  "_note": "Редактируй этот файл на GitHub после каждого матча. Всё что не указано — берётся из бандла.",
-  "matchResults": {}
+  "_updated": "2026-06-07T11:16:11.646Z",
+  "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
+  "matchResults": {
+    "m01": {
+      "status": "upcoming"
+    },
+    "m02": {
+      "status": "upcoming"
+    },
+    "m03": {
+      "status": "upcoming"
+    },
+    "m04": {
+      "status": "upcoming"
+    },
+    "m05": {
+      "status": "upcoming"
+    },
+    "m06": {
+      "status": "upcoming"
+    },
+    "m07": {
+      "status": "upcoming"
+    },
+    "m08": {
+      "status": "upcoming"
+    },
+    "m09": {
+      "status": "upcoming"
+    },
+    "m10": {
+      "status": "upcoming"
+    },
+    "m11": {
+      "status": "upcoming"
+    },
+    "m12": {
+      "status": "upcoming"
+    },
+    "m13": {
+      "status": "upcoming"
+    },
+    "m14": {
+      "status": "upcoming"
+    },
+    "m16": {
+      "status": "upcoming"
+    },
+    "m17": {
+      "status": "upcoming"
+    },
+    "m18": {
+      "status": "upcoming"
+    },
+    "m19": {
+      "status": "upcoming"
+    },
+    "m20": {
+      "status": "upcoming"
+    },
+    "m21": {
+      "status": "upcoming"
+    },
+    "m22": {
+      "status": "upcoming"
+    },
+    "m23": {
+      "status": "upcoming"
+    },
+    "m24": {
+      "status": "upcoming"
+    },
+    "m25": {
+      "status": "upcoming"
+    },
+    "m26": {
+      "status": "upcoming"
+    },
+    "m27": {
+      "status": "upcoming"
+    },
+    "m28": {
+      "status": "upcoming"
+    },
+    "m29": {
+      "status": "upcoming"
+    },
+    "m30": {
+      "status": "upcoming"
+    },
+    "m31": {
+      "status": "upcoming"
+    },
+    "m32": {
+      "status": "upcoming"
+    },
+    "m33": {
+      "status": "upcoming"
+    },
+    "m34": {
+      "status": "upcoming"
+    },
+    "m35": {
+      "status": "upcoming"
+    },
+    "m36": {
+      "status": "upcoming"
+    },
+    "m37": {
+      "status": "upcoming"
+    },
+    "m38": {
+      "status": "upcoming"
+    },
+    "m40": {
+      "status": "upcoming"
+    },
+    "m41": {
+      "status": "upcoming"
+    },
+    "m42": {
+      "status": "upcoming"
+    },
+    "m43": {
+      "status": "upcoming"
+    },
+    "m44": {
+      "status": "upcoming"
+    },
+    "m45": {
+      "status": "upcoming"
+    },
+    "m46": {
+      "status": "upcoming"
+    },
+    "m47": {
+      "status": "upcoming"
+    },
+    "m48": {
+      "status": "upcoming"
+    },
+    "m49": {
+      "status": "upcoming"
+    },
+    "m50": {
+      "status": "upcoming"
+    },
+    "m52": {
+      "status": "upcoming"
+    },
+    "m51": {
+      "status": "upcoming"
+    },
+    "m53": {
+      "status": "upcoming"
+    },
+    "m54": {
+      "status": "upcoming"
+    },
+    "m55": {
+      "status": "upcoming"
+    },
+    "m56": {
+      "status": "upcoming"
+    },
+    "m58": {
+      "status": "upcoming"
+    },
+    "m57": {
+      "status": "upcoming"
+    },
+    "m59": {
+      "status": "upcoming"
+    },
+    "m60": {
+      "status": "upcoming"
+    },
+    "m61": {
+      "status": "upcoming"
+    },
+    "m62": {
+      "status": "upcoming"
+    },
+    "m63": {
+      "status": "upcoming"
+    },
+    "m66": {
+      "status": "upcoming"
+    },
+    "m65": {
+      "status": "upcoming"
+    },
+    "m67": {
+      "status": "upcoming"
+    },
+    "m68": {
+      "status": "upcoming"
+    },
+    "m69": {
+      "status": "upcoming"
+    },
+    "m70": {
+      "status": "upcoming"
+    },
+    "m72": {
+      "status": "upcoming"
+    },
+    "m71": {
+      "status": "upcoming"
+    }
+  }
 }
