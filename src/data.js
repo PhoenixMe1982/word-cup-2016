@@ -17,7 +17,7 @@ export const TOURNAMENT = {
 // держит текст читаемым, а cover/center/no-repeat корректно адаптируют
 // изображение под любую ширину экрана и плотность пикселей.
 export const HEADER_BANNER_STYLE = {
-  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.94) 55%, rgba(255,255,255,0.99) 100%), url('${import.meta.env.BASE_URL}header-banner.jpg')`,
+  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.45) 55%, rgba(255,255,255,0.6) 100%), url('${import.meta.env.BASE_URL}header-banner.jpg')`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
@@ -28,7 +28,6 @@ export const HEADER_BANNER_STYLE = {
 // заполняется по датам); даты группового этапа — по факту первого/последнего
 // матча тура (см. MATCHES); даты плей-офф — по официальному календарю ЧМ-2026.
 export const TOURNAMENT_STAGES = [
-  { id: 'start', label: 'Старт',  start: '2026-06-04', end: '2026-06-10' },
   { id: 'r1',    label: '1 круг', start: '2026-06-11', end: '2026-06-17' },
   { id: 'r2',    label: '2 круг', start: '2026-06-18', end: '2026-06-23' },
   { id: 'r3',    label: '3 круг', start: '2026-06-24', end: '2026-06-27' },

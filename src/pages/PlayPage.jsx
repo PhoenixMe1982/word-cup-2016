@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { TEAMS, MATCHES, HEADER_BANNER_STYLE } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 import { toLocalDateTime } from '../utils.js'
+
+const LIVE_YELLOW = '#FACC15'
+const GREEN = '#16A34A'
+const BLUE = '#2563EB'
+const RED = '#DC2626'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -69,6 +75,8 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
   const isSettled = !!result
+  const isLive = match.status === 'live' && !isSettled
+  const isLocked = isSettled || isLive
   const hasPred = myPred != null
 
   const [homeVal, setHomeVal] = useState(hasPred ? myPred.home : '')
@@ -83,9 +91,22 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
     }
   }, [myPred])
 
-  const canSubmit = homeVal !== '' && awayVal !== '' && !isSettled && !saving
+  const canSubmit = homeVal !== '' && awayVal !== '' && !isLocked && !saving
   const hasChanged = saved && (homeVal !== myPred?.home || awayVal !== myPred?.away)
   const { time: localTime, date: localDate } = toLocalDateTime(match.date, match.time)
+
+  // Цвет рамки сразу показывает игроку, насколько точным был его прогноз:
+  // жёлтая — матч идёт и прогноз заблокирован, зелёная/синяя/красная — итог матча.
+  let outcomeColor = null
+  if (isLive) outcomeColor = LIVE_YELLOW
+  else if (isSettled && hasPred) outcomeColor = myPred.pts === 3 ? GREEN : myPred.pts === 1 ? BLUE : RED
+
+  const cardBorder = outcomeColor
+    ? `2.5px solid ${outcomeColor}`
+    : isSelected ? '1.5px solid rgba(201,168,0,0.4)' : '1px solid rgba(0,0,0,0.07)'
+  const cardShadow = outcomeColor
+    ? `0 0 0 1px ${outcomeColor}33, 0 4px 16px ${outcomeColor}40`
+    : isSelected ? '0 2px 12px rgba(201,168,0,0.12)' : '0 1px 4px rgba(0,0,0,0.05)'
 
   async function handleSave() {
     if (!canSubmit) return
@@ -115,14 +136,26 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
   return (
     <div
       onClick={onSelect}
-      className="p-3 mb-2 cursor-pointer"
+      className="relative overflow-hidden p-3 mb-2 cursor-pointer"
       style={{
         background: '#FFFFFF',
-        border: isSelected ? '1.5px solid rgba(201,168,0,0.4)' : '1px solid rgba(0,0,0,0.07)',
+        border: cardBorder,
         borderRadius: 8,
-        boxShadow: isSelected ? '0 2px 12px rgba(201,168,0,0.12)' : '0 1px 4px rgba(0,0,0,0.05)',
+        boxShadow: cardShadow,
+        transition: 'border 0.3s ease, box-shadow 0.3s ease',
       }}
     >
+      {/* LIVE indicator — матч идёт, прогноз создать/изменить уже нельзя */}
+      {isLive && (
+        <div
+          className="absolute top-0 right-0 flex items-center gap-1 pl-2.5 pr-2 py-1"
+          style={{ background: LIVE_YELLOW, borderBottomLeftRadius: 8 }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse2" style={{ background: '#DC2626' }} />
+          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#111827' }}>Live</span>
+        </div>
+      )}
+
       {/* Match meta */}
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: '#9CA3AF' }}>
@@ -139,7 +172,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
             {myPred.pts === 3 ? '⚽ Точный счёт' : myPred.pts === 1 ? '✓ Исход угадан' : '✗ Мимо'}
           </span>
         )}
-        {!isSettled && saved && !hasChanged && (
+        {!isLocked && saved && !hasChanged && (
           <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: '#16A34A' }}>✓ Сохранено</span>
         )}
       </div>
@@ -163,6 +196,23 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
               </div>
               {myPred != null && <PointsBadge pts={myPred.pts} />}
             </>
+          ) : isLive ? (
+            hasPred ? (
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-2"
+                style={{ background: 'rgba(0,0,0,0.04)', border: `1.5px solid ${LIVE_YELLOW}80`, borderRadius: 8 }}
+              >
+                <span className="text-xs">🔒</span>
+                <span className="text-base font-black" style={{ color: '#6B7280' }}>{myPred.home} : {myPred.away}</span>
+              </div>
+            ) : (
+              <div
+                className="px-2.5 py-2 text-center text-[9px] font-black uppercase tracking-wide"
+                style={{ background: 'rgba(0,0,0,0.04)', border: `1.5px solid ${LIVE_YELLOW}80`, borderRadius: 8, color: '#9CA3AF' }}
+              >
+                🔒 Прогнозы<br />закрыты
+              </div>
+            )
           ) : (
             <>
               <ScoreInput value={homeVal} onChange={setHomeVal} disabled={false} />
@@ -216,6 +266,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 
 export default function PlayPage() {
+  const { matches } = useLiveData()
   const [results, setResults] = useState({})
   const [myPreds, setMyPreds] = useState(null)
   const [saving, setSaving] = useState(null)
@@ -272,8 +323,8 @@ export default function PlayPage() {
   }
 
   const filteredMatches = filter === 'all'
-    ? MATCHES
-    : MATCHES.filter((m) => m.group === filter)
+    ? matches
+    : matches.filter((m) => m.group === filter)
 
   const predCount = myPreds ? Object.keys(myPreds).length : 0
   const settledWithPred = myPreds

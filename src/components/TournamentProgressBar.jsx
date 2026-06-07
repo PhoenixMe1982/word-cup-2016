@@ -3,21 +3,26 @@ import { useLiveData } from '../LiveDataContext.jsx'
 
 const RED = '#DC2626'
 
+// "Старт" — чисто декоративная метка начала турнира, не входит в расчёт
+// прогресса (см. TOURNAMENT_STAGES/tournamentProgress в data.js): пока
+// турнир не начался, прогресс равен 0 и горит только эта точка.
+const LABELS = ['Старт', ...TOURNAMENT_STAGES.map((s) => s.label)]
+
 export default function TournamentProgressBar() {
   const { matches } = useLiveData()
   const progress = tournamentProgress(TOURNAMENT_STAGES, new Date(), matches)
-  const n = TOURNAMENT_STAGES.length
+  const n = LABELS.length
 
   return (
     <div className="mb-4 px-1">
       {/* Stage labels */}
       <div className="flex justify-between mb-1.5">
-        {TOURNAMENT_STAGES.map((s, i) => {
+        {LABELS.map((label, i) => {
           const dotPos = i / (n - 1)
           const reached = progress >= dotPos - 0.001
           return (
             <span
-              key={s.id}
+              key={label}
               className="text-[6px] font-black uppercase tracking-wide"
               style={{
                 color: reached ? RED : '#9CA3AF',
@@ -25,7 +30,7 @@ export default function TournamentProgressBar() {
                 textAlign: i === 0 ? 'left' : i === n - 1 ? 'right' : 'center',
               }}
             >
-              {s.label}
+              {label}
             </span>
           )
         })}
@@ -45,12 +50,12 @@ export default function TournamentProgressBar() {
             transition: 'width 0.6s ease',
           }}
         />
-        {TOURNAMENT_STAGES.map((s, i) => {
+        {LABELS.map((label, i) => {
           const dotPos = i / (n - 1)
           const reached = progress >= dotPos - 0.001
           return (
             <div
-              key={s.id}
+              key={label}
               className="relative rounded-full"
               style={{
                 width: 8, height: 8, zIndex: 1,
