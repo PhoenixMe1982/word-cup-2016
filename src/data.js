@@ -24,9 +24,11 @@ export const HEADER_BANNER_STYLE = {
 };
 
 // Календарь стадий турнира — для прогресс-бара на главной.
-// Даты группового этапа — по факту первого/последнего матча тура (см. MATCHES);
-// даты плей-офф — по официальному календарю ЧМ-2026.
+// "Старт" — условный отрезок предтурнирного отсчёта (матчей ещё нет, поэтому
+// заполняется по датам); даты группового этапа — по факту первого/последнего
+// матча тура (см. MATCHES); даты плей-офф — по официальному календарю ЧМ-2026.
 export const TOURNAMENT_STAGES = [
+  { id: 'start', label: 'Старт',  start: '2026-06-04', end: '2026-06-10' },
   { id: 'r1',    label: '1 круг', start: '2026-06-11', end: '2026-06-17' },
   { id: 'r2',    label: '2 круг', start: '2026-06-18', end: '2026-06-23' },
   { id: 'r3',    label: '3 круг', start: '2026-06-24', end: '2026-06-27' },
@@ -37,9 +39,16 @@ export const TOURNAMENT_STAGES = [
   { id: 'final', label: 'Финал',  start: '2026-07-19', end: '2026-07-19' },
 ];
 
+// Туры группового этапа в MATCHES идут подряд по 24 матча (12 групп × 2 игры за тур).
+const GROUP_STAGE_ROUNDS = { r1: [0, 24], r2: [24, 48], r3: [48, 72] };
+
 // Доля пройденного пути по стадиям турнира (0..1), на текущий момент.
+// Внутри тура группового этапа доля считается по факту сыгранных матчей
+// (live-матч даёт половину веса) — так заполнение бара отражает реальный
+// ход турнира, а не только календарь. Для отрезков без данных о матчах
+// (предстарт и стадии плей-офф) используется доля прошедшего времени.
 // Между стадиями (выходные дни) — предыдущая стадия считается завершённой.
-export function tournamentProgress(stages = TOURNAMENT_STAGES, now = new Date()) {
+export function tournamentProgress(stages = TOURNAMENT_STAGES, now = new Date(), matches = MATCHES) {
   const t = now.getTime();
   const first = new Date(`${stages[0].start}T00:00:00Z`).getTime();
   if (t <= first) return 0;
@@ -47,10 +56,26 @@ export function tournamentProgress(stages = TOURNAMENT_STAGES, now = new Date())
   if (t >= lastEnd) return 1;
 
   for (let i = 0; i < stages.length; i++) {
-    const start = new Date(`${stages[i].start}T00:00:00Z`).getTime();
-    const end = new Date(`${stages[i].end}T23:59:59Z`).getTime();
+    const stage = stages[i];
+    const start = new Date(`${stage.start}T00:00:00Z`).getTime();
+    const end = new Date(`${stage.end}T23:59:59Z`).getTime();
     if (t < start) return i / stages.length;
-    if (t <= end) return (i + (t - start) / Math.max(1, end - start)) / stages.length;
+    if (t <= end) {
+      const round = GROUP_STAGE_ROUNDS[stage.id];
+      let withinFraction
+      if (round) {
+        const roundMatches = matches.slice(round[0], round[1])
+        const playedWeight = roundMatches.reduce((sum, m) => {
+          if (m.status === 'finished') return sum + 1
+          if (m.status === 'live') return sum + 0.5
+          return sum
+        }, 0)
+        withinFraction = playedWeight / roundMatches.length
+      } else {
+        withinFraction = (t - start) / Math.max(1, end - start)
+      }
+      return (i + withinFraction) / stages.length;
+    }
   }
   return 1;
 }
