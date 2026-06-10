@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { HEADER_BANNER_STYLE } from '../data.js'
+import { HEADER_BANNER_STYLE, MATCHES, TEAMS } from '../data.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
+
+const MATCH_MAP = Object.fromEntries(MATCHES.map(m => [m.id, m]))
 
 function getInitData() {
   return window.Telegram?.WebApp?.initData || ''
@@ -34,12 +36,118 @@ function RankBadge({ rank }) {
   )
 }
 
+function PredRow({ item }) {
+  const match = MATCH_MAP[item.matchId]
+  if (!match) return null
+  const homeTeam = TEAMS[match.home] || { name: match.home, flag: '🏳️' }
+  const awayTeam = TEAMS[match.away] || { name: match.away, flag: '🏳️' }
+
+  const ptsBg   = item.pts === 3 ? 'rgba(34,197,94,0.12)'  : item.pts === 1 ? 'rgba(234,179,8,0.12)'  : 'rgba(239,68,68,0.08)'
+  const ptsBdr  = item.pts === 3 ? 'rgba(34,197,94,0.3)'   : item.pts === 1 ? 'rgba(234,179,8,0.3)'   : 'rgba(239,68,68,0.2)'
+  const ptsCol  = item.pts === 3 ? '#16a34a'               : item.pts === 1 ? '#ca8a04'               : '#ef4444'
+  const icon    = item.pts === 3 ? '✅' : item.pts === 1 ? '☑️' : '❌'
+
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1.5"
+      style={{ background: ptsBg, border: `1px solid ${ptsBdr}` }}
+    >
+      <span className="text-sm flex-shrink-0">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-bold truncate" style={{ color: '#111827' }}>
+          {homeTeam.flag} {homeTeam.name} — {awayTeam.flag} {awayTeam.name}
+        </div>
+        <div className="text-[10px] mt-0.5" style={{ color: '#6B7280' }}>
+          Прогноз: <b>{item.pred.home}:{item.pred.away}</b>
+          {item.result && (
+            <> · Итог: <b>{item.result.home}:{item.result.away}</b></>
+          )}
+        </div>
+      </div>
+      <div
+        className="text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0"
+        style={{ color: ptsCol, background: ptsBg, border: `1px solid ${ptsBdr}` }}
+      >
+        +{item.pts}
+      </div>
+    </div>
+  )
+}
+
+function PredictionsList({ preds, loading }) {
+  if (loading) {
+    return (
+      <div className="px-3 py-3 text-center text-xs" style={{ color: '#9CA3AF' }}>
+        Загрузка...
+      </div>
+    )
+  }
+  if (!preds || preds.length === 0) {
+    return (
+      <div className="px-3 py-3 text-center text-xs" style={{ color: '#9CA3AF' }}>
+        Нет засчитанных прогнозов
+      </div>
+    )
+  }
+
+  const exact   = preds.filter(p => p.pts === 3)
+  const outcome = preds.filter(p => p.pts === 1)
+  const miss    = preds.filter(p => p.pts === 0)
+
+  return (
+    <div className="px-3 pt-2 pb-3">
+      {exact.length > 0 && (
+        <>
+          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#16a34a' }}>
+            Точный счёт · {exact.length}
+          </div>
+          {exact.map(p => <PredRow key={p.matchId} item={p} />)}
+        </>
+      )}
+      {outcome.length > 0 && (
+        <>
+          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#ca8a04' }}>
+            Угадан исход · {outcome.length}
+          </div>
+          {outcome.map(p => <PredRow key={p.matchId} item={p} />)}
+        </>
+      )}
+      {miss.length > 0 && (
+        <>
+          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#9CA3AF' }}>
+            Мимо · {miss.length}
+          </div>
+          {miss.map(p => <PredRow key={p.matchId} item={p} />)}
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function Leaderboard() {
   const [entries, setEntries] = useState([])
   const [me, setMe] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [expanded, setExpanded] = useState(null)
+  const [predCache, setPredCache] = useState({})
+  const [predLoading, setPredLoading] = useState(null)
   const inTg = isTelegram()
+
+  async function togglePredictions(userId) {
+    if (expanded === userId) { setExpanded(null); return }
+    setExpanded(userId)
+    if (predCache[userId] !== undefined) return
+    setPredLoading(userId)
+    try {
+      const preds = await apiFetch(`/api/predictions/${userId}`)
+      setPredCache(c => ({ ...c, [userId]: preds || [] }))
+    } catch {
+      setPredCache(c => ({ ...c, [userId]: [] }))
+    } finally {
+      setPredLoading(null)
+    }
+  }
 
   function shareLeaderboard() {
     const top3 = entries.slice(0, 3).map((e, i) => {
@@ -162,37 +270,68 @@ export default function Leaderboard() {
 
       {!loading && entries.length > 0 && (
         <div className="px-4">
-          {entries.map((entry, i) => {
+          {entries.map((entry) => {
             const isMe = entry.userId === tgUserId
+            const isOpen = expanded === entry.userId
+            const isLoadingThis = predLoading === entry.userId
             return (
-              <div
-                key={entry.userId}
-                className="flex items-center gap-3 p-3 mb-2 rounded-lg"
-                style={{
-                  background: isMe ? 'rgba(201,168,0,0.08)' : '#FFFFFF',
-                  border: isMe ? '1.5px solid rgba(201,168,0,0.3)' : '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                }}
-              >
-                <RankBadge rank={entry.rank} />
+              <div key={entry.userId} className="mb-2">
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg,#C9A800,#f0c400)', color: '#fff' }}
+                  className="flex items-center gap-3 p-3 rounded-lg cursor-pointer select-none"
+                  style={{
+                    background: isMe ? 'rgba(201,168,0,0.08)' : '#FFFFFF',
+                    border: isMe
+                      ? `1.5px solid ${isOpen ? 'rgba(201,168,0,0.5)' : 'rgba(201,168,0,0.3)'}`
+                      : `1px solid ${isOpen ? 'rgba(0,0,0,0.14)' : 'rgba(0,0,0,0.06)'}`,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                    borderBottomLeftRadius: isOpen ? 0 : undefined,
+                    borderBottomRightRadius: isOpen ? 0 : undefined,
+                  }}
+                  onClick={() => togglePredictions(entry.userId)}
                 >
-                  {(entry.firstName?.[0] || '?').toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate" style={{ color: '#111827' }}>
-                    {entry.firstName || 'Игрок'}{isMe ? ' (ты)' : ''}
+                  <RankBadge rank={entry.rank} />
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg,#C9A800,#f0c400)', color: '#fff' }}
+                  >
+                    {(entry.firstName?.[0] || '?').toUpperCase()}
                   </div>
-                  {entry.username && (
-                    <div className="text-[10px]" style={{ color: '#9CA3AF' }}>@{entry.username}</div>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold truncate" style={{ color: '#111827' }}>
+                      {entry.firstName || 'Игрок'}{isMe ? ' (ты)' : ''}
+                    </div>
+                    {entry.username && (
+                      <div className="text-[10px]" style={{ color: '#9CA3AF' }}>@{entry.username}</div>
+                    )}
+                  </div>
+                  <div className="text-right flex-shrink-0 flex flex-col items-end">
+                    <div className="text-lg font-black" style={{ color: '#C9A800' }}>{entry.pts}</div>
+                    <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>очков</div>
+                  </div>
+                  <div
+                    className="text-xs flex-shrink-0 transition-transform duration-200"
+                    style={{ color: '#9CA3AF', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  >
+                    ▾
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-lg font-black" style={{ color: '#C9A800' }}>{entry.pts}</div>
-                  <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>очков</div>
-                </div>
+
+                {isOpen && (
+                  <div
+                    style={{
+                      background: '#FAFAFA',
+                      border: isMe ? '1.5px solid rgba(201,168,0,0.3)' : '1px solid rgba(0,0,0,0.06)',
+                      borderTop: 'none',
+                      borderBottomLeftRadius: 8,
+                      borderBottomRightRadius: 8,
+                    }}
+                  >
+                    <PredictionsList
+                      preds={predCache[entry.userId]}
+                      loading={isLoadingThis}
+                    />
+                  </div>
+                )}
               </div>
             )
           })}

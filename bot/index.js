@@ -18,9 +18,40 @@ const K = {
   users:       `${KEY_PREFIX}wc2026_users`,
   results:     `${KEY_PREFIX}wc2026_results`,
   leaderboard: `${KEY_PREFIX}wc2026_lb`,
+  scorers:     `${KEY_PREFIX}wc2026_scorers`,
+  keepers:     `${KEY_PREFIX}wc2026_keepers`,
   preds:  (matchId)  => `${KEY_PREFIX}wc2026_mp:${matchId}`,
   upreds: (userId)   => `${KEY_PREFIX}wc2026_up:${userId}`,
 }
+
+const STATIC_SCORERS = [
+  { rank:1,  name:'Килиан Мбаппе',        team:'FRA', club:'Real Madrid',   goals:0, assists:0, matches:0, avatar:'⚡' },
+  { rank:2,  name:'Лионель Месси',         team:'ARG', club:'Inter Miami',   goals:0, assists:0, matches:0, avatar:'🐐' },
+  { rank:3,  name:'Эрлинг Холанд',         team:'NOR', club:'Man City',      goals:0, assists:0, matches:0, avatar:'💥' },
+  { rank:4,  name:'Криштиану Роналду',     team:'POR', club:'Al-Nassr',      goals:0, assists:0, matches:0, avatar:'🦁' },
+  { rank:5,  name:'Виниций Жуниор',        team:'BRA', club:'Real Madrid',   goals:0, assists:0, matches:0, avatar:'🔥' },
+  { rank:6,  name:'Харри Кейн',            team:'ENG', club:'Bayern Munich', goals:0, assists:0, matches:0, avatar:'👑' },
+  { rank:7,  name:'Лаутаро Мартинес',      team:'ARG', club:'Inter Milan',   goals:0, assists:0, matches:0, avatar:'🐂' },
+  { rank:8,  name:'Букайо Сака',           team:'ENG', club:'Arsenal',       goals:0, assists:0, matches:0, avatar:'⭐' },
+  { rank:9,  name:'Бернарду Силва',        team:'POR', club:'Man City',      goals:0, assists:0, matches:0, avatar:'🎯' },
+  { rank:10, name:'Мемфис Депай',          team:'NED', club:'Atlético',      goals:0, assists:0, matches:0, avatar:'🦁' },
+  { rank:11, name:'Дарвин Нуньес',         team:'URU', club:'Liverpool',     goals:0, assists:0, matches:0, avatar:'🔫' },
+  { rank:12, name:'Луис Диас',             team:'COL', club:'Liverpool',     goals:0, assists:0, matches:0, avatar:'🐆' },
+  { rank:13, name:'Ришарлисон',            team:'BRA', club:'Tottenham',     goals:0, assists:0, matches:0, avatar:'🕊️' },
+  { rank:14, name:'Ламин Ямаль',           team:'ESP', club:'Barcelona',     goals:0, assists:0, matches:0, avatar:'🌟' },
+  { rank:15, name:'Ромелу Лукаку',         team:'BEL', club:'Napoli',        goals:0, assists:0, matches:0, avatar:'🏋️' },
+]
+
+const STATIC_KEEPERS = [
+  { rank:1, name:'Эмильяно Мартинес', team:'ARG', club:'Aston Villa',   matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:9.2 },
+  { rank:2, name:'Тибо Куртуа',       team:'BEL', club:'Real Madrid',   matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:9.0 },
+  { rank:3, name:'Мануэль Нойер',     team:'GER', club:'Bayern Munich', matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:8.8 },
+  { rank:4, name:'Эдерсон',           team:'BRA', club:'Man City',      matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:8.7 },
+  { rank:5, name:'Диого Кошта',       team:'POR', club:'Porto',         matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:8.6 },
+  { rank:6, name:'Джордан Пикфорд',   team:'ENG', club:'Everton',       matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:8.4 },
+  { rank:7, name:'Мик Маньян',        team:'FRA', club:'AC Milan',      matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:8.3 },
+  { rank:8, name:'Фернандо Муслера',  team:'URU', club:'Galatasaray',   matches:0, cleanSheets:0, minutesWithoutGoal:0, saves:0, rating:7.9 },
+]
 
 if (!TOKEN) { console.error('BOT_TOKEN not set'); process.exit(1) }
 
@@ -243,6 +274,22 @@ app.get('/api/leaderboard', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
+// GET /api/scorers — top scorers (Redis override or null → frontend uses static)
+app.get('/api/scorers', async (_, res) => {
+  try {
+    const data = await rget(K.scorers)
+    res.json(data)
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// GET /api/goalkeepers — goalkeeper stats (Redis override or null → frontend uses static)
+app.get('/api/goalkeepers', async (_, res) => {
+  try {
+    const data = await rget(K.keepers)
+    res.json(data)
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
 // GET /api/me — my rank + points
 app.get('/api/me', withAuth, async (req, res) => {
   try {
@@ -263,6 +310,28 @@ app.get('/api/me', withAuth, async (req, res) => {
       exact: correct,
       outcome: partial,
     })
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// GET /api/predictions/:userId — public, settled predictions for any user
+app.get('/api/predictions/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params
+    const [upreds, results] = await Promise.all([
+      rget(K.upreds(userId)),
+      rget(K.results),
+    ])
+    const allPreds = upreds || {}
+    const allResults = results || {}
+    const settled = Object.entries(allPreds)
+      .filter(([, p]) => p.pts !== undefined)
+      .map(([matchId, p]) => ({
+        matchId,
+        pred: { home: p.home, away: p.away },
+        result: allResults[matchId] ? { home: allResults[matchId].home, away: allResults[matchId].away } : null,
+        pts: p.pts,
+      }))
+    res.json(settled)
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
@@ -351,12 +420,92 @@ bot.command('photo', async (ctx) => {
   return ctx.reply(`✅ Готово: ${sent}/${total} отправлено, ${failed} ошибок`)
 })
 
+bot.command('scorer', async (ctx) => {
+  if (ctx.from.id !== ADMIN_ID) return
+  const args = ctx.message.text.replace(/^\/scorer\s*/, '').trim()
+  const current = (await rget(K.scorers)) || STATIC_SCORERS.map(s => ({ ...s }))
+
+  if (!args) {
+    const lines = current.map((s, i) =>
+      `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}`
+    )
+    return ctx.reply(
+      `*Бомбардиры:*\n\n${lines.join('\n')}\n\n📝 Обновить: \`/scorer N голы ассисты матчи\``,
+      { parse_mode: 'Markdown' }
+    )
+  }
+
+  const parts = args.split(/\s+/)
+  const idx = parseInt(parts[0])
+  if (!idx || idx < 1 || idx > current.length)
+    return ctx.reply(`❌ Номер игрока от 1 до ${current.length}`)
+
+  const goals   = parseInt(parts[1])
+  const assists = parseInt(parts[2])
+  const matches = parseInt(parts[3])
+  if (isNaN(goals) || isNaN(assists))
+    return ctx.reply('❌ Формат: /scorer N голы ассисты [матчи]')
+
+  const player = current[idx - 1]
+  player.goals   = goals
+  player.assists = assists
+  if (!isNaN(matches)) player.matches = matches
+
+  current.sort((a, b) => b.goals - a.goals || b.assists - a.assists)
+  current.forEach((s, i) => { s.rank = i + 1 })
+
+  await rset(K.scorers, current)
+  return ctx.reply(`✅ ${player.name}: ⚽${player.goals} 🅰️${player.assists} 🎮${player.matches}`)
+})
+
+bot.command('keeper', async (ctx) => {
+  if (ctx.from.id !== ADMIN_ID) return
+  const args = ctx.message.text.replace(/^\/keeper\s*/, '').trim()
+  const current = (await rget(K.keepers)) || STATIC_KEEPERS.map(k => ({ ...k }))
+
+  if (!args) {
+    const lines = current.map((k, i) =>
+      `${i + 1}. ${k.name} (${k.team}) — 🧤${k.cleanSheets} ⏱${k.minutesWithoutGoal}мин 🎮${k.matches}`
+    )
+    return ctx.reply(
+      `*Вратари:*\n\n${lines.join('\n')}\n\n📝 Обновить: \`/keeper N сухие минуты матчи\``,
+      { parse_mode: 'Markdown' }
+    )
+  }
+
+  const parts = args.split(/\s+/)
+  const idx = parseInt(parts[0])
+  if (!idx || idx < 1 || idx > current.length)
+    return ctx.reply(`❌ Номер вратаря от 1 до ${current.length}`)
+
+  const cleanSheets         = parseInt(parts[1])
+  const minutesWithoutGoal  = parseInt(parts[2])
+  const matches             = parseInt(parts[3])
+  if (isNaN(cleanSheets) || isNaN(minutesWithoutGoal))
+    return ctx.reply('❌ Формат: /keeper N сухие минуты [матчи]')
+
+  const keeper = current[idx - 1]
+  keeper.cleanSheets        = cleanSheets
+  keeper.minutesWithoutGoal = minutesWithoutGoal
+  if (!isNaN(matches)) keeper.matches = matches
+
+  current.sort((a, b) => b.cleanSheets - a.cleanSheets || b.minutesWithoutGoal - a.minutesWithoutGoal)
+  current.forEach((k, i) => { k.rank = i + 1 })
+
+  await rset(K.keepers, current)
+  return ctx.reply(`✅ ${keeper.name}: 🧤${keeper.cleanSheets} ⏱${keeper.minutesWithoutGoal}мин 🎮${keeper.matches}`)
+})
+
 bot.command('help', (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
   return ctx.reply(
     `*Команды администратора:*\n\n` +
     `/stats — подписчики и лидерборд\n\n` +
     `/score m01 2:1 — зафиксировать результат матча\n\n` +
+    `/scorer — список бомбардиров\n` +
+    `/scorer N голы ассисты [матчи] — обновить игрока #N\n\n` +
+    `/keeper — список вратарей\n` +
+    `/keeper N сухие минуты [матчи] — обновить вратаря #N\n\n` +
     `/send текст — рассылка текста\n\n` +
     `/result 🇫🇷 Франция 2:1 🇧🇷 Бразилия — объявление результата\n\n` +
     `/photo url | подпись — рассылка с фото\n\n` +
