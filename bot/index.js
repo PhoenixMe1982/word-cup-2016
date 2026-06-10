@@ -430,15 +430,49 @@ bot.command('scorer', async (ctx) => {
       `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}`
     )
     return ctx.reply(
-      `*Бомбардиры:*\n\n${lines.join('\n')}\n\n📝 Обновить: \`/scorer N голы ассисты матчи\``,
+      `*Бомбардиры:*\n\n${lines.join('\n')}\n\n` +
+      `📝 Обновить: \`/scorer N голы ассисты [матчи]\`\n` +
+      `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\``,
       { parse_mode: 'Markdown' }
     )
+  }
+
+  // /scorer add Имя TLA голы ассисты [матчи]
+  if (args.toLowerCase().startsWith('add ')) {
+    const parts = args.slice(4).trim().split(/\s+/)
+    if (parts.length < 4)
+      return ctx.reply('❌ Формат: /scorer add Имя TLA голы ассисты [матчи]\nПример: /scorer add Pulisic USA 3 1 4')
+    const team    = parts[parts.length - 1].length <= 4 && isNaN(parseInt(parts[parts.length - 1]))
+      ? null : null // разбираем ниже
+    // Формат: последние 2-3 — числа; перед ними — TLA (3-4 буквы); перед TLA — имя (остальное)
+    const numParts = []
+    let i = parts.length - 1
+    while (i >= 0 && !isNaN(parseInt(parts[i]))) { numParts.unshift(parseInt(parts[i])); i-- }
+    const tla     = parts[i] ? parts[i].toUpperCase() : null
+    const name    = parts.slice(0, i).join(' ')
+    if (!name || !tla || numParts.length < 2)
+      return ctx.reply('❌ Формат: /scorer add Имя TLA голы ассисты [матчи]\nПример: /scorer add Pulisic USA 3 1 4')
+    const newPlayer = {
+      rank: current.length + 1,
+      name,
+      team: tla,
+      club: '',
+      goals:   numParts[0],
+      assists: numParts[1],
+      matches: numParts[2] ?? 0,
+      avatar: '⚽',
+    }
+    current.push(newPlayer)
+    current.sort((a, b) => b.goals - a.goals || b.assists - a.assists)
+    current.forEach((s, j) => { s.rank = j + 1 })
+    await rset(K.scorers, current)
+    return ctx.reply(`✅ Добавлен: ${newPlayer.name} (${newPlayer.team}) ⚽${newPlayer.goals} 🅰️${newPlayer.assists} 🎮${newPlayer.matches}`)
   }
 
   const parts = args.split(/\s+/)
   const idx = parseInt(parts[0])
   if (!idx || idx < 1 || idx > current.length)
-    return ctx.reply(`❌ Номер игрока от 1 до ${current.length}`)
+    return ctx.reply(`❌ Номер игрока от 1 до ${current.length}. Для добавления: /scorer add Имя TLA голы ассисты`)
 
   const goals   = parseInt(parts[1])
   const assists = parseInt(parts[2])
@@ -503,7 +537,8 @@ bot.command('help', (ctx) => {
     `/stats — подписчики и лидерборд\n\n` +
     `/score m01 2:1 — зафиксировать результат матча\n\n` +
     `/scorer — список бомбардиров\n` +
-    `/scorer N голы ассисты [матчи] — обновить игрока #N\n\n` +
+    `/scorer N голы ассисты [матчи] — обновить игрока #N\n` +
+    `/scorer add Имя TLA голы ассисты [матчи] — добавить нового\n\n` +
     `/keeper — список вратарей\n` +
     `/keeper N сухие минуты [матчи] — обновить вратаря #N\n\n` +
     `/send текст — рассылка текста\n\n` +
