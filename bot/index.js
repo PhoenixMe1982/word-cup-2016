@@ -423,7 +423,7 @@ bot.command('photo', async (ctx) => {
 bot.command('scorer', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
   const args = ctx.message.text.replace(/^\/scorer\s*/, '').trim()
-  const current = (await rget(K.scorers)) || STATIC_SCORERS.map(s => ({ ...s }))
+  const current = (await rget(K.scorers)) || []
 
   if (!args) {
     const lines = current.map((s, i) =>
@@ -490,6 +490,12 @@ bot.command('scorer', async (ctx) => {
 
   await rset(K.scorers, current)
   return ctx.reply(`✅ ${player.name}: ⚽${player.goals} 🅰️${player.assists} 🎮${player.matches}`)
+})
+
+bot.command('scorer_reset', async (ctx) => {
+  if (ctx.from.id !== ADMIN_ID) return
+  await rset(K.scorers, [])
+  return ctx.reply('✅ Список бомбардиров очищен')
 })
 
 bot.command('keeper', async (ctx) => {

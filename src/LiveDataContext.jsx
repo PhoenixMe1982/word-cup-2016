@@ -28,7 +28,7 @@ export function LiveDataProvider({ children }) {
         matches: json?.matchResults
           ? MATCHES.map(m => ({ ...m, ...(json.matchResults[m.id] || {}) }))
           : MATCHES,
-        scorers:     apiScorers  || json?.scorers     || TOP_SCORERS,
+        scorers:     apiScorers  || json?.scorers     || [],
         goalkeepers: apiKeepers  || json?.goalkeepers || GOALKEEPERS,
         groups:      json?.groups  || GROUPS,
         news:        json?.news    || NEWS,

@@ -8,9 +8,13 @@ const MEDAL_COLORS = {
   3: { bg: 'linear-gradient(135deg,#CD7F32,#8B4513)', text: '#fff' },
 }
 
-function ScorerRow({ scorer, maxGoals }) {
+function ScorerRow({ scorer, maxVal, view }) {
   const team = TEAMS[scorer.team]
   const medal = MEDAL_COLORS[scorer.rank]
+  const mainStat = view === 'goals' ? scorer.goals : scorer.assists
+  const subStat  = view === 'goals'
+    ? `${scorer.assists} пас · ${scorer.matches} матч`
+    : `${scorer.matches} матч`
 
   return (
     <div
@@ -37,7 +41,6 @@ function ScorerRow({ scorer, maxGoals }) {
       )}
 
       <div className="flex items-center gap-3">
-        {/* Rank */}
         <div
           className="w-8 h-8 flex items-center justify-center text-sm font-black flex-shrink-0"
           style={{
@@ -50,7 +53,6 @@ function ScorerRow({ scorer, maxGoals }) {
           {scorer.rank <= 3 ? ['🥇', '🥈', '🥉'][scorer.rank - 1] : scorer.rank}
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-sm font-black truncate uppercase" style={{ color: '#111827' }}>{scorer.name}</span>
@@ -65,32 +67,29 @@ function ScorerRow({ scorer, maxGoals }) {
           </div>
           <div className="flex items-center gap-2 text-[10px]" style={{ color: '#6B7280' }}>
             <span>{team?.flag} {team?.name}</span>
-            <span>·</span>
-            <span>{scorer.club}</span>
+            {scorer.club && <><span>·</span><span>{scorer.club}</span></>}
           </div>
-          {/* Progress bar */}
           <div className="mt-2 stat-bar">
             <div
               className="stat-bar-fill"
               style={{
-                width: scorer.goals > 0 ? `${(scorer.goals / maxGoals) * 100}%` : '4px',
+                width: mainStat > 0 ? `${(mainStat / maxVal) * 100}%` : '4px',
                 background: scorer.rank === 1 ? '#C9A800' : scorer.rank <= 3 ? '#9A8000' : '#0EA5E9',
               }}
             />
           </div>
         </div>
 
-        {/* Stats */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-black score-number" style={{ color: scorer.rank === 1 ? '#C9A800' : '#111827' }}>
-              {scorer.goals}
+              {mainStat}
             </span>
-            <span className="text-[10px]" style={{ color: '#9CA3AF' }}>гол</span>
+            <span className="text-[10px]" style={{ color: '#9CA3AF' }}>
+              {view === 'goals' ? 'гол' : 'пас'}
+            </span>
           </div>
-          <div className="text-[10px]" style={{ color: '#6B7280' }}>
-            {scorer.assists} пас · {scorer.matches} матч
-          </div>
+          <div className="text-[10px]" style={{ color: '#6B7280' }}>{subStat}</div>
         </div>
       </div>
     </div>
@@ -101,10 +100,21 @@ export default function Scorers() {
   const { scorers } = useLiveData()
   const [view, setView] = useState('goals')
 
-  const sorted = [...scorers].sort((a, b) =>
-    view === 'goals' ? b.goals - a.goals : b.assists - a.assists
-  ).map((s, i) => ({ ...s, rank: i + 1 }))
-  const maxGoals = Math.max(sorted[0]?.goals || 0, 1)
+  const sorted = [...scorers]
+    .filter(s => view === 'goals' ? s.goals > 0 : s.assists > 0)
+    .sort((a, b) => view === 'goals'
+      ? b.goals - a.goals || b.assists - a.assists
+      : b.assists - a.assists || b.goals - a.goals
+    )
+    .map((s, i) => ({ ...s, rank: i + 1 }))
+
+  const maxVal = view === 'goals'
+    ? Math.max(sorted[0]?.goals || 0, 1)
+    : Math.max(sorted[0]?.assists || 0, 1)
+
+  const leader = sorted[0]
+  const leaderStat = leader ? (view === 'goals' ? leader.goals : leader.assists) : null
+  const leaderLabel = view === 'goals' ? 'голов' : 'ассистов'
 
   return (
     <div className="page-content">
@@ -123,26 +133,28 @@ export default function Scorers() {
         </div>
 
         {/* Leader Card */}
-        <div
-          className="mt-4 p-4 flex items-center gap-4"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-        >
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#C9A800' }}>Фаворит — Золотая бутса</div>
-            <div className="text-lg font-black truncate uppercase" style={{ color: '#111827' }}>{sorted[0]?.name}</div>
-            <div className="text-xs" style={{ color: '#6B7280' }}>{TEAMS[sorted[0]?.team]?.flag} {sorted[0]?.club}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-black" style={{ color: '#C9A800' }}>
-              {sorted[0]?.goals > 0 ? sorted[0].goals : '—'}
+        {leader ? (
+          <div
+            className="mt-4 p-4 flex items-center gap-4"
+            style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#C9A800' }}>
+                {view === 'goals' ? 'Фаворит — Золотая бутса' : 'Лидер по ассистам'}
+              </div>
+              <div className="text-lg font-black truncate uppercase" style={{ color: '#111827' }}>{leader.name}</div>
+              <div className="text-xs" style={{ color: '#6B7280' }}>{TEAMS[leader.team]?.flag} {leader.club || TEAMS[leader.team]?.name}</div>
             </div>
-            <div className="text-[10px]" style={{ color: '#9CA3AF' }}>голов</div>
+            <div className="text-center">
+              <div className="text-4xl font-black" style={{ color: '#C9A800' }}>{leaderStat}</div>
+              <div className="text-[10px]" style={{ color: '#9CA3AF' }}>{leaderLabel}</div>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-2 text-center text-[10px] uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-          Турнир стартует 11 июня · Голы ещё не забиты
-        </div>
+        ) : (
+          <div className="mt-3 text-center text-[10px] uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
+            Данные появятся после первых матчей
+          </div>
+        )}
       </div>
 
       {/* View Toggle */}
@@ -172,10 +184,19 @@ export default function Scorers() {
       </div>
 
       {/* List */}
-      <div className="px-4">
-        {sorted.map((scorer) => (
-          <ScorerRow key={scorer.name} scorer={scorer} maxGoals={maxGoals} />
-        ))}
+      <div className="px-4 pb-4">
+        {sorted.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="text-5xl">{view === 'goals' ? '⚽' : '🎯'}</div>
+            <p className="text-xs uppercase tracking-wider text-center" style={{ color: '#9CA3AF' }}>
+              {view === 'goals' ? 'Голы ещё не забиты' : 'Ассистов ещё не было'}
+            </p>
+          </div>
+        ) : (
+          sorted.map((scorer) => (
+            <ScorerRow key={scorer.name} scorer={scorer} maxVal={maxVal} view={view} />
+          ))
+        )}
       </div>
     </div>
   )
