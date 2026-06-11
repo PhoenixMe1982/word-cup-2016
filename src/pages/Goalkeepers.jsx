@@ -149,7 +149,18 @@ export default function Goalkeepers() {
     .map((g, i) => ({ ...g, rank: i + 1 }))
 
   const topGK = sorted[0]
-  const topTeam = TEAMS[topGK.team]
+  const topTeam = topGK ? TEAMS[topGK.team] : null
+
+  if (!topGK) {
+    return (
+      <div className="page-content">
+        <div className="px-4 pt-12 pb-5" style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Вратари</h1>
+          <p className="text-xs mt-3 uppercase tracking-wider" style={{ color: '#9CA3AF' }}>🧤 Статистика появится после первых матчей</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="page-content">

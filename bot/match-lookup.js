@@ -33,6 +33,7 @@ const TLA_ALIASES = {
   'HTI': 'HAI',  // Haiti
   'CUR': 'CUW',  // Curaçao
   'CPV': 'CPV',  // Cape Verde (same)
+  'URY': 'URU',  // Uruguay — football-data.org использует ISO-код URY
 }
 
 function normTLA(tla) {

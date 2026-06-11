@@ -146,6 +146,28 @@ function validateInitData(initData) {
 
 // ── Scoring ────────────────────────────────────────────────────────────────
 
+// Время начала матчей (UTC, ms) — парсится из src/data.js, где время указано в МСК (UTC+3).
+// Нужно для серверной блокировки прогнозов: клиентскую проверку можно обойти прямым запросом.
+const KICKOFFS = (() => {
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'src', 'data.js'), 'utf8')
+    const months = { 'июня': 5, 'июля': 6 }
+    const map = {}
+    const re = /id:\s*'(m\d+)'[^\n]*?date:\s*'(\d+)\s+([а-яё]+)'[^\n]*?time:\s*'(\d+):(\d+)\s*МСК'/g
+    let m
+    while ((m = re.exec(raw))) {
+      const [, id, day, mon, hh, mm] = m
+      if (months[mon] == null) continue
+      map[id] = Date.UTC(2026, months[mon], Number(day), Number(hh) - 3, Number(mm))
+    }
+    console.log(`[kickoffs] parsed ${Object.keys(map).length} match kickoff times`)
+    return map
+  } catch (e) {
+    console.warn('[kickoffs] parse failed:', e.message)
+    return {}
+  }
+})()
+
 function calcPoints(pred, result) {
   if (pred.home === result.home && pred.away === result.away) return 3
   const predOutcome = Math.sign(pred.home - pred.away)
@@ -170,7 +192,11 @@ async function settleMatch(matchId, homeScore, awayScore) {
   const matchPreds = (await rget(K.preds(matchId))) || {}
   for (const [userId, pred] of Object.entries(matchPreds)) {
     const pts = calcPoints(pred, result)
-    if (pts > 0) await redisExec('ZINCRBY', K.leaderboard, pts, userId)
+    // Коррекция счёта: вычитаем очки, начисленные за предыдущий результат,
+    // иначе повторный зачёт задваивает очки в лидерборде
+    const oldPts = existing ? calcPoints(pred, existing) : 0
+    const delta = pts - oldPts
+    if (delta !== 0) await redisExec('ZINCRBY', K.leaderboard, delta, userId)
     const upreds = (await rget(K.upreds(userId))) || {}
     if (upreds[matchId]) {
       upreds[matchId].pts = pts
@@ -311,6 +337,11 @@ app.post('/api/predict', withAuth, async (req, res) => {
 
     const results = (await rget(K.results)) || {}
     if (results[matchId]) return res.status(403).json({ error: 'Match already settled' })
+
+    // Серверная блокировка: после стартового свистка прогноз не принимается
+    const kickoff = KICKOFFS[matchId]
+    if (kickoff && Date.now() >= kickoff)
+      return res.status(403).json({ error: 'Матч уже начался — приём прогнозов закрыт' })
 
     const userId = String(req.tgUser.id)
 
