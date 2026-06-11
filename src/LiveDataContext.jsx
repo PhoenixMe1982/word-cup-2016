@@ -16,6 +16,30 @@ const FALLBACK = {
   ticker: TICKER_ITEMS,
 }
 
+// Турнирные таблицы групп считаются из завершённых матчей:
+// победа 3 очка, ничья 1, сортировка на странице групп — очки → разница → забитые
+function computeGroups(matches) {
+  const groups = JSON.parse(JSON.stringify(GROUPS))
+  const rowByCode = {}
+  for (const g of Object.values(groups)) for (const t of g.teams) rowByCode[t.code] = t
+
+  for (const m of matches) {
+    if (m.status !== 'finished' || m.scoreHome == null || m.scoreAway == null) continue
+    const h = rowByCode[m.home]
+    const a = rowByCode[m.away]
+    if (!h || !a) continue
+    h.p++; a.p++
+    h.gf += m.scoreHome; h.ga += m.scoreAway
+    a.gf += m.scoreAway; a.ga += m.scoreHome
+    if (m.scoreHome > m.scoreAway)      { h.w++; a.l++; h.pts += 3 }
+    else if (m.scoreHome < m.scoreAway) { a.w++; h.l++; a.pts += 3 }
+    else                                { h.d++; a.d++; h.pts++; a.pts++ }
+    h.gd = h.gf - h.ga
+    a.gd = a.gf - a.ga
+  }
+  return groups
+}
+
 const LiveDataCtx = createContext(FALLBACK)
 
 export function LiveDataProvider({ children }) {
@@ -40,15 +64,17 @@ export function LiveDataProvider({ children }) {
         ? apiLive.matchResults
         : null
 
+      const matches = MATCHES.map(m => ({
+        ...m,
+        ...(staticResults[m.id] || {}),
+        ...((liveResults && liveResults[m.id]) || {}),
+      }))
+
       setData({
-        matches: MATCHES.map(m => ({
-          ...m,
-          ...(staticResults[m.id] || {}),
-          ...((liveResults && liveResults[m.id]) || {}),
-        })),
+        matches,
         scorers:     apiScorers  || json?.scorers     || [],
         goalkeepers: apiKeepers  || json?.goalkeepers || GOALKEEPERS,
-        groups:      json?.groups  || GROUPS,
+        groups:      computeGroups(matches),
         news:        json?.news    || NEWS,
         ticker:      json?.ticker  || TICKER_ITEMS,
       })
