@@ -567,41 +567,53 @@ export default function Home({ onTab }) {
       )}
 
       {/* Top Scorer Promo */}
-      <section className="mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Претенденты на Золотую бутсу</h2>
-          <button onClick={() => onTab('worldcup.scorers')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
-            Топ-15 →
-          </button>
-        </div>
-        <div
-          className="p-4"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-        >
-          {scorers.slice(0, 3).map((s) => (
-            <div key={s.rank} className="flex items-center gap-3 py-2">
-              <div
-                className={`w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0 rank-${s.rank}`}
-                style={{ borderRadius: 3 }}
-              >
-                {s.rank}
-              </div>
-              <span className="text-xl flex-shrink-0">{TEAMS[s.team]?.flag}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold truncate uppercase" style={{ color: '#111827' }}>{s.name}</div>
-                <div className="text-[10px]" style={{ color: '#6B7280' }}>{s.club}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xl font-black" style={{ color: '#C9A800' }}>{s.goals > 0 ? s.goals : '—'}</span>
-                <span className="text-[10px]" style={{ color: '#9CA3AF' }}>голов</span>
-              </div>
+      {(() => {
+        const topScorers = scorers.filter(s => s.goals > 0).slice(0, 3)
+        return (
+          <section className="mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Бомбардиры турнира</h2>
+              <button onClick={() => onTab('worldcup.scorers')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+                Все →
+              </button>
             </div>
-          ))}
-          <div className="mt-2 pt-2 text-center text-[10px] uppercase tracking-wider" style={{ borderTop: '1px solid rgba(0,0,0,0.06)', color: '#9CA3AF' }}>
-            Турнир ещё не начался · Данные обновятся 11 июня
-          </div>
-        </div>
-      </section>
+            <div
+              className="p-4"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+            >
+              {topScorers.length === 0 ? (
+                <div className="py-3 text-center text-[11px] uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
+                  ⚽ Голы появятся после первых матчей
+                </div>
+              ) : (
+                topScorers.map((s, i) => (
+                  <div key={s.name} className="flex items-center gap-3 py-2">
+                    <div
+                      className="w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0"
+                      style={{
+                        borderRadius: 3,
+                        background: i === 0 ? 'linear-gradient(135deg,#FFD700,#FF8C00)' : i === 1 ? 'linear-gradient(135deg,#C0C0C0,#909090)' : 'linear-gradient(135deg,#CD7F32,#8B4513)',
+                        color: '#fff',
+                      }}
+                    >
+                      {['🥇','🥈','🥉'][i]}
+                    </div>
+                    <span className="text-xl flex-shrink-0">{TEAMS[s.team]?.flag}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold truncate uppercase" style={{ color: '#111827' }}>{s.name}</div>
+                      <div className="text-[10px]" style={{ color: '#6B7280' }}>{TEAMS[s.team]?.name}{s.club ? ` · ${s.club}` : ''}</div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xl font-black" style={{ color: '#C9A800' }}>{s.goals}</span>
+                      <span className="text-[10px]" style={{ color: '#9CA3AF' }}>гол</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        )
+      })()}
     </div>
   )
 }
