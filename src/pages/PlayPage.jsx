@@ -77,8 +77,10 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
   const isSettled = !!result
   const kickoffUTC = matchUTCDate(match.date, match.time)
   const isTimeStarted = kickoffUTC ? new Date() >= kickoffUTC : false
-  const isLive = match.status === 'live' || isTimeStarted
-  const isLocked = isSettled || isLive
+  // Завершённый матч (зачтён или статус finished) больше не LIVE
+  const isFinished = isSettled || match.status === 'finished'
+  const isLive = !isFinished && (match.status === 'live' || isTimeStarted)
+  const isLocked = isFinished || isLive
   const hasPred = myPred != null
 
   const [homeVal, setHomeVal] = useState(hasPred ? myPred.home : '')
@@ -118,10 +120,14 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 
   function handleShare(e) {
     e.stopPropagation()
+    const finalHome = result?.home ?? match.scoreHome
+    const finalAway = result?.away ?? match.scoreAway
     let text
-    if (result && myPred) {
-      const pts = myPred.pts ?? calcPointsLocal(myPred, result)
-      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${result.home}:${result.away} ${away.name} ${away.flag}\n🔮 Мой прогноз: ${myPred.home}:${myPred.away} (+${pts} оч.)\n📲 @Mundial_26_bot`
+    if (isFinished && finalHome != null && myPred) {
+      const pts = myPred.pts ?? calcPointsLocal(myPred, { home: finalHome, away: finalAway })
+      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${finalHome}:${finalAway} ${away.name} ${away.flag}\n🔮 Мой прогноз: ${myPred.home}:${myPred.away} (+${pts} оч.)\n📲 @Mundial_26_bot`
+    } else if (isFinished && finalHome != null) {
+      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${finalHome}:${finalAway} ${away.name} ${away.flag}\n📲 Прогнозируй матчи: @Mundial_26_bot`
     } else if (myPred && saved) {
       text = `🔮 Прогноз ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${myPred.home}:${myPred.away} ${away.name} ${away.flag}\n📲 Угадывай счёт: @Mundial_26_bot`
     } else {
@@ -189,14 +195,21 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 
         {/* Score area — stop propagation so clicks here don't toggle card selection */}
         <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          {isSettled ? (
+          {isFinished ? (
             <>
               <div className="flex items-center gap-1">
-                <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{result.home}</span>
+                <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{result?.home ?? match.scoreHome ?? '–'}</span>
                 <span className="text-sm" style={{ color: '#9CA3AF' }}>:</span>
-                <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{result.away}</span>
+                <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{result?.away ?? match.scoreAway ?? '–'}</span>
               </div>
-              {myPred != null && <PointsBadge pts={myPred.pts} />}
+              {isSettled && myPred != null && <PointsBadge pts={myPred.pts} />}
+              <button
+                onClick={handleShare}
+                className="w-10 h-10 rounded-lg text-base flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(201,168,0,0.12)', border: '1px solid rgba(201,168,0,0.3)', color: '#C9A800' }}
+              >
+                📤
+              </button>
             </>
           ) : isLive ? (
             <div className="flex flex-col items-center gap-1">
