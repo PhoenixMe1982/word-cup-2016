@@ -4,8 +4,10 @@ const path = require('path')
 const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
+const { lookupMatchId, normTLA } = require('./match-lookup.js')
 
 const TOKEN    = (process.env.BOT_TOKEN || '').trim()
+const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const ADMIN_ID = parseInt(process.env.ADMIN_ID, 10)
 const APP_URL  = (process.env.APP_URL || 'https://phoenixme1982.github.io/word-cup-2016/').trim()
 const USERS_FILE = path.join(__dirname, 'users.json')
@@ -179,6 +181,75 @@ async function settleMatch(matchId, homeScore, awayScore) {
   return Object.keys(matchPreds).length
 }
 
+// ── Live data poller (football-data.org, every 5 min) ─────────────────────
+// Render работает 24/7 (keep-alive), поэтому setInterval здесь надёжнее,
+// чем GitHub Actions cron, который GitHub троттлит до раза в несколько часов.
+
+const FD_STATUS_MAP = {
+  SCHEDULED: 'upcoming', TIMED: 'upcoming', POSTPONED: 'upcoming', CANCELLED: 'upcoming',
+  IN_PLAY: 'live', PAUSED: 'live', SUSPENDED: 'live',
+  FINISHED: 'finished', AWARDED: 'finished',
+}
+
+const liveState = { updated: null, matchResults: {} }
+
+async function pollFootballData() {
+  if (!FDORG_TOKEN) return
+  try {
+    const res = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
+      headers: { 'X-Auth-Token': FDORG_TOKEN },
+    })
+    if (!res.ok) {
+      console.error(`[live] football-data.org ${res.status}: ${(await res.text()).slice(0, 200)}`)
+      return
+    }
+    const data = await res.json()
+    const matches = data.matches || []
+    const settled = (await rget(K.results)) || {}
+    const next = {}
+    let liveCount = 0
+
+    for (const m of matches) {
+      const matchId = lookupMatchId(normTLA(m.homeTeam?.tla || ''), normTLA(m.awayTeam?.tla || ''))
+      if (!matchId) continue
+
+      const status = FD_STATUS_MAP[m.status] || 'upcoming'
+      const entry = { status }
+      const score = m.score?.fullTime?.home != null ? m.score.fullTime
+        : m.score?.halfTime?.home != null ? m.score.halfTime : null
+      if (score) { entry.scoreHome = score.home; entry.scoreAway = score.away }
+      if (status === 'live') {
+        liveCount++
+        if (m.minute != null) entry.time = String(m.minute)
+      }
+      next[matchId] = entry
+
+      // Авто-зачёт очков: матч завершён, счёт есть, в Redis ещё не зачтён
+      if (status === 'finished' && score && !settled[matchId]) {
+        try {
+          const count = await settleMatch(matchId, score.home, score.away)
+          if (ADMIN_ID) {
+            bot.api.sendMessage(ADMIN_ID,
+              `⚽ *${m.homeTeam.name} ${score.home}:${score.away} ${m.awayTeam.name}*\nПрогнозов зачтено: ${count}`,
+              { parse_mode: 'Markdown' }).catch(() => {})
+          }
+        } catch (e) {
+          console.error(`[live] settle ${matchId} failed:`, e.message)
+        }
+      }
+    }
+
+    liveState.matchResults = next
+    liveState.updated = new Date().toISOString()
+    console.log(`[live] poll ok: ${Object.keys(next).length} matches, ${liveCount} live`)
+  } catch (e) {
+    console.error('[live] poll failed:', e.message)
+  }
+}
+
+// GET /api/live — текущее состояние всех матчей (статусы + счёт)
+// Регистрируется ниже, после создания app.
+
 // ── Express API ────────────────────────────────────────────────────────────
 
 const app = express()
@@ -203,6 +274,9 @@ function withAuth(req, res, next) {
 
 // GET /api/health
 app.get('/api/health', (_, res) => res.json({ ok: true }))
+
+// GET /api/live — live match state polled from football-data.org every 5 min
+app.get('/api/live', (_, res) => res.json(liveState))
 
 // GET /api/results — all settled match results
 app.get('/api/results', async (_, res) => {
@@ -602,3 +676,11 @@ bot.start({
 
 const PORT = process.env.PORT || 10000
 app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
+
+if (FDORG_TOKEN) {
+  pollFootballData()
+  setInterval(pollFootballData, 5 * 60 * 1000)
+  console.log('⚽ Live poller started (football-data.org, every 5 min)')
+} else {
+  console.warn('⚠️ FDORG_TOKEN not set — live poller disabled, /api/live will be empty')
+}
