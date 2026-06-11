@@ -1,7 +1,33 @@
 import { useState, useMemo } from 'react'
 import { ALL_TIME_TEAMS, SQUADS } from '../data/teamsData.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 function pts(t) { return t.wc.w * 3 + t.wc.d }
+
+// Историческая статистика + завершённые матчи текущего ЧМ-2026
+function applyCurrentResults(matches) {
+  const teams = ALL_TIME_TEAMS.map(t => ({ ...t, wc: { ...t.wc } }))
+  const byId = Object.fromEntries(teams.map(t => [t.id, t]))
+
+  for (const m of matches || []) {
+    if (m.status !== 'finished' || m.scoreHome == null || m.scoreAway == null) continue
+    const h = byId[m.home]
+    const a = byId[m.away]
+    if (h) {
+      h.wc.gf += m.scoreHome; h.wc.ga += m.scoreAway
+      if (m.scoreHome > m.scoreAway) h.wc.w++
+      else if (m.scoreHome < m.scoreAway) h.wc.l++
+      else h.wc.d++
+    }
+    if (a) {
+      a.wc.gf += m.scoreAway; a.wc.ga += m.scoreHome
+      if (m.scoreAway > m.scoreHome) a.wc.w++
+      else if (m.scoreAway < m.scoreHome) a.wc.l++
+      else a.wc.d++
+    }
+  }
+  return teams
+}
 
 const POS_ORDER = { GK: 0, DF: 1, MF: 2, FW: 3 }
 const POS_LABEL = { GK: 'Вратари', DF: 'Защитники', MF: 'Полузащитники', FW: 'Нападающие' }
@@ -149,20 +175,23 @@ function TeamDetail({ team, onBack }) {
 }
 
 export default function Teams() {
+  const { matches } = useLiveData()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [sortKey, setSortKey] = useState('pts')
   const [selectedTeam, setSelectedTeam] = useState(null)
 
+  const allTeams = useMemo(() => applyCurrentResults(matches), [matches])
+
   const sorted = useMemo(() => {
-    return [...ALL_TIME_TEAMS].sort((a, b) => {
+    return [...allTeams].sort((a, b) => {
       if (sortKey === 'pts') return pts(b) - pts(a)
       if (sortKey === 'p')   return b.wc.p - a.wc.p
       const ma = a.wc.w + a.wc.d + a.wc.l
       const mb = b.wc.w + b.wc.d + b.wc.l
       return mb - ma
     })
-  }, [sortKey])
+  }, [allTeams, sortKey])
 
   const filtered = useMemo(() => {
     let list = sorted
@@ -183,7 +212,7 @@ export default function Teams() {
       <div className="px-4 pt-4 pb-2">
         <h1 className="text-lg font-bold" style={{ color: '#111827' }}>Сборные мира</h1>
         <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
-          Все участники финальных стадий ЧМ — {ALL_TIME_TEAMS.length} сборных
+          Все участники финальных стадий ЧМ — {allTeams.length} сборных
         </p>
       </div>
 

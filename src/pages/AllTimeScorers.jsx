@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 const ALL_TIME_SCORERS = [
   { rank: 1,  name: 'Мирослав Клозе',      nat: 'GER', goals: 16, years: '2002–2014', active: false, note: 'Рекордсмен ЧМ' },
@@ -85,6 +87,9 @@ function ScorerRow({ scorer }) {
           <span>{scorer.years}</span>
           <span>·</span>
           <span>{scorer.note}</span>
+          {scorer.plus2026 > 0 && (
+            <span className="font-black" style={{ color: '#16A34A' }}>+{scorer.plus2026} на ЧМ-2026</span>
+          )}
         </div>
       </div>
 
@@ -102,9 +107,32 @@ function ScorerRow({ scorer }) {
   )
 }
 
+// К историческим голам играющих (active) прибавляются голы текущего ЧМ-2026
+// из списка бомбардиров (Redis, обновляется через бота). Сопоставление — по имени.
+function mergeCurrentGoals(allTime, currentScorers) {
+  const current = {}
+  for (const s of currentScorers || []) {
+    if (s.name && s.goals > 0) current[s.name.trim().toLowerCase()] = s.goals
+  }
+  const merged = allTime.map(s => {
+    const plus = s.active ? (current[s.name.trim().toLowerCase()] || 0) : 0
+    return {
+      ...s,
+      goals: s.goals + plus,
+      plus2026: plus,
+      years: plus > 0 ? s.years.replace(/–\d{4}$/, '–2026') : s.years,
+    }
+  })
+  merged.sort((a, b) => b.goals - a.goals)
+  return merged.map((s, i) => ({ ...s, rank: i + 1 }))
+}
+
 export default function AllTimeScorers() {
-  const activePlayers = ALL_TIME_SCORERS.filter((s) => s.active)
-  const maxGoals = ALL_TIME_SCORERS[0].goals
+  const { scorers: currentScorers } = useLiveData()
+  const scorersList = useMemo(() => mergeCurrentGoals(ALL_TIME_SCORERS, currentScorers), [currentScorers])
+  const recordHolder = scorersList[0]
+  const activePlayers = scorersList.filter((s) => s.active)
+  const maxGoals = recordHolder.goals
 
   return (
     <div className="page-content">
@@ -127,14 +155,14 @@ export default function AllTimeScorers() {
           className="mt-4 p-4 flex items-center gap-4"
           style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
         >
-          <div className="text-4xl">🇩🇪</div>
+          <div className="text-4xl">{NAT_FLAGS[recordHolder.nat] || '🏳️'}</div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#C9A800' }}>Абсолютный рекордсмен</div>
-            <div className="text-lg font-black uppercase" style={{ color: '#111827' }}>Мирослав Клозе</div>
-            <div className="text-xs" style={{ color: '#6B7280' }}>Германия · 2002–2014</div>
+            <div className="text-lg font-black uppercase" style={{ color: '#111827' }}>{recordHolder.name}</div>
+            <div className="text-xs" style={{ color: '#6B7280' }}>{recordHolder.years}</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-black" style={{ color: '#C9A800' }}>16</div>
+            <div className="text-4xl font-black" style={{ color: '#C9A800' }}>{recordHolder.goals}</div>
             <div className="text-[10px]" style={{ color: '#9CA3AF' }}>голов</div>
           </div>
         </div>
@@ -181,7 +209,7 @@ export default function AllTimeScorers() {
         <div className="text-[10px] font-black uppercase tracking-wider mb-3" style={{ color: '#9CA3AF' }}>
           Голы на чемпионатах мира
         </div>
-        {ALL_TIME_SCORERS.map((scorer) => {
+        {scorersList.map((scorer) => {
           const pct = (scorer.goals / maxGoals) * 100
           return (
             <div key={scorer.rank} className="mb-1.5">
@@ -227,8 +255,8 @@ export default function AllTimeScorers() {
         <div className="text-[10px] font-black uppercase tracking-wider mb-3" style={{ color: '#9CA3AF' }}>
           Подробная статистика
         </div>
-        {ALL_TIME_SCORERS.map((scorer) => (
-          <ScorerRow key={scorer.rank} scorer={scorer} />
+        {scorersList.map((scorer) => (
+          <ScorerRow key={scorer.name} scorer={scorer} />
         ))}
       </div>
     </div>
