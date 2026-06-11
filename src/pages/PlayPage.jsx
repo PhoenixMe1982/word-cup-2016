@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime } from '../utils.js'
+import { toLocalDateTime, matchUTCDate } from '../utils.js'
 
 const LIVE_YELLOW = '#FACC15'
 const GREEN = '#16A34A'
@@ -75,7 +75,9 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
   const isSettled = !!result
-  const isLive = match.status === 'live' && !isSettled
+  const kickoffUTC = matchUTCDate(match.date, match.time)
+  const isTimeStarted = kickoffUTC ? new Date() >= kickoffUTC : false
+  const isLive = match.status === 'live' || isTimeStarted
   const isLocked = isSettled || isLive
   const hasPred = myPred != null
 

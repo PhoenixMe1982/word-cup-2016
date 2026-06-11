@@ -137,7 +137,9 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
     if (pred) { setHomeVal(pred.home); setAwayVal(pred.away); setSaved(true) }
   }, [pred])
 
-  const canSubmit = homeVal !== '' && awayVal !== '' && saving !== match.id
+  const kickoffUTC = matchUTCDate(match.date, match.time)
+  const isLocked = kickoffUTC ? new Date() >= kickoffUTC : false
+  const canSubmit = !isLocked && homeVal !== '' && awayVal !== '' && saving !== match.id
   const hasChanged = saved && (homeVal !== pred?.home || awayVal !== pred?.away)
   const inTg = !!window.Telegram?.WebApp?.initData
 
@@ -151,6 +153,27 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
     return (
       <div className="px-3 py-2 text-xs text-center" style={{ color: '#C9A800' }}>
         📱 Открой в Telegram, чтобы сделать прогноз
+      </div>
+    )
+  }
+
+  if (isLocked) {
+    return (
+      <div className="px-3 pb-3">
+        <div className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: '#9CA3AF' }}>
+          Твой прогноз
+        </div>
+        {saved ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px]" style={{ color: '#6B7280' }}>Прогноз:</span>
+            <span className="text-base font-black" style={{ color: '#C9A800' }}>{pred?.home} : {pred?.away}</span>
+            <span className="text-[10px]" style={{ color: '#9CA3AF' }}>🔒</span>
+          </div>
+        ) : (
+          <div className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
+            🔒 Прогноз не был сделан
+          </div>
+        )}
       </div>
     )
   }
