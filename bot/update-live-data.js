@@ -57,6 +57,11 @@ async function main() {
 
   const fdData = await fetchFDOrg('/competitions/WC/matches')
   const matches = fdData.matches || []
+  console.log(`[live-data] football-data.org returned ${matches.length} matches for WC`)
+  if (matches.length > 0) {
+    const sample = matches[0]
+    console.log(`[live-data] Sample: ${sample.homeTeam?.tla} vs ${sample.awayTeam?.tla} status=${sample.status}`)
+  }
   const matchResults = readExistingResults()
 
   let changed = false
@@ -71,12 +76,16 @@ async function main() {
 
     const status = STATUS_MAP[m.status] || 'upcoming'
     const fullTime = m.score?.fullTime || {}
+    const halfTime = m.score?.halfTime || {}
 
     const prev = matchResults[matchId] || {}
     const next = { ...prev, status }
-    if (fullTime.home != null && fullTime.away != null) {
-      next.scoreHome = fullTime.home
-      next.scoreAway = fullTime.away
+
+    // For finished matches use fullTime; for live matches try fullTime first, then halfTime
+    const scoreSource = (fullTime.home != null ? fullTime : null) || (halfTime.home != null ? halfTime : null)
+    if (scoreSource) {
+      next.scoreHome = scoreSource.home
+      next.scoreAway = scoreSource.away
     }
     if (status === 'live' && m.minute != null) {
       next.time = String(m.minute)

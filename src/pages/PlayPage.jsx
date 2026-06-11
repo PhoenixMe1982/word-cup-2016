@@ -199,22 +199,26 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
               {myPred != null && <PointsBadge pts={myPred.pts} />}
             </>
           ) : isLive ? (
-            hasPred ? (
+            <div className="flex flex-col items-center gap-1">
+              {match.scoreHome != null ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
+                  <span className="text-sm" style={{ color: '#9CA3AF' }}>:</span>
+                  <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
+                  <span className="text-[8px] font-black px-1 py-0.5 rounded ml-1" style={{ background: LIVE_YELLOW, color: '#111827' }}>LIVE</span>
+                </div>
+              ) : null}
               <div
-                className="flex items-center gap-1.5 px-2.5 py-2"
-                style={{ background: 'rgba(0,0,0,0.04)', border: `1.5px solid ${LIVE_YELLOW}80`, borderRadius: 8 }}
+                className="flex items-center gap-1 px-2 py-0.5"
+                style={{ background: 'rgba(0,0,0,0.04)', border: `1px solid ${LIVE_YELLOW}60`, borderRadius: 6 }}
               >
-                <span className="text-xs">🔒</span>
-                <span className="text-base font-black" style={{ color: '#6B7280' }}>{myPred.home} : {myPred.away}</span>
+                <span className="text-[9px]">🔒</span>
+                {hasPred
+                  ? <span className="text-xs font-black" style={{ color: '#6B7280' }}>{myPred.home}:{myPred.away}</span>
+                  : <span className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>нет</span>
+                }
               </div>
-            ) : (
-              <div
-                className="px-2.5 py-2 text-center text-[9px] font-black uppercase tracking-wide"
-                style={{ background: 'rgba(0,0,0,0.04)', border: `1.5px solid ${LIVE_YELLOW}80`, borderRadius: 8, color: '#9CA3AF' }}
-              >
-                🔒 Прогнозы<br />закрыты
-              </div>
-            )
+            </div>
           ) : (
             <>
               <ScoreInput value={homeVal} onChange={setHomeVal} disabled={false} />

@@ -297,11 +297,27 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
 }
 
 export default function Home({ onTab }) {
-  const { matches, ticker, scorers } = useLiveData()
+  const { matches, scorers } = useLiveData()
   const liveMatches = matches.filter((m) => m.status === 'live')
   const finishedMatches = matches.filter((m) => m.status === 'finished').slice(0, 5)
   const upcomingMatches = matches.filter((m) => m.status === 'upcoming')
-  const totalGoals = matches.filter(m => m.status !== 'upcoming').reduce((s, m) => s + (m.scoreHome || 0) + (m.scoreAway || 0), 0)
+
+  // Time-based estimates when live-data.json is stale
+  const MATCH_DURATION_MS = 115 * 60 * 1000
+  const allFinished = matches.filter(m => m.status === 'finished')
+  const timeBasedFinished = matches.filter(m => {
+    if (m.status !== 'upcoming') return false
+    const kick = matchUTCDate(m.date, m.time)
+    return kick && new Date() >= new Date(kick.getTime() + MATCH_DURATION_MS)
+  })
+  const timeBasedLive = matches.filter(m => {
+    if (m.status !== 'upcoming') return false
+    const kick = matchUTCDate(m.date, m.time)
+    return kick && new Date() >= kick && new Date() < new Date(kick.getTime() + MATCH_DURATION_MS)
+  })
+  const playedCount = allFinished.length + timeBasedFinished.length
+  const liveCount = liveMatches.length + timeBasedLive.length
+  const totalGoals = allFinished.reduce((s, m) => s + (m.scoreHome || 0) + (m.scoreAway || 0), 0)
 
   const [upcomingPage, setUpcomingPage] = useState(0)
   const [expandedUpcoming, setExpandedUpcoming] = useState(null)
@@ -419,9 +435,9 @@ export default function Home({ onTab }) {
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
           {[
-            { v: liveMatches.length > 0 ? liveMatches.length : '—', l: 'Live матчей' },
-            { v: totalGoals > 0 ? totalGoals : '—', l: 'Голов' },
-            { v: matches.filter(m => m.status === 'finished').length || '—', l: 'Сыграно' },
+            { v: playedCount, l: 'Сыграно' },
+            { v: totalGoals, l: 'Голов' },
+            { v: liveCount > 0 ? liveCount : '—', l: 'Live' },
           ].map((s) => (
             <div key={s.l} className="text-center" style={{ background: '#FFFFFF', borderRadius: 3, padding: '8px 4px', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
               <div className="text-xl font-black" style={{ color: '#111827' }}>{s.v}</div>
@@ -431,30 +447,12 @@ export default function Home({ onTab }) {
         </div>
       </div>
 
-      {/* Countdown to kickoff — disappears once the tournament starts */}
-      {KICKOFF && (
+      {KICKOFF && new Date() < KICKOFF && (
         <CountdownTimer target={KICKOFF} title="До старта ЧМ-2026" subtitle={`${KICKOFF_LOCAL.date} · ${KICKOFF_LOCAL.time}`} />
       )}
 
       {/* Tournament progress — group stage rounds → playoff rounds → final */}
       <TournamentProgressBar />
-
-      {/* Live Ticker */}
-      <div
-        className="mb-4 overflow-hidden flex items-center"
-        style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', height: 36, borderRadius: 3 }}
-      >
-        <div className="flex-shrink-0 px-3 py-1 text-[10px] font-black tracking-widest" style={{ background: '#C9A800', color: '#FFFFFF' }}>
-          LIVE
-        </div>
-        <div className="flex-1 overflow-hidden relative">
-          <div className="flex whitespace-nowrap animate-ticker text-[11px]" style={{ color: '#6B7280' }}>
-            {[...ticker, ...ticker].map((item, i) => (
-              <span key={i} className="px-6">{item}</span>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Live Matches */}
       {liveMatches.length > 0 && (
