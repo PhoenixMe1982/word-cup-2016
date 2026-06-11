@@ -187,10 +187,6 @@ export default function Goalkeepers() {
           </div>
         </div>
 
-        <div className="mt-2 text-center text-[10px] uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-          Турнир стартует 11 июня · Статистика будет обновлена
-        </div>
-
         {/* Legend */}
         <div className="mt-3 flex items-center gap-4 text-[10px]" style={{ color: '#9CA3AF' }}>
           <div className="flex items-center gap-1.5">
