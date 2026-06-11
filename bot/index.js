@@ -213,6 +213,13 @@ async function pollFootballData() {
       const matchId = lookupMatchId(normTLA(m.homeTeam?.tla || ''), normTLA(m.awayTeam?.tla || ''))
       if (!matchId) continue
 
+      // Зачтённый в Redis матч — источник истины: football-data.org иногда
+      // временно откатывает FINISHED обратно в SCHEDULED, не даём ему понизить статус
+      if (settled[matchId]) {
+        next[matchId] = { status: 'finished', scoreHome: settled[matchId].home, scoreAway: settled[matchId].away }
+        continue
+      }
+
       const status = FD_STATUS_MAP[m.status] || 'upcoming'
       const entry = { status }
       const score = m.score?.fullTime?.home != null ? m.score.fullTime
