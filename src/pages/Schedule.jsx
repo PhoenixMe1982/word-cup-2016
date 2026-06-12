@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { TEAMS } from '../data.js'
 import { H2H_DATA } from '../data/h2hData.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime } from '../utils.js'
+import { toLocalDateTime, matchUTCDate } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -12,10 +12,12 @@ function getInitData() {
 
 function StatusBadge({ status, time, date }) {
   if (status === 'live') {
+    // Минута матча есть не всегда (free-тариф API) — тогда показываем LIVE
+    const minute = /^\d+$/.test(String(time)) ? `${time}'` : 'LIVE'
     return (
       <div className="flex items-center gap-1">
         <span className="w-1.5 h-1.5 rounded-full animate-pulse2" style={{ background: '#16A34A' }} />
-        <span className="text-[10px] font-bold" style={{ color: '#16A34A' }}>{time}</span>
+        <span className="text-[10px] font-bold" style={{ color: '#16A34A' }}>{minute}</span>
       </div>
     )
   }
@@ -221,8 +223,14 @@ function PredictionMini({ matchId, pred, onSave, saving, inTg }) {
 function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred, inTg }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
-  const isLive = match.status === 'live'
-  const isUpcoming = match.status === 'upcoming'
+  // Время — главный признак: если матч начался по расписанию, он live,
+  // даже если статус из API ещё не обновился (лаг до 5 минут)
+  const kickoffUTC = matchUTCDate(match.date, match.time)
+  const timeStarted = kickoffUTC ? Date.now() >= kickoffUTC.getTime() : false
+  const isFinished = match.status === 'finished'
+  const isLive = !isFinished && (match.status === 'live' || timeStarted)
+  const isUpcoming = !isFinished && !isLive
+  const isLocked = !isUpcoming
 
   return (
     <div
@@ -234,7 +242,7 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
           Группа {match.group}
         </span>
         <div className="flex items-center gap-2">
-          <StatusBadge status={match.status} time={match.time} date={match.date} />
+          <StatusBadge status={isFinished ? 'finished' : isLive ? 'live' : 'upcoming'} time={match.time} date={match.date} />
           {isUpcoming && (
             <span className="text-[10px]" style={{ color: '#C9A800' }}>
               {isExpanded ? '▲' : '▼'}
@@ -253,9 +261,9 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
             <span className="text-sm font-black" style={{ color: '#9CA3AF' }}>vs</span>
           ) : (
             <div className="flex items-center gap-1">
-              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
+              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome ?? '–'}</span>
               <span style={{ color: '#9CA3AF' }}>:</span>
-              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
+              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway ?? '–'}</span>
             </div>
           )}
         </div>
@@ -335,14 +343,23 @@ export default function Schedule({ embedded = false }) {
     finally { setSavingPred(null) }
   }, [initData])
 
+  // Эффективный статус: матч, начавшийся по расписанию, считается live,
+  // даже если API ещё не переключил статус
+  const effStatus = (m) => {
+    if (m.status === 'finished') return 'finished'
+    if (m.status === 'live') return 'live'
+    const kick = matchUTCDate(m.date, m.time)
+    return kick && Date.now() >= kick.getTime() ? 'live' : 'upcoming'
+  }
+
   const filtered = matches.filter((m) => {
-    if (statusFilter !== 'all' && m.status !== statusFilter) return false
+    if (statusFilter !== 'all' && effStatus(m) !== statusFilter) return false
     if (groupFilter !== 'Все' && m.group !== groupFilter) return false
     return true
   })
 
   const byDate = filtered.reduce((acc, m) => {
-    const key = m.status === 'live' ? '🔴 Идёт сейчас' : toLocalDateTime(m.date, m.time).date
+    const key = effStatus(m) === 'live' ? '🔴 Идёт сейчас' : toLocalDateTime(m.date, m.time).date
     if (!acc[key]) acc[key] = []
     acc[key].push(m)
     return acc

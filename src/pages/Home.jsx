@@ -48,12 +48,17 @@ function UserAvatar({ onTab }) {
   )
 }
 
+// Минуту матча free-тариф football-data.org не отдаёт — показываем её,
+// только если она реально пришла (числовая строка), иначе просто LIVE
 function LiveMinute({ base }) {
-  const [min, setMin] = useState(parseInt(base) || 0)
+  const hasRealMinute = /^\d+$/.test(String(base))
+  const [min, setMin] = useState(hasRealMinute ? parseInt(base) : 0)
   useEffect(() => {
+    if (!hasRealMinute) return
     const t = setInterval(() => setMin((m) => Math.min(m + 1, 90)), 60000)
     return () => clearInterval(t)
-  }, [])
+  }, [hasRealMinute])
+  if (!hasRealMinute) return <span className="font-bold text-live animate-pulse2">●</span>
   return <span className="font-bold text-live">{min}'</span>
 }
 
@@ -77,9 +82,9 @@ function LiveMatchCard({ match }) {
         </div>
         <div className="flex flex-col items-center px-4">
           <div className="flex items-center gap-2">
-            <span className="text-4xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
+            <span className="text-4xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome ?? '–'}</span>
             <span className="text-2xl font-light" style={{ color: '#9CA3AF' }}>:</span>
-            <span className="text-4xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
+            <span className="text-4xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway ?? '–'}</span>
           </div>
           <LiveMinute base={match.time} />
         </div>
@@ -298,25 +303,29 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
 
 export default function Home({ onTab }) {
   const { matches, scorers } = useLiveData()
-  const liveMatches = matches.filter((m) => m.status === 'live')
-  const finishedMatches = matches.filter((m) => m.status === 'finished').slice(0, 5)
-  const upcomingMatches = matches.filter((m) => m.status === 'upcoming')
 
-  // Time-based estimates when live-data.json is stale
+  // Если статус из API запаздывает, матч считается live по расписанию —
+  // он сразу попадает в «Идут сейчас», а не висит в «Ближайших»
   const MATCH_DURATION_MS = 115 * 60 * 1000
+  const now = Date.now()
+  const isTimeLive = (m) => {
+    if (m.status !== 'upcoming') return false
+    const kick = matchUTCDate(m.date, m.time)
+    return kick && now >= kick.getTime() && now < kick.getTime() + MATCH_DURATION_MS
+  }
+
+  const liveMatches = matches.filter((m) => m.status === 'live' || isTimeLive(m))
   const allFinished = matches.filter(m => m.status === 'finished')
+  const finishedMatches = allFinished.slice(0, 5)
+  const upcomingMatches = matches.filter((m) => m.status === 'upcoming' && !isTimeLive(m))
+
   const timeBasedFinished = matches.filter(m => {
     if (m.status !== 'upcoming') return false
     const kick = matchUTCDate(m.date, m.time)
-    return kick && new Date() >= new Date(kick.getTime() + MATCH_DURATION_MS)
-  })
-  const timeBasedLive = matches.filter(m => {
-    if (m.status !== 'upcoming') return false
-    const kick = matchUTCDate(m.date, m.time)
-    return kick && new Date() >= kick && new Date() < new Date(kick.getTime() + MATCH_DURATION_MS)
+    return kick && now >= kick.getTime() + MATCH_DURATION_MS
   })
   const playedCount = allFinished.length + timeBasedFinished.length
-  const liveCount = liveMatches.length + timeBasedLive.length
+  const liveCount = liveMatches.length
   const totalGoals = allFinished.reduce((s, m) => s + (m.scoreHome || 0) + (m.scoreAway || 0), 0)
 
   const [upcomingPage, setUpcomingPage] = useState(0)
