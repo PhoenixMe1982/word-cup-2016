@@ -1,7 +1,23 @@
 import { TOURNAMENT_STAGES, tournamentProgress } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { matchUTCDate } from '../utils.js'
 
 const RED = '#DC2626'
+const MATCH_DURATION_MS = 115 * 60 * 1000
+
+// Статусы из API могут запаздывать — для прогресса матч, начавшийся по
+// расписанию, считается live, а прошедший дольше длительности матча — сыгранным
+function withTimeBasedStatus(matches) {
+  const now = Date.now()
+  return matches.map((m) => {
+    if (m.status !== 'upcoming') return m
+    const kick = matchUTCDate(m.date, m.time)
+    if (!kick) return m
+    if (now >= kick.getTime() + MATCH_DURATION_MS) return { ...m, status: 'finished' }
+    if (now >= kick.getTime()) return { ...m, status: 'live' }
+    return m
+  })
+}
 
 // "Старт" — чисто декоративная метка начала турнира, не входит в расчёт
 // прогресса (см. TOURNAMENT_STAGES/tournamentProgress в data.js): пока
@@ -10,7 +26,7 @@ const LABELS = ['Старт', ...TOURNAMENT_STAGES.map((s) => s.label)]
 
 export default function TournamentProgressBar() {
   const { matches } = useLiveData()
-  const progress = tournamentProgress(TOURNAMENT_STAGES, new Date(), matches)
+  const progress = tournamentProgress(TOURNAMENT_STAGES, new Date(), withTimeBasedStatus(matches))
   const n = LABELS.length
 
   return (
@@ -46,7 +62,10 @@ export default function TournamentProgressBar() {
           className="absolute left-0"
           style={{
             height: 4, borderRadius: 2, background: RED, top: '50%',
-            transform: 'translateY(-50%)', width: `${progress * 100}%`,
+            transform: 'translateY(-50%)',
+            // max(): доля первых сыгранных матчей меньше размера точки «Старт» —
+            // без минимальной ширины заполнение визуально не отличимо от нуля
+            width: progress > 0 ? `max(${progress * 100}%, 14px)` : 0,
             transition: 'width 0.6s ease',
           }}
         />
