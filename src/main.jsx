@@ -1,8 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill'
 import App from './App.jsx'
 import './index.css'
+
+// Windows не отрисовывает эмодзи-флаги (показывает буквенные коды вместо них) —
+// полифилл подключает шрифт с флагами только в браузерах без системной поддержки
+polyfillCountryFlagEmojis()
 
 const tg = window.Telegram?.WebApp
 if (tg) {
