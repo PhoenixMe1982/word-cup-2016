@@ -5,6 +5,7 @@ const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
 const { lookupMatchId, normTLA } = require('./match-lookup.js')
+const { toRussianName } = require('./names-ru.js')
 
 const TOKEN    = (process.env.BOT_TOKEN || '').trim()
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
@@ -277,6 +278,85 @@ async function pollFootballData() {
     console.log(`[live] poll ok: ${Object.keys(next).length} matches, ${liveCount} live`)
   } catch (e) {
     console.error('[live] poll failed:', e.message)
+  }
+}
+
+// ── Авто-обновление бомбардиров (football-data.org /scorers, бесплатный тариф) ──
+// Голы и сыгранные матчи приходят из API; ассисты free-тариф не отдаёт —
+// они сохраняются из ручных правок (/scorer). Привязка по player.id (fdId).
+
+const lastWord = (s) => s.trim().split(/\s+/).pop().toLowerCase().replace(/ё/g, 'е')
+
+async function pollScorers() {
+  if (!FDORG_TOKEN) return
+  try {
+    const res = await fetch('https://api.football-data.org/v4/competitions/WC/scorers?limit=100', {
+      headers: { 'X-Auth-Token': FDORG_TOKEN },
+    })
+    if (!res.ok) {
+      console.error(`[scorers] football-data.org ${res.status}`)
+      return
+    }
+    const data = await res.json()
+    const fdScorers = data.scorers || []
+    if (fdScorers.length === 0) return
+
+    const current = (await rget(K.scorers)) || []
+    const added = []
+    let changed = false
+
+    for (const s of fdScorers) {
+      const fdId = s.player?.id
+      const tla = normTLA(s.team?.tla || '')
+      const goals = s.goals || 0
+      const matches = s.playedMatches || 0
+      if (!fdId || !tla) continue
+
+      let row = current.find(r => r.fdId === fdId)
+      if (!row) {
+        // Игрок мог быть добавлен вручную — ищем по команде и фамилии
+        const ru = toRussianName(s.player.name)
+        row = current.find(r => !r.fdId && r.team === tla && lastWord(r.name) === lastWord(ru.name))
+        if (row) {
+          row.fdId = fdId
+          changed = true
+        } else {
+          row = {
+            rank: current.length + 1,
+            name: ru.name, team: tla, club: '',
+            goals: 0, assists: 0, matches: 0,
+            avatar: '⚽', fdId,
+          }
+          current.push(row)
+          added.push({ name: ru.name, tla, goals, exact: ru.exact })
+          changed = true
+        }
+      }
+      if (row.goals !== goals || row.matches !== matches) {
+        row.goals = goals
+        row.matches = matches
+        // Ассисты free-тариф не отдаёт (null) — не трогаем ручное значение
+        if (s.assists != null) row.assists = s.assists
+        changed = true
+      }
+    }
+
+    if (!changed) return
+    current.sort((a, b) => b.goals - a.goals || b.assists - a.assists)
+    current.forEach((r, i) => { r.rank = i + 1 })
+    await rset(K.scorers, current)
+    console.log(`[scorers] synced: ${fdScorers.length} from API, ${added.length} new`)
+
+    if (added.length > 0 && ADMIN_ID) {
+      const lines = added.map(a =>
+        `⚽ ${a.name} (${a.tla}) — ${a.goals} гол.` +
+        (a.exact ? '' : '\n⚠️ имя транслитерировано автоматически — проверь: /scorer ren N Имя')
+      )
+      bot.api.sendMessage(ADMIN_ID, `🥅 *Новые бомбардиры (авто)*\n\n${lines.join('\n')}`,
+        { parse_mode: 'Markdown' }).catch(() => {})
+    }
+  } catch (e) {
+    console.error('[scorers] poll failed:', e.message)
   }
 }
 
@@ -563,6 +643,18 @@ function applyScorerLine(args, current) {
     return `🗑 Удалён: ${removed.name} (${removed.team})`
   }
 
+  // ren N Новое Имя — переименовать (привязка fdId к API сохраняется)
+  if (args.toLowerCase().startsWith('ren ')) {
+    const m = args.slice(4).trim().match(/^(\d+)\s+(.+)$/)
+    if (!m) return '❌ Формат: /scorer ren N Новое Имя'
+    const n = parseInt(m[1])
+    if (!n || n < 1 || n > current.length)
+      return `❌ ren: номер игрока от 1 до ${current.length}`
+    const old = current[n - 1].name
+    current[n - 1].name = m[2].trim()
+    return `✏️ ${old} → ${current[n - 1].name}`
+  }
+
   // N голы ассисты [матчи] — обновить игрока
   const parts = args.split(/\s+/)
   const idx = parseInt(parts[0])
@@ -596,7 +688,7 @@ bot.command('scorer', async (ctx) => {
       `*Бомбардиры:*\n\n${list.join('\n') || '— пусто —'}\n\n` +
       `📝 Обновить: \`/scorer N голы ассисты [матчи]\`\n` +
       `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\`\n` +
-      `🗑 Удалить: \`/scorer del N\``,
+      `🗑 Удалить: \`/scorer del N\` · ✏️ Имя: \`/scorer ren N Имя\``,
       { parse_mode: 'Markdown' }
     )
   }
@@ -721,7 +813,9 @@ app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
 
 if (FDORG_TOKEN) {
   pollFootballData()
+  pollScorers()
   setInterval(pollFootballData, 5 * 60 * 1000)
+  setInterval(pollScorers, 5 * 60 * 1000)
   console.log('⚽ Live poller started (football-data.org, every 5 min)')
 } else {
   console.warn('⚠️ FDORG_TOKEN not set — live poller disabled, /api/live will be empty')
