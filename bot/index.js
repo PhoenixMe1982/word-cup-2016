@@ -532,76 +532,80 @@ bot.command('photo', async (ctx) => {
   return ctx.reply(`✅ Готово: ${sent}/${total} отправлено, ${failed} ошибок`)
 })
 
+// Обрабатывает одну строку команды /scorer; мутирует current, возвращает текст ответа
+function applyScorerLine(args, current) {
+  // add Имя TLA голы ассисты [матчи]
+  if (args.toLowerCase().startsWith('add ')) {
+    const parts = args.slice(4).trim().split(/\s+/)
+    // Формат: последние 2-3 — числа; перед ними — TLA (3-4 буквы); перед TLA — имя
+    const numParts = []
+    let i = parts.length - 1
+    while (i >= 0 && !isNaN(parseInt(parts[i]))) { numParts.unshift(parseInt(parts[i])); i-- }
+    const tla  = parts[i] ? parts[i].toUpperCase() : null
+    const name = parts.slice(0, i).join(' ')
+    if (!name || !tla || numParts.length < 2)
+      return '❌ Формат: /scorer add Имя TLA голы ассисты [матчи]'
+    current.push({
+      rank: current.length + 1,
+      name, team: tla, club: '',
+      goals: numParts[0], assists: numParts[1], matches: numParts[2] ?? 0,
+      avatar: '⚽',
+    })
+    return `✅ Добавлен: ${name} (${tla}) ⚽${numParts[0]} 🅰️${numParts[1]} 🎮${numParts[2] ?? 0}`
+  }
+
+  // del N — удалить игрока по номеру
+  if (args.toLowerCase().startsWith('del ')) {
+    const n = parseInt(args.slice(4))
+    if (!n || n < 1 || n > current.length)
+      return `❌ del: номер игрока от 1 до ${current.length}`
+    const [removed] = current.splice(n - 1, 1)
+    return `🗑 Удалён: ${removed.name} (${removed.team})`
+  }
+
+  // N голы ассисты [матчи] — обновить игрока
+  const parts = args.split(/\s+/)
+  const idx = parseInt(parts[0])
+  if (!idx || idx < 1 || idx > current.length)
+    return `❌ Номер игрока от 1 до ${current.length}. Добавить: /scorer add Имя TLA голы ассисты · Удалить: /scorer del N`
+  const goals   = parseInt(parts[1])
+  const assists = parseInt(parts[2])
+  const matches = parseInt(parts[3])
+  if (isNaN(goals) || isNaN(assists)) return '❌ Формат: /scorer N голы ассисты [матчи]'
+  const player = current[idx - 1]
+  player.goals = goals
+  player.assists = assists
+  if (!isNaN(matches)) player.matches = matches
+  return `✅ ${player.name}: ⚽${player.goals} 🅰️${player.assists} 🎮${player.matches}`
+}
+
 bot.command('scorer', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
-  const args = ctx.message.text.replace(/^\/scorer\s*/, '').trim()
   const current = (await rget(K.scorers)) || []
 
-  if (!args) {
-    const lines = current.map((s, i) =>
+  // Каждая строка сообщения — отдельная команда: можно вставлять пакетом
+  const lines = ctx.message.text.split('\n')
+    .map(l => l.replace(/^\/scorer(@\S+)?\s*/i, '').trim())
+    .filter((l, i) => i === 0 || l)
+
+  if (lines.length === 1 && !lines[0]) {
+    const list = current.map((s, i) =>
       `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}`
     )
     return ctx.reply(
-      `*Бомбардиры:*\n\n${lines.join('\n')}\n\n` +
+      `*Бомбардиры:*\n\n${list.join('\n') || '— пусто —'}\n\n` +
       `📝 Обновить: \`/scorer N голы ассисты [матчи]\`\n` +
-      `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\``,
+      `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\`\n` +
+      `🗑 Удалить: \`/scorer del N\``,
       { parse_mode: 'Markdown' }
     )
   }
 
-  // /scorer add Имя TLA голы ассисты [матчи]
-  if (args.toLowerCase().startsWith('add ')) {
-    const parts = args.slice(4).trim().split(/\s+/)
-    if (parts.length < 4)
-      return ctx.reply('❌ Формат: /scorer add Имя TLA голы ассисты [матчи]\nПример: /scorer add Pulisic USA 3 1 4')
-    const team    = parts[parts.length - 1].length <= 4 && isNaN(parseInt(parts[parts.length - 1]))
-      ? null : null // разбираем ниже
-    // Формат: последние 2-3 — числа; перед ними — TLA (3-4 буквы); перед TLA — имя (остальное)
-    const numParts = []
-    let i = parts.length - 1
-    while (i >= 0 && !isNaN(parseInt(parts[i]))) { numParts.unshift(parseInt(parts[i])); i-- }
-    const tla     = parts[i] ? parts[i].toUpperCase() : null
-    const name    = parts.slice(0, i).join(' ')
-    if (!name || !tla || numParts.length < 2)
-      return ctx.reply('❌ Формат: /scorer add Имя TLA голы ассисты [матчи]\nПример: /scorer add Pulisic USA 3 1 4')
-    const newPlayer = {
-      rank: current.length + 1,
-      name,
-      team: tla,
-      club: '',
-      goals:   numParts[0],
-      assists: numParts[1],
-      matches: numParts[2] ?? 0,
-      avatar: '⚽',
-    }
-    current.push(newPlayer)
-    current.sort((a, b) => b.goals - a.goals || b.assists - a.assists)
-    current.forEach((s, j) => { s.rank = j + 1 })
-    await rset(K.scorers, current)
-    return ctx.reply(`✅ Добавлен: ${newPlayer.name} (${newPlayer.team}) ⚽${newPlayer.goals} 🅰️${newPlayer.assists} 🎮${newPlayer.matches}`)
-  }
-
-  const parts = args.split(/\s+/)
-  const idx = parseInt(parts[0])
-  if (!idx || idx < 1 || idx > current.length)
-    return ctx.reply(`❌ Номер игрока от 1 до ${current.length}. Для добавления: /scorer add Имя TLA голы ассисты`)
-
-  const goals   = parseInt(parts[1])
-  const assists = parseInt(parts[2])
-  const matches = parseInt(parts[3])
-  if (isNaN(goals) || isNaN(assists))
-    return ctx.reply('❌ Формат: /scorer N голы ассисты [матчи]')
-
-  const player = current[idx - 1]
-  player.goals   = goals
-  player.assists = assists
-  if (!isNaN(matches)) player.matches = matches
-
+  const replies = lines.filter(Boolean).map(line => applyScorerLine(line, current))
   current.sort((a, b) => b.goals - a.goals || b.assists - a.assists)
   current.forEach((s, i) => { s.rank = i + 1 })
-
   await rset(K.scorers, current)
-  return ctx.reply(`✅ ${player.name}: ⚽${player.goals} 🅰️${player.assists} 🎮${player.matches}`)
+  return ctx.reply(replies.join('\n'))
 })
 
 bot.command('scorer_reset', async (ctx) => {
