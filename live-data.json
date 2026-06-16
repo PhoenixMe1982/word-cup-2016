@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-06-12T05:14:33.232Z",
+  "_updated": "2026-06-16T05:39:33.949Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
@@ -13,43 +13,69 @@
       "scoreAway": 1
     },
     "m03": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 1
     },
     "m04": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 4,
+      "scoreAway": 1
     },
     "m05": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 1
     },
     "m06": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 1
     },
     "m07": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 0,
+      "scoreAway": 1
     },
     "m08": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 2,
+      "scoreAway": 0
     },
     "m09": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 7,
+      "scoreAway": 1
     },
     "m10": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 2,
+      "scoreAway": 2
     },
     "m11": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 0
     },
     "m12": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 5,
+      "scoreAway": 1
     },
     "m13": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 0,
+      "scoreAway": 0
     },
     "m14": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 1
     },
     "m16": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 2,
+      "scoreAway": 2
     },
     "m17": {
       "status": "upcoming"
@@ -214,7 +240,9 @@
       "status": "upcoming"
     },
     "m15": {
-      "status": "upcoming"
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 1
     },
     "m39": {
       "status": "upcoming"
