@@ -4,3 +4,4 @@ dist/
 bot/node_modules/
 bot/.env
 bot/users.json
+screenshots/
