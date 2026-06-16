@@ -6,6 +6,7 @@ import PlayPage from './pages/PlayPage.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import PredictionPanel from './components/PredictionPanel.jsx'
+import SaluteWatcher from './components/SaluteWatcher.jsx'
 import { LiveDataProvider } from './LiveDataContext.jsx'
 
 const SEEN_KEY = 'wc2026_predictionSeen'
@@ -55,6 +56,7 @@ export default function App() {
 
   return (
     <LiveDataProvider>
+      <SaluteWatcher />
       <div className="relative min-h-screen" style={{ background: '#F5F6FA' }}>
         <div className="tab-transition">
           {pages[tab] ?? pages.home}
