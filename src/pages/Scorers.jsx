@@ -108,14 +108,10 @@ export default function Scorers() {
     ? Math.max(sorted[0]?.goals || 0, 1)
     : Math.max(sorted[0]?.assists || 0, 1)
 
-  // Претенденты на Золотую бутсу: все игроки с максимальным показателем.
-  // Если максимум у одного — показываем его одного; если у нескольких — всех (как со-лидеров).
-  const contenders = sorted
-    .filter((s) => (view === 'goals' ? s.goals : s.assists) === maxVal)
-    .map((s) => ({ ...s, rank: 1 }))
+  // Претенденты на Золотую бутсу для верхнего блока: все игроки с максимальным
+  // показателем. Один лидер — показываем одного; несколько с равным максимумом — всех.
+  const contenders = sorted.filter((s) => (view === 'goals' ? s.goals : s.assists) === maxVal)
 
-  const leader = sorted[0]
-  const leaderStat = leader ? (view === 'goals' ? leader.goals : leader.assists) : null
   const leaderLabel = view === 'goals' ? 'голов' : 'ассистов'
 
   return (
@@ -134,22 +130,31 @@ export default function Scorers() {
           <div className="text-5xl">⚽</div>
         </div>
 
-        {/* Leader Card */}
-        {leader ? (
+        {/* Блок претендентов на Золотую бутсу (макс. показатель) */}
+        {contenders.length > 0 ? (
           <div
-            className="mt-4 p-4 flex items-center gap-4"
+            className="mt-4 p-4"
             style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
           >
-            <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-3 mb-2">
               <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#C9A800' }}>
-                {view === 'goals' ? 'Фаворит — Золотая бутса' : 'Лидер по ассистам'}
+                {view === 'goals'
+                  ? (contenders.length > 1 ? 'Претенденты — Золотая бутса' : 'Фаворит — Золотая бутса')
+                  : (contenders.length > 1 ? 'Лидеры по ассистам' : 'Лидер по ассистам')}
               </div>
-              <div className="text-lg font-black truncate uppercase" style={{ color: '#111827' }}>{leader.name}</div>
-              <div className="text-xs" style={{ color: '#6B7280' }}>{TEAMS[leader.team]?.flag} {leader.club || TEAMS[leader.team]?.name}</div>
+              <div className="flex items-baseline gap-1 flex-shrink-0">
+                <span className="text-3xl font-black leading-none" style={{ color: '#C9A800' }}>{maxVal}</span>
+                <span className="text-[10px]" style={{ color: '#9CA3AF' }}>{leaderLabel}</span>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-4xl font-black" style={{ color: '#C9A800' }}>{leaderStat}</div>
-              <div className="text-[10px]" style={{ color: '#9CA3AF' }}>{leaderLabel}</div>
+            <div className="space-y-1.5">
+              {contenders.map((c) => (
+                <div key={c.name} className="flex items-center gap-2 min-w-0">
+                  <span className="text-base flex-shrink-0">{TEAMS[c.team]?.flag}</span>
+                  <span className="text-base font-black uppercase truncate" style={{ color: '#111827' }}>{c.name}</span>
+                  <span className="text-[11px] truncate" style={{ color: '#6B7280' }}>{c.club || TEAMS[c.team]?.name}</span>
+                </div>
+              ))}
             </div>
           </div>
         ) : (
@@ -187,7 +192,7 @@ export default function Scorers() {
 
       {/* List */}
       <div className="px-4 pb-4">
-        {contenders.length === 0 ? (
+        {sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="text-5xl">{view === 'goals' ? '⚽' : '🎯'}</div>
             <p className="text-xs uppercase tracking-wider text-center" style={{ color: '#9CA3AF' }}>
@@ -195,7 +200,7 @@ export default function Scorers() {
             </p>
           </div>
         ) : (
-          contenders.map((scorer) => (
+          sorted.map((scorer) => (
             <ScorerRow key={scorer.name} scorer={scorer} maxVal={maxVal} view={view} />
           ))
         )}
