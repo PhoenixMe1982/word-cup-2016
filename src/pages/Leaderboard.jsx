@@ -36,6 +36,52 @@ function RankBadge({ rank }) {
   )
 }
 
+// Наряд аватарки по месту — те же правила, что в хедере главной
+function lbMedal(rank) {
+  if (rank === 1) return { ring: '#FFD700', crown: '#FFD700', crownSize: 15 }
+  if (rank === 2) return { ring: '#B8B8B8', crown: '#B8B8B8', crownSize: 12 }
+  if (rank === 3) return { ring: '#CD7F32', crown: null, crownSize: 0 }
+  return { ring: '#111827', crown: null, crownSize: 0 }
+}
+
+function LbAvatar({ rank, firstName, photoUrl }) {
+  const m = lbMedal(rank)
+  const top3 = rank <= 3
+  const initial = (firstName?.[0] || '?').toUpperCase()
+  return (
+    <div className="relative flex-shrink-0">
+      {m.crown && (
+        <span
+          className="absolute z-10 leading-none"
+          style={{
+            top: -m.crownSize * 0.5,
+            left: '50%',
+            fontSize: m.crownSize,
+            transform: 'translateX(-60%) rotate(-22deg)',
+            filter: rank === 2 ? 'grayscale(1) brightness(1.7)' : 'none',
+            textShadow: '0 1px 2px rgba(0,0,0,0.25)',
+          }}
+        >
+          👑
+        </span>
+      )}
+      <div
+        className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center"
+        style={{
+          background: 'linear-gradient(135deg,#C9A800,#f0c400)',
+          border: `${top3 ? 3 : 2}px solid ${m.ring}`,
+          boxShadow: top3 ? `0 0 0 1px ${m.ring}55` : 'none',
+        }}
+      >
+        {photoUrl
+          ? <img src={photoUrl} alt={firstName} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none' }} />
+          : <span className="text-sm font-black" style={{ color: '#fff' }}>{initial}</span>
+        }
+      </div>
+    </div>
+  )
+}
+
 function PredRow({ item }) {
   const match = MATCH_MAP[item.matchId]
   if (!match) return null
@@ -164,9 +210,10 @@ export default function Leaderboard() {
     }
   }
 
-  const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
-    ? String(window.Telegram.WebApp.initDataUnsafe.user.id)
-    : null
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
+  const tgUserId = tgUser?.id ? String(tgUser.id) : null
+  // Своё фото профиля доступно мини-аппе только для текущего пользователя
+  const myPhotoUrl = tgUser?.photo_url || null
 
   useEffect(() => {
     async function load() {
@@ -290,12 +337,11 @@ export default function Leaderboard() {
                   onClick={() => togglePredictions(entry.userId)}
                 >
                   <RankBadge rank={entry.rank} />
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg,#C9A800,#f0c400)', color: '#fff' }}
-                  >
-                    {(entry.firstName?.[0] || '?').toUpperCase()}
-                  </div>
+                  <LbAvatar
+                    rank={entry.rank}
+                    firstName={entry.firstName}
+                    photoUrl={isMe ? myPhotoUrl : (entry.photoUrl || null)}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold truncate" style={{ color: '#111827' }}>
                       {entry.firstName || 'Игрок'}{isMe ? ' (ты)' : ''}
