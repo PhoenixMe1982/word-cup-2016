@@ -12,9 +12,6 @@ function ScorerRow({ scorer, maxVal, view }) {
   const team = TEAMS[scorer.team]
   const medal = MEDAL_COLORS[scorer.rank]
   const mainStat = view === 'goals' ? scorer.goals : scorer.assists
-  const subStat  = view === 'goals'
-    ? `${scorer.assists} пас · ${scorer.matches} матч`
-    : `${scorer.matches} матч`
 
   return (
     <div
@@ -89,7 +86,6 @@ function ScorerRow({ scorer, maxVal, view }) {
               {view === 'goals' ? 'гол' : 'пас'}
             </span>
           </div>
-          <div className="text-[10px]" style={{ color: '#6B7280' }}>{subStat}</div>
         </div>
       </div>
     </div>
@@ -111,6 +107,12 @@ export default function Scorers() {
   const maxVal = view === 'goals'
     ? Math.max(sorted[0]?.goals || 0, 1)
     : Math.max(sorted[0]?.assists || 0, 1)
+
+  // Претенденты на Золотую бутсу: все игроки с максимальным показателем.
+  // Если максимум у одного — показываем его одного; если у нескольких — всех (как со-лидеров).
+  const contenders = sorted
+    .filter((s) => (view === 'goals' ? s.goals : s.assists) === maxVal)
+    .map((s) => ({ ...s, rank: 1 }))
 
   const leader = sorted[0]
   const leaderStat = leader ? (view === 'goals' ? leader.goals : leader.assists) : null
@@ -185,7 +187,7 @@ export default function Scorers() {
 
       {/* List */}
       <div className="px-4 pb-4">
-        {sorted.length === 0 ? (
+        {contenders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="text-5xl">{view === 'goals' ? '⚽' : '🎯'}</div>
             <p className="text-xs uppercase tracking-wider text-center" style={{ color: '#9CA3AF' }}>
@@ -193,7 +195,7 @@ export default function Scorers() {
             </p>
           </div>
         ) : (
-          sorted.map((scorer) => (
+          contenders.map((scorer) => (
             <ScorerRow key={scorer.name} scorer={scorer} maxVal={maxVal} view={view} />
           ))
         )}

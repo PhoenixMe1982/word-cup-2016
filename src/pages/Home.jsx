@@ -29,21 +29,56 @@ function UserAvatar({ onTab }) {
       .catch(() => {})
   }, [])
 
+  // Наряд аватарки по месту в лидерборде
+  const medal = rank === 1
+    ? { ring: '#FFD700', crown: '#FFD700', crownSize: 22 }
+    : rank === 2
+    ? { ring: '#B8B8B8', crown: '#B8B8B8', crownSize: 17 }
+    : rank === 3
+    ? { ring: '#CD7F32', crown: null, crownSize: 0 }
+    : { ring: '#111827', crown: null, crownSize: 0 }
+
   return (
-    <button onClick={() => onTab('leaderboard')} className="flex flex-col items-center gap-0.5">
-      <div
-        className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg,#C9A800,#f0c400)', border: '2px solid rgba(201,168,0,0.25)' }}
-      >
-        {photoUrl
-          ? <img src={photoUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none' }} />
-          : <span className="text-base font-black" style={{ color: '#fff' }}>{initial}</span>
-        }
+    <button onClick={() => onTab('leaderboard')} className="flex flex-col items-center gap-1">
+      {/* Номер места над аватаркой */}
+      <div className="text-sm font-black leading-none h-4" style={{ color: '#111827' }}>
+        {rank !== null ? `#${rank}` : ''}
       </div>
-      <div className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: '#111827' }}>{name}</div>
-      <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
-        {pts !== null ? `${pts} очк` : rank !== null ? `#${rank}` : 'Лидерборд'}
+      <div className="relative flex-shrink-0">
+        {medal.crown && (
+          <span
+            className="absolute z-10 leading-none"
+            style={{
+              top: -medal.crownSize * 0.55,
+              left: '50%',
+              fontSize: medal.crownSize,
+              transform: 'translateX(-60%) rotate(-22deg)',
+              color: medal.crown,
+              filter: rank === 2 ? 'grayscale(1) brightness(1.7)' : 'none',
+              textShadow: '0 1px 2px rgba(0,0,0,0.25)',
+            }}
+          >
+            👑
+          </span>
+        )}
+        <div
+          className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center"
+          style={{
+            background: 'linear-gradient(135deg,#C9A800,#f0c400)',
+            border: `${rank !== null && rank <= 3 ? 4 : 3}px solid ${medal.ring}`,
+            boxShadow: rank !== null && rank <= 3 ? `0 0 0 1px ${medal.ring}55, 0 2px 8px rgba(0,0,0,0.18)` : '0 1px 4px rgba(0,0,0,0.12)',
+          }}
+        >
+          {photoUrl
+            ? <img src={photoUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none' }} />
+            : <span className="text-2xl font-black" style={{ color: '#fff' }}>{initial}</span>
+          }
+        </div>
       </div>
+      <div className="text-sm font-bold truncate max-w-[80px]" style={{ color: '#111827' }}>{name}</div>
+      {pts !== null && (
+        <div className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>{pts} очк</div>
+      )}
     </button>
   )
 }
@@ -316,7 +351,14 @@ export default function Home({ onTab }) {
 
   const liveMatches = matches.filter((m) => m.status === 'live' || isTimeLive(m))
   const allFinished = matches.filter(m => m.status === 'finished')
-  const finishedMatches = allFinished.slice(0, 5)
+  // Самые свежие результаты сверху: сортируем по дате матча по убыванию
+  const finishedMatches = [...allFinished]
+    .sort((a, b) => {
+      const da = matchUTCDate(a.date, a.time)?.getTime() ?? 0
+      const db = matchUTCDate(b.date, b.time)?.getTime() ?? 0
+      return db - da
+    })
+    .slice(0, 5)
   const upcomingMatches = matches.filter((m) => m.status === 'upcoming' && !isTimeLive(m))
 
   const timeBasedFinished = matches.filter(m => {
@@ -436,7 +478,7 @@ export default function Home({ onTab }) {
             <h1 className="text-2xl font-black leading-tight tracking-wide uppercase" style={{ color: '#111827' }}>
               FIFA World Cup
             </h1>
-            <p className="text-lg font-black" style={{ color: '#C9A800', letterSpacing: '0.08em' }}>
+            <p className="text-lg font-black" style={{ color: '#111827', letterSpacing: '0.08em' }}>
               2026™
             </p>
           </div>
