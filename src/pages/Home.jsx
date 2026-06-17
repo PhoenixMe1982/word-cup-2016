@@ -232,7 +232,7 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
           </div>
           <button
             onClick={() => setSaved(false)}
-            className="text-[10px] font-bold uppercase px-2 py-1 rounded"
+            className="text-[10px] font-bold uppercase px-2 py-1 rounded-2xl"
             style={{ background: 'rgba(0,0,0,0.05)', color: '#6B7280' }}
           >
             Изменить
@@ -244,7 +244,7 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
             type="number" min="0" max="20"
             value={homeVal}
             onChange={e => { const v = e.target.value; setHomeVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
-            className="w-12 h-12 text-center text-xl font-black rounded-xl outline-none"
+            className="w-12 h-12 text-center text-xl font-black rounded-2xl outline-none"
             style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
           />
           <span className="text-lg font-bold" style={{ color: '#9CA3AF' }}>:</span>
@@ -252,13 +252,13 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
             type="number" min="0" max="20"
             value={awayVal}
             onChange={e => { const v = e.target.value; setAwayVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
-            className="w-12 h-12 text-center text-xl font-black rounded-xl outline-none"
+            className="w-12 h-12 text-center text-xl font-black rounded-2xl outline-none"
             style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
           />
           <button
             onClick={handleSave}
             disabled={!canSubmit}
-            className="flex-1 py-3 rounded-xl text-sm font-black ml-1"
+            className="flex-1 py-3 rounded-2xl text-sm font-black ml-1"
             style={{
               background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)',
               color: canSubmit ? '#fff' : '#9CA3AF',
@@ -285,7 +285,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
         style={{
           background: '#FFFFFF',
           border: isExpanded ? '1.5px solid rgba(201,168,0,0.4)' : '1px solid rgba(0,0,0,0.07)',
-          borderRadius: 10,
+          borderRadius: 16,
           boxShadow: isExpanded ? '0 2px 12px rgba(201,168,0,0.1)' : '0 1px 4px rgba(0,0,0,0.05)',
         }}
         onClick={onToggle}
@@ -612,7 +612,7 @@ export default function Home({ onTab }) {
           {totalPages > 1 && (
             <button
               onClick={() => onTab('worldcup.schedule')}
-              className="mt-2 w-full text-[10px] font-bold uppercase tracking-wide py-1.5 text-center rounded-lg"
+              className="mt-2 w-full text-[10px] font-bold uppercase tracking-wide py-1.5 text-center rounded-2xl"
               style={{ color: '#9CA3AF', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
             >
               Всё расписание →

@@ -4,7 +4,7 @@ import { SQUADS } from '../data/squads.js'
 
 function SquadPanel({ squad }) {
   return (
-    <div className="ml-5 mt-1.5 p-2.5 rounded-lg space-y-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
+    <div className="ml-5 mt-1.5 p-2.5 rounded-2xl space-y-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
       {squad.coach && (
         <div className="text-[10px] font-bold mb-1" style={{ color: '#6B7280' }}>
           🎩 {squad.coach}
@@ -104,7 +104,7 @@ function HistoryCard({ wc, onClick, isSelected }) {
       {isSelected && (
         <div className="px-4 pb-4 space-y-3">
           {/* Podium with squad taps */}
-          <div className="rounded-xl p-3" style={{ background: 'rgba(201,168,0,0.07)' }}>
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,0,0.07)' }}>
             <div className="text-[10px] font-bold mb-2" style={{ color: '#9CA3AF' }}>ИТОГОВЫЕ МЕСТА</div>
             <div className="space-y-1">
               {podiumRows.map(({ role, medal, name, flag, extra }) => {
@@ -113,7 +113,7 @@ function HistoryCard({ wc, onClick, isSelected }) {
                 return (
                   <div key={role}>
                     <div
-                      className={`flex items-center gap-2 py-1 rounded-lg ${hasSquad ? 'cursor-pointer active:opacity-70' : ''}`}
+                      className={`flex items-center gap-2 py-1 rounded-2xl ${hasSquad ? 'cursor-pointer active:opacity-70' : ''}`}
                       style={{ paddingLeft: 4, paddingRight: 4 }}
                       onClick={hasSquad ? (e) => toggleSquad(role, e) : undefined}
                     >
@@ -143,7 +143,7 @@ function HistoryCard({ wc, onClick, isSelected }) {
 
           {/* Scorer */}
           <div
-            className="rounded-xl p-3 flex items-center gap-3"
+            className="rounded-2xl p-3 flex items-center gap-3"
             style={{ background: 'rgba(0,0,0,0.03)' }}
           >
             <span className="text-xl">👟</span>
@@ -162,7 +162,7 @@ function HistoryCard({ wc, onClick, isSelected }) {
             ].map((s) => (
               <div
                 key={s.label}
-                className="rounded-xl p-2 text-center"
+                className="rounded-2xl p-2 text-center"
                 style={{ background: 'rgba(0,0,0,0.04)' }}
               >
                 <div className="text-sm font-black" style={{ color: '#111827' }}>{s.value}</div>
@@ -173,7 +173,7 @@ function HistoryCard({ wc, onClick, isSelected }) {
 
           {/* Fact */}
           <div
-            className="rounded-xl p-3"
+            className="rounded-2xl p-3"
             style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)' }}
           >
             <div className="text-[10px] font-bold mb-1" style={{ color: '#0EA5E9' }}>⚡ ИСТОРИЧЕСКИЙ ФАКТ</div>
@@ -215,7 +215,7 @@ function ChampModal({ name, years, flag, onClose }) {
             {years.map((y) => (
               <div
                 key={y}
-                className="px-3 py-1.5 rounded-xl text-sm font-black"
+                className="px-3 py-1.5 rounded-2xl text-sm font-black"
                 style={{ background: 'rgba(201,168,0,0.10)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.25)' }}
               >
                 🏆 {y}
@@ -226,7 +226,7 @@ function ChampModal({ name, years, flag, onClose }) {
         <div className="px-5 pb-5">
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl text-sm font-black"
+            className="w-full py-2.5 rounded-2xl text-sm font-black"
             style={{ background: 'rgba(0,0,0,0.06)', color: '#6B7280' }}
           >
             Закрыть
@@ -305,7 +305,7 @@ export default function History() {
                 <div
                   key={name}
                   onClick={() => setSelectedChamp(name)}
-                  className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer active:opacity-70 transition-opacity"
+                  className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer active:opacity-70 transition-opacity"
                   style={{
                     background: i === 0 ? 'rgba(201,168,0,0.10)' : 'rgba(0,0,0,0.04)',
                     border: i === 0 ? '1px solid rgba(201,168,0,0.25)' : '1px solid rgba(0,0,0,0.07)',

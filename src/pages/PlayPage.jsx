@@ -41,7 +41,7 @@ function ScoreInput({ value, onChange, disabled }) {
         if (!isNaN(n) && n >= 0 && n <= 20) onChange(n)
       }}
       disabled={disabled}
-      className="w-10 h-10 text-center text-lg font-black rounded-lg outline-none"
+      className="w-10 h-10 text-center text-lg font-black rounded-2xl outline-none"
       style={{
         background: disabled ? 'rgba(0,0,0,0.04)' : '#F5F6FA',
         border: disabled ? '1.5px solid rgba(0,0,0,0.08)' : '1.5px solid rgba(201,168,0,0.4)',
@@ -55,17 +55,17 @@ function ScoreInput({ value, onChange, disabled }) {
 
 function PointsBadge({ pts }) {
   if (pts === 3) return (
-    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg" style={{ background: 'rgba(22,163,74,0.12)', border: '1.5px solid rgba(22,163,74,0.3)' }}>
+    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: 'rgba(22,163,74,0.12)', border: '1.5px solid rgba(22,163,74,0.3)' }}>
       <span className="text-sm font-black" style={{ color: '#16A34A' }}>+3</span>
     </div>
   )
   if (pts === 1) return (
-    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg" style={{ background: 'rgba(201,168,0,0.1)', border: '1.5px solid rgba(201,168,0,0.3)' }}>
+    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: 'rgba(201,168,0,0.1)', border: '1.5px solid rgba(201,168,0,0.3)' }}>
       <span className="text-sm font-black" style={{ color: '#C9A800' }}>+1</span>
     </div>
   )
   return (
-    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)', border: '1.5px solid rgba(0,0,0,0.1)' }}>
+    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: 'rgba(0,0,0,0.04)', border: '1.5px solid rgba(0,0,0,0.1)' }}>
       <span className="text-sm font-black" style={{ color: '#9CA3AF' }}>0</span>
     </div>
   )
@@ -148,7 +148,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
       style={{
         background: '#FFFFFF',
         border: cardBorder,
-        borderRadius: 8,
+        borderRadius: 16,
         boxShadow: cardShadow,
         transition: 'border 0.3s ease, box-shadow 0.3s ease',
       }}
@@ -171,7 +171,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
         </span>
         {isSettled && myPred != null && (
           <span
-            className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded"
+            className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-2xl"
             style={{
               background: myPred.pts === 3 ? 'rgba(22,163,74,0.1)' : myPred.pts === 1 ? 'rgba(201,168,0,0.1)' : 'rgba(0,0,0,0.05)',
               color: myPred.pts === 3 ? '#16A34A' : myPred.pts === 1 ? '#C9A800' : '#9CA3AF',
@@ -205,7 +205,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
               {isSettled && myPred != null && <PointsBadge pts={myPred.pts} />}
               <button
                 onClick={handleShare}
-                className="w-10 h-10 rounded-xl text-base flex items-center justify-center flex-shrink-0"
+                className="w-10 h-10 rounded-2xl text-base flex items-center justify-center flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg,#2a00ff,#00299d)', border: '1px solid #0b0077', color: '#FFFFFF', boxShadow: '0 2px 8px rgba(42,0,255,0.3)' }}
               >
                 📤
@@ -218,7 +218,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
                   <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
                   <span className="text-sm" style={{ color: '#9CA3AF' }}>:</span>
                   <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
-                  <span className="text-[8px] font-black px-1 py-0.5 rounded ml-1" style={{ background: LIVE_YELLOW, color: '#111827' }}>LIVE</span>
+                  <span className="text-[8px] font-black px-1 py-0.5 rounded-2xl ml-1" style={{ background: LIVE_YELLOW, color: '#111827' }}>LIVE</span>
                 </div>
               ) : null}
               <div
@@ -240,8 +240,8 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
               {saved && !hasChanged ? (
                 <button
                   onClick={handleShare}
-                  className="w-10 h-10 rounded-lg text-base flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(201,168,0,0.12)', border: '1px solid rgba(201,168,0,0.3)', color: '#C9A800' }}
+                  className="w-10 h-10 rounded-2xl text-base flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#2a00ff,#00299d)', border: '1px solid #0b0077', color: '#FFFFFF', boxShadow: '0 2px 8px rgba(42,0,255,0.3)' }}
                 >
                   📤
                 </button>
@@ -249,7 +249,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
                 <button
                   onClick={handleSave}
                   disabled={!canSubmit}
-                  className={`w-10 h-10 rounded-lg text-lg font-black flex items-center justify-center flex-shrink-0 ${canSubmit ? 'animate-bounce' : ''}`}
+                  className={`w-10 h-10 rounded-2xl text-lg font-black flex items-center justify-center flex-shrink-0 ${canSubmit ? 'animate-bounce' : ''}`}
                   style={{
                     background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)',
                     color: canSubmit ? '#fff' : '#9CA3AF',
@@ -397,7 +397,7 @@ export default function PlayPage() {
             ].map((s) => (
               <div
                 key={s.l}
-                className="text-center py-2 rounded"
+                className="text-center py-2 rounded-2xl"
                 style={{ background: '#F5F6FA', border: '1px solid rgba(0,0,0,0.06)' }}
               >
                 <div className="text-lg font-black" style={{ color: '#111827' }}>{s.v}</div>
@@ -410,7 +410,7 @@ export default function PlayPage() {
         {/* Not in Telegram warning */}
         {!inTg && (
           <div
-            className="p-3 text-xs text-center rounded-lg"
+            className="p-3 text-xs text-center rounded-2xl"
             style={{ background: 'rgba(201,168,0,0.08)', border: '1px solid rgba(201,168,0,0.2)', color: '#C9A800' }}
           >
             📱 Открой приложение в Telegram, чтобы делать прогнозы и участвовать в рейтинге
@@ -419,7 +419,7 @@ export default function PlayPage() {
       </div>
 
       {error && (
-        <div className="mx-4 mb-3 p-3 rounded-lg text-xs text-center" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+        <div className="mx-4 mb-3 p-3 rounded-2xl text-xs text-center" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
           {error}
         </div>
       )}
@@ -487,7 +487,7 @@ export default function PlayPage() {
       {/* Scoring legend */}
       <div className="px-4 mt-4 mb-2">
         <div
-          className="p-3 rounded-lg grid grid-cols-3 gap-2 text-center text-[10px]"
+          className="p-3 rounded-2xl grid grid-cols-3 gap-2 text-center text-[10px]"
           style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
         >
           <div>

@@ -180,7 +180,7 @@ function PredictionMini({ matchId, pred, onSave, saving, inTg }) {
           </div>
           <button
             onClick={() => setSaved(false)}
-            className="text-[10px] font-bold uppercase px-2 py-1 rounded"
+            className="text-[10px] font-bold uppercase px-2 py-1 rounded-2xl"
             style={{ background: 'rgba(0,0,0,0.04)', color: '#6B7280' }}
           >
             Изменить
@@ -192,7 +192,7 @@ function PredictionMini({ matchId, pred, onSave, saving, inTg }) {
             type="number" min="0" max="20"
             value={homeVal}
             onChange={e => { const v = e.target.value; setHomeVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
-            className="w-10 h-10 text-center text-lg font-black rounded-lg outline-none"
+            className="w-10 h-10 text-center text-lg font-black rounded-2xl outline-none"
             style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
           />
           <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>:</span>
@@ -200,13 +200,13 @@ function PredictionMini({ matchId, pred, onSave, saving, inTg }) {
             type="number" min="0" max="20"
             value={awayVal}
             onChange={e => { const v = e.target.value; setAwayVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
-            className="w-10 h-10 text-center text-lg font-black rounded-lg outline-none"
+            className="w-10 h-10 text-center text-lg font-black rounded-2xl outline-none"
             style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
           />
           <button
             onClick={handleSave}
             disabled={!canSubmit}
-            className="flex-1 py-2.5 rounded-lg text-xs font-black ml-1"
+            className="flex-1 py-2.5 rounded-2xl text-xs font-black ml-1"
             style={{
               background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)',
               color: canSubmit ? '#fff' : '#9CA3AF',

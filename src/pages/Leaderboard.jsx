@@ -126,7 +126,7 @@ function PredRow({ item }) {
 
   return (
     <div
-      className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1.5"
+      className="flex items-center gap-2 px-3 py-2 rounded-2xl mb-1.5"
       style={{ background: ptsBg, border: `1px solid ${ptsBdr}` }}
     >
       <span className="text-sm flex-shrink-0">{icon}</span>
@@ -286,7 +286,7 @@ export default function Leaderboard() {
             {entries.length > 0 && (
               <button
                 onClick={shareLeaderboard}
-                className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-2xl text-xs font-black flex items-center gap-1.5"
                 style={{ background: 'linear-gradient(135deg,#2a00ff,#00299d)', color: '#FFFFFF', border: '1px solid #0b0077', boxShadow: '0 2px 8px rgba(42,0,255,0.3)' }}
               >
                 📤 Поделиться
@@ -319,7 +319,7 @@ export default function Leaderboard() {
       </div>
 
       {error && (
-        <div className="mx-4 mb-4 p-3 rounded-lg text-xs text-center" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+        <div className="mx-4 mb-4 p-3 rounded-2xl text-xs text-center" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
           {error}
         </div>
       )}
@@ -338,7 +338,7 @@ export default function Leaderboard() {
             <p className="text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>Рейтинг появится после первых прогнозов</p>
           </div>
           <div
-            className="w-full p-3 text-center text-xs uppercase tracking-wider rounded-lg"
+            className="w-full p-3 text-center text-xs uppercase tracking-wider rounded-2xl"
             style={{ background: 'rgba(201,168,0,0.08)', border: '1px solid rgba(201,168,0,0.2)', color: '#C9A800' }}
           >
             🥇 Делай прогнозы — попади в топ
@@ -423,7 +423,7 @@ export default function Leaderboard() {
 
           {showMyRank && (
             <div
-              className="mt-3 p-3 rounded-lg text-center text-xs"
+              className="mt-3 p-3 rounded-2xl text-center text-xs"
               style={{ background: 'rgba(201,168,0,0.06)', border: '1px solid rgba(201,168,0,0.2)', color: '#C9A800' }}
             >
               Ты на {me.rank}-м месте с {me.pts} очками

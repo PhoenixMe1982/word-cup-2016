@@ -54,7 +54,7 @@ function TeamDetail({ team, onBack }) {
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <button
           onClick={onBack}
-          className="flex items-center justify-center w-8 h-8 rounded"
+          className="flex items-center justify-center w-8 h-8 rounded-2xl"
           style={{ background: 'rgba(201,168,0,0.10)', border: '1px solid rgba(201,168,0,0.25)' }}
         >
           <span style={{ color: '#C9A800', fontSize: 16 }}>‹</span>
@@ -62,7 +62,7 @@ function TeamDetail({ team, onBack }) {
         <span className="text-sm font-semibold" style={{ color: '#6B7280' }}>Сборные</span>
       </div>
 
-      <div className="mx-4 mb-4 p-4 rounded" style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+      <div className="mx-4 mb-4 p-4 rounded-2xl" style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center gap-1">
             {team.emblem ? (
@@ -83,13 +83,13 @@ function TeamDetail({ team, onBack }) {
           <div>
             <div className="text-xl font-bold" style={{ color: '#111827' }}>{team.flag} {team.name}</div>
             {team.debut2026 && (
-              <span className="mt-1 inline-block text-xs font-bold px-2 py-0.5 rounded"
+              <span className="mt-1 inline-block text-xs font-bold px-2 py-0.5 rounded-2xl"
                 style={{ background: 'rgba(22,163,74,0.10)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}>
                 ДЕБЮТ ЧМ 2026
               </span>
             )}
             {team.defunct && (
-              <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded"
+              <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-2xl"
                 style={{ background: 'rgba(156,163,175,0.10)', color: '#9CA3AF', border: '1px solid rgba(156,163,175,0.2)' }}>
                 Историческая сборная
               </span>
@@ -120,7 +120,7 @@ function TeamDetail({ team, onBack }) {
               { label: 'Пропущено',val:team.wc.ga, color: '#9CA3AF' },
               { label: 'Разница', val: team.wc.gf - team.wc.ga, color: team.wc.gf >= team.wc.ga ? '#16A34A' : '#DC2626' },
             ].map(({ label, val, gold, color }) => (
-              <div key={label} className="p-2 rounded text-center" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <div key={label} className="p-2 rounded-2xl text-center" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                 <div className="text-base font-bold score-number"
                   style={{ color: gold ? '#C9A800' : (color || '#111827') }}>
                   {val}
@@ -142,14 +142,14 @@ function TeamDetail({ team, onBack }) {
             .map((pos) => (
               <div key={pos} className="mb-3">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded"
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-2xl"
                     style={{ background: `${POS_COLOR[pos]}22`, color: POS_COLOR[pos], border: `1px solid ${POS_COLOR[pos]}44` }}>
                     {POS_LABEL[pos]}
                   </span>
                 </div>
                 <div className="space-y-1">
                   {grouped[pos].map((pl, i) => (
-                    <div key={i} className="flex items-center justify-between px-3 py-1.5 rounded"
+                    <div key={i} className="flex items-center justify-between px-3 py-1.5 rounded-2xl"
                       style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)' }}>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold w-5 text-center"
@@ -166,7 +166,7 @@ function TeamDetail({ team, onBack }) {
             ))}
         </div>
       ) : (
-        <div className="mx-4 mb-4 p-4 rounded text-center" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)' }}>
+        <div className="mx-4 mb-4 p-4 rounded-2xl text-center" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)' }}>
           <div className="text-sm" style={{ color: '#9CA3AF' }}>Состав не объявлен</div>
         </div>
       )}
@@ -224,7 +224,7 @@ export default function Teams() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск сборной..."
-            className="w-full pl-8 pr-3 py-2 text-sm rounded outline-none"
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-2xl outline-none"
             style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', color: '#111827' }}
           />
         </div>
@@ -236,7 +236,7 @@ export default function Teams() {
             <button
               key={v}
               onClick={() => setFilter(v)}
-              className="px-3 py-1 text-xs font-semibold rounded transition-all"
+              className="px-3 py-1 text-xs font-semibold rounded-2xl transition-all"
               style={filter === v
                 ? { background: 'rgba(201,168,0,0.15)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.35)' }
                 : { background: 'rgba(0,0,0,0.05)', color: '#6B7280', border: '1px solid rgba(0,0,0,0.08)' }}
@@ -251,7 +251,7 @@ export default function Teams() {
             <button
               key={v}
               onClick={() => setSortKey(v)}
-              className="px-2 py-1 text-[10px] font-semibold rounded transition-all"
+              className="px-2 py-1 text-[10px] font-semibold rounded-2xl transition-all"
               style={sortKey === v
                 ? { background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', border: '1px solid rgba(14,165,233,0.3)' }
                 : { background: 'rgba(0,0,0,0.04)', color: '#6B7280', border: '1px solid rgba(0,0,0,0.07)' }}
@@ -287,7 +287,7 @@ export default function Teams() {
             <div
               key={team.id}
               onClick={() => isActive && setSelectedTeam(team)}
-              className="grid items-center px-2 py-2 rounded"
+              className="grid items-center px-2 py-2 rounded-2xl"
               style={{
                 gridTemplateColumns: '24px 1fr 36px 24px 36px 36px 36px 40px',
                 background: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.03)',
