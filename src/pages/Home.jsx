@@ -490,7 +490,7 @@ export default function Home({ onTab }) {
             { v: totalGoals, l: 'Голов' },
             { v: liveCount > 0 ? liveCount : '—', l: 'Live' },
           ].map((s) => (
-            <div key={s.l} className="text-center" style={{ background: '#FFFFFF', borderRadius: 3, padding: '8px 4px', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+            <div key={s.l} className="text-center" style={{ background: '#FFFFFF', borderRadius: 16, padding: '8px 4px', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
               <div className="text-xl font-black" style={{ color: '#111827' }}>{s.v}</div>
               <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>{s.l}</div>
             </div>
@@ -538,7 +538,7 @@ export default function Home({ onTab }) {
                     style={{
                       width: i === upcomingPage ? 14 : 6,
                       height: 6,
-                      borderRadius: 3,
+                      borderRadius: 16,
                       background: i === upcomingPage ? '#C9A800' : 'rgba(0,0,0,0.15)',
                       transition: 'width 0.2s, background 0.2s',
                     }}
@@ -651,7 +651,7 @@ export default function Home({ onTab }) {
             </div>
             <div
               className="p-4"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+              style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
             >
               {topScorers.length === 0 ? (
                 <div className="py-3 text-center text-[11px] uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
@@ -663,7 +663,7 @@ export default function Home({ onTab }) {
                     <div
                       className="w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0"
                       style={{
-                        borderRadius: 3,
+                        borderRadius: 16,
                         background: i === 0 ? 'linear-gradient(135deg,#FFD700,#FF8C00)' : i === 1 ? 'linear-gradient(135deg,#C0C0C0,#909090)' : 'linear-gradient(135deg,#CD7F32,#8B4513)',
                         color: '#fff',
                       }}

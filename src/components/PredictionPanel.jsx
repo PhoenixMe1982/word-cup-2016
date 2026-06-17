@@ -122,7 +122,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
             <button
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center text-sm"
-              style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 3, color: '#6B7280' }}
+              style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 16, color: '#6B7280' }}
             >
               ✕
             </button>
@@ -136,7 +136,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
         style={{
           background: '#FFFFFF',
           border: '1px solid rgba(201,168,0,0.2)',
-          borderRadius: 3,
+          borderRadius: 16,
           boxShadow: '0 2px 12px rgba(201,168,0,0.08)',
         }}
       >
@@ -167,7 +167,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
                 style={{
                   background: '#FFFFFF',
                   border: isActive ? `2px solid ${color}` : `1px solid ${team ? color + '40' : 'rgba(0,0,0,0.08)'}`,
-                  borderRadius: 3,
+                  borderRadius: 16,
                   boxShadow: isActive ? `0 2px 12px ${color}30` : '0 1px 4px rgba(0,0,0,0.06)',
                 }}
               >
@@ -181,7 +181,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
                     </div>
                     <div
                       className="text-[9px] font-black px-1.5 py-0.5 flex-shrink-0"
-                      style={{ background: color + '20', color, borderRadius: 2 }}
+                      style={{ background: color + '20', color, borderRadius: 10 }}
                     >
                       {isActive ? 'ИЗМЕНИТЬ' : '✓'}
                     </div>
@@ -204,7 +204,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
                   style={{
                     background: '#FFFFFF',
                     border: `1px solid ${color}40`,
-                    borderRadius: 3,
+                    borderRadius: 16,
                     boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                   }}
                 >
@@ -220,7 +220,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
                       style={{
                         background: 'rgba(0,0,0,0.04)',
                         border: '1px solid rgba(0,0,0,0.08)',
-                        borderRadius: 2,
+                        borderRadius: 10,
                         padding: '7px 10px',
                         color: '#111827',
                       }}
@@ -242,7 +242,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
                         <span className="flex-1 text-sm font-semibold" style={{ color: '#111827' }}>{team.name}</span>
                         <span
                           className="text-[9px] font-black px-1.5 py-0.5 flex-shrink-0"
-                          style={{ background: 'rgba(0,0,0,0.06)', color: '#9CA3AF', borderRadius: 2 }}
+                          style={{ background: 'rgba(0,0,0,0.06)', color: '#9CA3AF', borderRadius: 10 }}
                         >
                           Гр.{team.group}
                         </span>
@@ -268,12 +268,13 @@ export default function PredictionPanel({ onClose, asPage = false }) {
             style={{
               background: shared
                 ? 'linear-gradient(135deg, #16A34A, #22c55e)'
-                : 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+                : 'linear-gradient(135deg, #2a00ff, #00299d)',
               color: '#FFFFFF',
-              borderRadius: 3,
+              borderRadius: 16,
+              border: shared ? 'none' : '1px solid #0b0077',
               boxShadow: shared
                 ? '0 4px 20px rgba(22,163,74,0.4)'
-                : '0 4px 20px rgba(59,130,246,0.4)',
+                : '0 4px 20px rgba(42,0,255,0.4)',
             }}
           >
             {shared ? '✓ Прогноз отправлен!' : '📤 Поделиться прогнозом'}
@@ -289,7 +290,7 @@ export default function PredictionPanel({ onClose, asPage = false }) {
       ) : (
         <div
           className="py-3 text-center text-xs uppercase tracking-wider"
-          style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 3, color: '#9CA3AF' }}
+          style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 16, color: '#9CA3AF' }}
         >
           Выберите все 4 позиции — появится кнопка шеринга
         </div>

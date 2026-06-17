@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
+import { TEAMS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
 const MEDAL_COLORS = {
@@ -22,7 +22,7 @@ function ScorerRow({ scorer, maxVal, view }) {
         border: scorer.rank <= 3
           ? undefined
           : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 3,
+        borderRadius: 16,
         boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
       }}
     >
@@ -32,7 +32,7 @@ function ScorerRow({ scorer, maxVal, view }) {
           style={{
             border: '1px solid rgba(0,0,0,0.07)',
             borderLeft: '2px solid #C9A800',
-            borderRadius: 3,
+            borderRadius: 16,
           }}
         />
       )}
@@ -41,7 +41,7 @@ function ScorerRow({ scorer, maxVal, view }) {
         <div
           className="w-8 h-8 flex items-center justify-center text-sm font-black flex-shrink-0"
           style={{
-            borderRadius: 3,
+            borderRadius: 16,
             ...(medal
               ? { background: medal.bg, color: medal.text }
               : { background: 'rgba(0,0,0,0.07)', color: '#6B7280' }),
@@ -56,7 +56,7 @@ function ScorerRow({ scorer, maxVal, view }) {
             {scorer.rank === 1 && (
               <span
                 className="text-[9px] font-black px-1.5 py-0.5"
-                style={{ background: '#C9A800', color: '#FFFFFF', borderRadius: 2 }}
+                style={{ background: '#C9A800', color: '#FFFFFF', borderRadius: 10 }}
               >
                 ТОП
               </span>
@@ -116,25 +116,15 @@ export default function Scorers() {
 
   return (
     <div className="page-content">
-      {/* Header */}
-      <div
-        className="px-4 pt-12 pb-5"
-        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
-      >
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
-            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Бомбардиры</h1>
-            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Претенденты на Золотую бутсу</p>
-          </div>
-          <div className="text-5xl">⚽</div>
-        </div>
+      {/* Info strip (заголовок раздела уже в шапке ЧМ) */}
+      <div className="px-4 pt-4 pb-3">
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>Претенденты на Золотую бутсу</p>
 
         {/* Блок претендентов на Золотую бутсу (макс. показатель) */}
         {contenders.length > 0 ? (
           <div
             className="mt-4 p-4"
-            style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+            style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
           >
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#C9A800' }}>
@@ -168,7 +158,7 @@ export default function Scorers() {
       <div className="px-4 mt-3 mb-3">
         <div
           className="flex p-1"
-          style={{ background: 'rgba(0,0,0,0.05)', borderRadius: 3, border: '1px solid rgba(0,0,0,0.08)' }}
+          style={{ background: 'rgba(0,0,0,0.05)', borderRadius: 16, border: '1px solid rgba(0,0,0,0.08)' }}
         >
           {[
             { id: 'goals', label: '⚽ Голы' },
@@ -181,7 +171,7 @@ export default function Scorers() {
               style={{
                 background: view === v.id ? '#C9A800' : 'transparent',
                 color: view === v.id ? '#FFFFFF' : '#6B7280',
-                borderRadius: 2,
+                borderRadius: 10,
               }}
             >
               {v.label}

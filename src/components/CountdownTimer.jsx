@@ -41,7 +41,7 @@ export default function CountdownTimer({ target, title, subtitle }) {
   return (
     <div
       className="mb-4 p-4"
-      style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+      style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#9CA3AF' }}>{title}</div>

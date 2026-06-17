@@ -208,6 +208,48 @@ async function settleMatch(matchId, homeScore, awayScore) {
   return Object.keys(matchPreds).length
 }
 
+// ── Изменение позиции относительно последнего зачёта ──────────────────────
+// Реконструируем рейтинг ДО последнего зачтённого матча: у текущих очков
+// вычитаем баллы, полученные именно за этот матч, и пересортировываем. Так
+// получаем точное «изменение позиции по отношению к последнему зачёту» без
+// хранения отдельных снимков в Redis (работает сразу после деплоя).
+// Возвращает map userId -> delta (prevRank - currentRank): >0 поднялся,
+// <0 опустился, 0 без изменений.
+async function computeRankDeltas() {
+  const raw = await redisExec('ZREVRANGE', K.leaderboard, 0, -1, 'WITHSCORES')
+  if (!raw || raw.length === 0) return {}
+  const cur = []
+  for (let i = 0; i < raw.length; i += 2) {
+    cur.push({ userId: raw[i], pts: parseInt(raw[i + 1]) || 0, currentRank: cur.length + 1 })
+  }
+
+  const results = (await rget(K.results)) || {}
+  let last = null
+  for (const [matchId, r] of Object.entries(results)) {
+    if (!r?.settledAt) continue
+    if (!last || r.settledAt > last.r.settledAt) last = { matchId, r }
+  }
+
+  const deltas = {}
+  if (!last) {
+    for (const e of cur) deltas[e.userId] = 0
+    return deltas
+  }
+
+  const lastPreds = (await rget(K.preds(last.matchId))) || {}
+  const lastResult = { home: last.r.home, away: last.r.away }
+  for (const e of cur) {
+    const p = lastPreds[e.userId]
+    e.prevPts = e.pts - (p ? calcPoints(p, lastResult) : 0)
+  }
+  // Тай-брейк по текущему рангу: среди равных по prevPts сохраняем текущий
+  // порядок, чтобы изменение позиции возникало только из-за реальных очков.
+  const prev = [...cur].sort((a, b) => b.prevPts - a.prevPts || a.currentRank - b.currentRank)
+  prev.forEach((e, i) => { e.prevRank = i + 1 })
+  for (const e of cur) deltas[e.userId] = e.prevRank - e.currentRank
+  return deltas
+}
+
 // ── Live data poller (football-data.org, every 5 min) ─────────────────────
 // Render работает 24/7 (keep-alive), поэтому setInterval здесь надёжнее,
 // чем GitHub Actions cron, который GitHub троттлит до раза в несколько часов.
@@ -454,13 +496,13 @@ app.get('/api/leaderboard', async (req, res) => {
     const raw = await redisExec('ZREVRANGE', K.leaderboard, 0, limit - 1, 'WITHSCORES')
     if (!raw) return res.json([])
 
-    const users = await loadUsers()
+    const [users, deltas] = await Promise.all([loadUsers(), computeRankDeltas()])
     const entries = []
     for (let i = 0; i < raw.length; i += 2) {
       const userId = raw[i]
       const pts = parseInt(raw[i + 1]) || 0
       const u = users[userId] || {}
-      entries.push({ userId, pts, firstName: u.firstName || 'Игрок', username: u.username || null, rank: entries.length + 1 })
+      entries.push({ userId, pts, firstName: u.firstName || 'Игрок', username: u.username || null, rank: entries.length + 1, rankDelta: deltas[userId] ?? null })
     }
     res.json(entries)
   } catch (e) { res.status(500).json({ error: e.message }) }
@@ -486,9 +528,10 @@ app.get('/api/goalkeepers', async (_, res) => {
 app.get('/api/me', withAuth, async (req, res) => {
   try {
     const userId = String(req.tgUser.id)
-    const [score, rank] = await Promise.all([
+    const [score, rank, deltas] = await Promise.all([
       redisExec('ZSCORE', K.leaderboard, userId),
       redisExec('ZREVRANK', K.leaderboard, userId),
+      computeRankDeltas(),
     ])
     const upreds = (await rget(K.upreds(userId))) || {}
     const total = Object.keys(upreds).length
@@ -498,6 +541,7 @@ app.get('/api/me', withAuth, async (req, res) => {
       userId,
       pts: parseInt(score) || 0,
       rank: rank != null ? rank + 1 : null,
+      rankDelta: deltas[userId] ?? null,
       predictions: total,
       exact: correct,
       outcome: partial,

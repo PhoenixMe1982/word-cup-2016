@@ -124,8 +124,8 @@ function HistoryCard({ wc, onClick, isSelected }) {
                         <span className="text-[10px] font-mono font-bold" style={{ color: '#C9A800' }}>{extra}</span>
                       )}
                       {hasSquad && (
-                        <span className="text-[9px] font-black" style={{ color: isOpen ? '#C9A800' : '#9CA3AF' }}>
-                          {isOpen ? '▲' : '👥'}
+                        <span className="text-[10px] font-black" style={{ color: isOpen ? '#C9A800' : '#6B7280' }}>
+                          {isOpen ? '▲' : '▼'}
                         </span>
                       )}
                     </div>

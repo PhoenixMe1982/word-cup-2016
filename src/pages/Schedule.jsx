@@ -78,7 +78,7 @@ function H2HPanel({ match }) {
           <div
             key={s.label}
             className="text-center p-2"
-            style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 3 }}
+            style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 16 }}
           >
             <div className="text-sm font-black" style={{ color: '#111827' }}>{s.value}</div>
             <div className="text-[9px] uppercase leading-tight" style={{ color: '#9CA3AF' }}>{s.label}</div>
@@ -101,7 +101,7 @@ function H2HPanel({ match }) {
 
       <div
         className="p-2.5 mb-2"
-        style={{ background: 'rgba(201,168,0,0.07)', border: '1px solid rgba(201,168,0,0.15)', borderRadius: 3 }}
+        style={{ background: 'rgba(201,168,0,0.07)', border: '1px solid rgba(201,168,0,0.15)', borderRadius: 16 }}
       >
         <div className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: '#C9A800' }}>
           Последняя встреча на ЧМ — {h.lastWC.year}
@@ -118,7 +118,7 @@ function H2HPanel({ match }) {
       {h.lastAny && (
         <div
           className="p-2.5"
-          style={{ background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 3 }}
+          style={{ background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 16 }}
         >
           <div className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: '#0EA5E9' }}>
             Последний официальный матч — {h.lastAny.year}
@@ -388,8 +388,8 @@ export default function Schedule({ embedded = false }) {
               className="flex-shrink-0 px-3 py-1.5 text-xs font-black transition-all duration-200 uppercase tracking-wide"
               style={{
                 background: statusFilter === f.id ? '#C9A800' : 'rgba(0,0,0,0.05)',
-                color: statusFilter === f.id ? '#FFFFFF' : '#6B7280',
-                borderRadius: 3,
+                color: statusFilter === f.id ? '#FFFFFF' : '#374151',
+                borderRadius: 16,
                 border: statusFilter === f.id ? 'none' : '1px solid rgba(0,0,0,0.08)',
               }}
             >
@@ -406,9 +406,9 @@ export default function Schedule({ embedded = false }) {
               className="flex-shrink-0 w-8 h-8 text-xs font-black transition-all duration-200 uppercase"
               style={{
                 background: groupFilter === g ? 'rgba(201,168,0,0.15)' : 'rgba(0,0,0,0.04)',
-                color: groupFilter === g ? '#C9A800' : '#6B7280',
+                color: groupFilter === g ? '#C9A800' : '#374151',
                 border: groupFilter === g ? '1px solid rgba(201,168,0,0.35)' : '1px solid rgba(0,0,0,0.08)',
-                borderRadius: 3,
+                borderRadius: 16,
               }}
             >
               {g}

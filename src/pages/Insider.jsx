@@ -13,7 +13,7 @@ function NewsCard({ news, featured }) {
         border: featured
           ? '1px solid rgba(220,38,38,0.15)'
           : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 3,
+        borderRadius: 16,
         boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
       }}
     >
@@ -29,7 +29,7 @@ function NewsCard({ news, featured }) {
           <div className="relative z-10 text-center px-4">
             <span
               className="text-[10px] font-black px-2 py-1 uppercase tracking-wider"
-              style={{ background: news.categoryColor + '22', color: news.categoryColor, borderRadius: 2 }}
+              style={{ background: news.categoryColor + '22', color: news.categoryColor, borderRadius: 10 }}
             >
               {news.category}
             </span>
@@ -46,21 +46,21 @@ function NewsCard({ news, featured }) {
           <div className="flex items-center gap-2 mb-2">
             <div
               className="w-9 h-9 flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 3 }}
+              style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 16 }}
             >
               {news.emoji}
             </div>
             <div className="flex items-center gap-2">
               <span
                 className="text-[9px] font-black px-1.5 py-0.5 uppercase tracking-wider"
-                style={{ background: news.categoryColor + '22', color: news.categoryColor, borderRadius: 2 }}
+                style={{ background: news.categoryColor + '22', color: news.categoryColor, borderRadius: 10 }}
               >
                 {news.category}
               </span>
               {news.hot && (
                 <span
                   className="text-[9px] font-black px-1.5 py-0.5 uppercase tracking-wider"
-                  style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', borderRadius: 2 }}
+                  style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', borderRadius: 10 }}
                 >
                   🔥 Горячо
                 </span>
@@ -81,7 +81,7 @@ function NewsCard({ news, featured }) {
           </div>
           <button
             className="text-[11px] font-black px-3 py-1.5 transition-colors uppercase tracking-wide"
-            style={{ background: 'rgba(201,168,0,0.10)', color: '#C9A800', borderRadius: 3, border: '1px solid rgba(201,168,0,0.25)' }}
+            style={{ background: 'rgba(201,168,0,0.10)', color: '#C9A800', borderRadius: 16, border: '1px solid rgba(201,168,0,0.25)' }}
           >
             Читать →
           </button>
@@ -119,7 +119,7 @@ export default function Insider() {
           </div>
           <div
             className="flex items-center gap-1.5 px-3 py-1.5"
-            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 3 }}
+            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 16 }}
           >
             <span className="w-1.5 h-1.5 rounded-full animate-pulse2" style={{ background: '#DC2626' }} />
             <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: '#DC2626' }}>{hotCount} горячих</span>
@@ -129,7 +129,7 @@ export default function Insider() {
         {/* Search */}
         <div
           className="mt-4 flex items-center gap-2 px-3 py-2.5"
-          style={{ background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: 3 }}
+          style={{ background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: 16 }}
         >
           <span style={{ color: '#9CA3AF' }}>🔍</span>
           <input
@@ -157,7 +157,7 @@ export default function Insider() {
               style={{
                 background: cat === c ? '#DC2626' : 'rgba(0,0,0,0.05)',
                 color: cat === c ? '#FFFFFF' : '#6B7280',
-                borderRadius: 3,
+                borderRadius: 16,
                 border: cat === c ? 'none' : '1px solid rgba(0,0,0,0.08)',
               }}
             >

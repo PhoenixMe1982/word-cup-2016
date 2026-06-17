@@ -57,7 +57,7 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
               key={t.id}
               onClick={() => handleSub(t.id)}
               className="flex-shrink-0 px-4 py-3 text-[11px] font-bold uppercase tracking-wide relative whitespace-nowrap"
-              style={{ color: sub === t.id ? '#C9A800' : '#9CA3AF' }}
+              style={{ color: sub === t.id ? '#C9A800' : '#111827' }}
             >
               {t.label}
               {sub === t.id && (

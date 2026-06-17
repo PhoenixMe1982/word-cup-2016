@@ -166,10 +166,14 @@ async function main() {
   await sleep(2500)
 
   let file = `${tab}-rank${rank}.png`
-  if (tab === 'leaderboard') {
-    file = 'leaderboard.png'
+  // Навигация по нижним вкладкам: home остаётся стартовым, для остальных
+  // кликаем кнопку в nav по тексту (cm → ЧМ).
+  const NAV_LABEL = { leaderboard: 'Лидерборд', cm: 'ЧМ', play: 'Играть', history: 'История' }
+  if (NAV_LABEL[tab]) {
+    file = `${tab}.png`
+    const label = NAV_LABEL[tab]
     const r = await cli.send('Runtime.evaluate', {
-      expression: `(function(){ var b=[].slice.call(document.querySelectorAll('nav button')).find(function(x){return /Лидерборд/.test(x.textContent);}); if(b){b.click(); return 'ok';} return 'nav-not-found'; })()`,
+      expression: `(function(){ var b=[].slice.call(document.querySelectorAll('nav button')).find(function(x){return new RegExp(${JSON.stringify(label)}).test(x.textContent);}); if(b){b.click(); return 'ok';} return 'nav-not-found'; })()`,
       returnByValue: true,
     })
     console.log('nav:', r.result?.value)

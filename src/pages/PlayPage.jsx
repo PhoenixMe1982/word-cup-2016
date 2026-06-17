@@ -205,8 +205,8 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
               {isSettled && myPred != null && <PointsBadge pts={myPred.pts} />}
               <button
                 onClick={handleShare}
-                className="w-10 h-10 rounded-lg text-base flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(201,168,0,0.12)', border: '1px solid rgba(201,168,0,0.3)', color: '#C9A800' }}
+                className="w-10 h-10 rounded-xl text-base flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg,#2a00ff,#00299d)', border: '1px solid #0b0077', color: '#FFFFFF', boxShadow: '0 2px 8px rgba(42,0,255,0.3)' }}
               >
                 📤
               </button>

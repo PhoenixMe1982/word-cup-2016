@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
+import { TEAMS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
 const ALL_TIME_SCORERS = [
@@ -45,7 +45,7 @@ function ScorerRow({ scorer }) {
           : isTop3
           ? '1px solid rgba(201,168,0,0.2)'
           : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 3,
+        borderRadius: 16,
         boxShadow: scorer.active
           ? '0 1px 8px rgba(22,163,74,0.08)'
           : '0 1px 6px rgba(0,0,0,0.06)',
@@ -55,7 +55,7 @@ function ScorerRow({ scorer }) {
       <div
         className="w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0"
         style={{
-          borderRadius: 3,
+          borderRadius: 16,
           background:
             scorer.rank === 1 ? 'linear-gradient(135deg,#FFD700,#FF8C00)' :
             scorer.rank === 2 ? 'linear-gradient(135deg,#C0C0C0,#909090)' :
@@ -77,7 +77,7 @@ function ScorerRow({ scorer }) {
           {scorer.active && (
             <span
               className="text-[9px] font-black px-1.5 py-0.5 flex-shrink-0"
-              style={{ background: '#16A34A', color: '#fff', borderRadius: 2 }}
+              style={{ background: '#16A34A', color: '#fff', borderRadius: 10 }}
             >
               ACTIVE
             </span>
@@ -136,24 +136,14 @@ export default function AllTimeScorers() {
 
   return (
     <div className="page-content">
-      {/* Header */}
-      <div
-        className="px-4 pt-12 pb-5"
-        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
-      >
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 1930–2026</p>
-            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Рекорды</h1>
-            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Топ-20 бомбардиров всех времён</p>
-          </div>
-          <div className="text-5xl">🏅</div>
-        </div>
+      {/* Info strip (заголовок раздела уже в шапке ЧМ) */}
+      <div className="px-4 pt-4 pb-3">
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>ЧМ 1930–2026 · Топ-20 бомбардиров всех времён</p>
 
         {/* Record holder card */}
         <div
           className="mt-4 p-4 flex items-center gap-4"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+          style={{ background: '#FFFFFF', border: '1px solid rgba(201,168,0,0.25)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
         >
           <div className="text-4xl">{NAT_FLAGS[recordHolder.nat] || '🏳️'}</div>
           <div className="flex-1 min-w-0">
@@ -170,7 +160,7 @@ export default function AllTimeScorers() {
         {/* Active players promo */}
         <div
           className="mt-3 p-3"
-          style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 3 }}
+          style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 16 }}
         >
           <div className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: '#16A34A' }}>
             ⚡ Могут улучшить результат на ЧМ 2026
@@ -182,7 +172,7 @@ export default function AllTimeScorers() {
                 <span className="text-xs font-black" style={{ color: '#111827' }}>{p.name}</span>
                 <span
                   className="text-[9px] font-black px-1 py-0.5"
-                  style={{ background: '#16A34A', color: '#fff', borderRadius: 2 }}
+                  style={{ background: '#16A34A', color: '#fff', borderRadius: 10 }}
                 >
                   {p.goals} гол.
                 </span>
@@ -194,11 +184,11 @@ export default function AllTimeScorers() {
         {/* Legend */}
         <div className="mt-3 flex items-center gap-4 text-[10px]" style={{ color: '#9CA3AF' }}>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#16A34A', borderRadius: 1 }} />
+            <div className="w-3 h-3" style={{ background: '#16A34A', borderRadius: 8 }} />
             <span className="uppercase tracking-wide">Играющие (2026)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#C9A800', borderRadius: 1 }} />
+            <div className="w-3 h-3" style={{ background: '#C9A800', borderRadius: 8 }} />
             <span className="uppercase tracking-wide">Топ-3</span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
+import { TEAMS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
 const MAX_MINUTES = 270
@@ -55,7 +55,7 @@ function GKRow({ gk }) {
           : gk.rank <= 3
           ? '1px solid rgba(22,163,74,0.15)'
           : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 3,
+        borderRadius: 16,
         boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
       }}
     >
@@ -64,7 +64,7 @@ function GKRow({ gk }) {
         <div
           className="w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0 mt-1"
           style={{
-            borderRadius: 3,
+            borderRadius: 16,
             background: gk.rank === 1 ? 'linear-gradient(135deg,#FFD700,#FF8C00)' :
               gk.rank === 2 ? 'linear-gradient(135deg,#C0C0C0,#909090)' :
               gk.rank === 3 ? 'linear-gradient(135deg,#CD7F32,#8B4513)' :
@@ -119,7 +119,7 @@ function GKRow({ gk }) {
               <div
                 key={s.label}
                 className="text-center"
-                style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 2, padding: '4px 2px', border: '1px solid rgba(0,0,0,0.06)' }}
+                style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 10, padding: '4px 2px', border: '1px solid rgba(0,0,0,0.06)' }}
               >
                 <div className="text-sm font-black" style={{ color: '#111827' }}>{s.value}</div>
                 <div className="text-[9px] uppercase" style={{ color: '#9CA3AF' }}>{s.label}</div>
@@ -154,9 +154,8 @@ export default function Goalkeepers() {
   if (!topGK) {
     return (
       <div className="page-content">
-        <div className="px-4 pt-12 pb-5" style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Вратари</h1>
-          <p className="text-xs mt-3 uppercase tracking-wider" style={{ color: '#9CA3AF' }}>🧤 Статистика появится после первых матчей</p>
+        <div className="px-4 pt-4 pb-3">
+          <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>🧤 Статистика появится после первых матчей</p>
         </div>
       </div>
     )
@@ -164,24 +163,14 @@ export default function Goalkeepers() {
 
   return (
     <div className="page-content">
-      {/* Header */}
-      <div
-        className="px-4 pt-12 pb-5"
-        style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
-      >
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
-            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Вратари</h1>
-            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Претенденты на Золотую перчатку</p>
-          </div>
-          <div className="text-5xl">🧤</div>
-        </div>
+      {/* Info strip (заголовок раздела уже в шапке ЧМ) */}
+      <div className="px-4 pt-4 pb-3">
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>Претенденты на Золотую перчатку</p>
 
         {/* Top GK Card */}
         <div
           className="mt-4 p-4 flex items-center gap-4"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+          style={{ background: '#FFFFFF', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
         >
           <div className="text-4xl">🧤</div>
           <div className="flex-1 min-w-0">
@@ -201,15 +190,15 @@ export default function Goalkeepers() {
         {/* Legend */}
         <div className="mt-3 flex items-center gap-4 text-[10px]" style={{ color: '#9CA3AF' }}>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#16A34A', borderRadius: 1 }} />
+            <div className="w-3 h-3" style={{ background: '#16A34A', borderRadius: 8 }} />
             <span className="uppercase tracking-wide">Сухой матч</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#3b82f6', borderRadius: 1 }} />
+            <div className="w-3 h-3" style={{ background: '#3b82f6', borderRadius: 8 }} />
             <span className="uppercase tracking-wide">Пропустил</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#C9A800', borderRadius: 1 }} />
+            <div className="w-3 h-3" style={{ background: '#C9A800', borderRadius: 8 }} />
             <span className="uppercase tracking-wide">Рейтинг ≥9</span>
           </div>
         </div>

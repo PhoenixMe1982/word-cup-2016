@@ -56,12 +56,12 @@ export default function TournamentProgressBar() {
       <div className="relative flex items-center justify-between" style={{ height: 8 }}>
         <div
           className="absolute left-0 right-0"
-          style={{ height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.08)', top: '50%', transform: 'translateY(-50%)' }}
+          style={{ height: 4, borderRadius: 10, background: 'rgba(0,0,0,0.08)', top: '50%', transform: 'translateY(-50%)' }}
         />
         <div
           className="absolute left-0"
           style={{
-            height: 4, borderRadius: 2, background: RED, top: '50%',
+            height: 4, borderRadius: 10, background: RED, top: '50%',
             transform: 'translateY(-50%)',
             // max(): доля первых сыгранных матчей меньше размера точки «Старт» —
             // без минимальной ширины заполнение визуально не отличимо от нуля

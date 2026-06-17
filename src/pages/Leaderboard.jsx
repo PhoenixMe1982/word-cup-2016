@@ -38,37 +38,50 @@ function RankBadge({ rank }) {
 
 // Наряд аватарки по месту — те же правила, что в хедере главной
 function lbMedal(rank) {
-  if (rank === 1) return { ring: '#FFD700', crown: '#FFD700', crownSize: 15 }
-  if (rank === 2) return { ring: '#B8B8B8', crown: '#B8B8B8', crownSize: 12 }
+  if (rank === 1) return { ring: '#FFD700', crown: '#FFD700', crownSize: 16 }
+  if (rank === 2) return { ring: '#C0C0C0', crown: '#C0C0C0', crownSize: 13 }
   if (rank === 3) return { ring: '#CD7F32', crown: null, crownSize: 0 }
   return { ring: '#111827', crown: null, crownSize: 0 }
 }
 
-function LbAvatar({ rank, firstName, photoUrl }) {
+// Корона как SVG с заливкой цветом рамки и тёмной обводкой — чтобы серебро
+// читалось на светлом фоне (эмодзи 👑 фиксированного цвета этого не давало).
+function CrownIcon({ color, size }) {
+  return (
+    <svg
+      width={size} height={size * 0.8} viewBox="0 0 24 19" fill="none"
+      style={{ transform: 'rotate(-20deg)', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))' }}
+    >
+      <path
+        d="M2 5l4.5 4L12 1.5 17.5 9 22 5l-2.2 12.5H4.2L2 5z"
+        fill={color} stroke="rgba(0,0,0,0.5)" strokeWidth="1.3" strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function LbAvatar({ rank, firstName, photoUrl, isMe }) {
   const m = lbMedal(rank)
   const top3 = rank <= 3
   const initial = (firstName?.[0] || '?').toUpperCase()
+  // Чужие аватарки-инициалы — тёмно-серые; своя — фирменное золото.
+  const avatarBg = isMe
+    ? 'linear-gradient(135deg,#C9A800,#f0c400)'
+    : 'linear-gradient(135deg,#374151,#1F2937)'
   return (
     <div className="relative flex-shrink-0">
       {m.crown && (
         <span
           className="absolute z-10 leading-none"
-          style={{
-            top: -m.crownSize * 0.5,
-            left: '50%',
-            fontSize: m.crownSize,
-            transform: 'translateX(-60%) rotate(-22deg)',
-            filter: rank === 2 ? 'grayscale(1) brightness(1.7)' : 'none',
-            textShadow: '0 1px 2px rgba(0,0,0,0.25)',
-          }}
+          style={{ top: -m.crownSize * 0.55, left: '50%', transform: 'translateX(-58%)' }}
         >
-          👑
+          <CrownIcon color={m.crown} size={m.crownSize} />
         </span>
       )}
       <div
         className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center"
         style={{
-          background: 'linear-gradient(135deg,#C9A800,#f0c400)',
+          background: avatarBg,
           border: `${top3 ? 3 : 2}px solid ${m.ring}`,
           boxShadow: top3 ? `0 0 0 1px ${m.ring}55` : 'none',
         }}
@@ -79,6 +92,24 @@ function LbAvatar({ rank, firstName, photoUrl }) {
         }
       </div>
     </div>
+  )
+}
+
+// Индикатор изменения позиции относительно последнего зачёта (rankDelta с бэка:
+// >0 поднялся, <0 опустился, 0 без изменений, null/undefined — нет данных).
+function RankDelta({ delta }) {
+  if (delta == null) return null
+  if (delta === 0) {
+    return <span className="text-xs font-black flex items-center" style={{ color: '#9CA3AF' }}>＝</span>
+  }
+  const up = delta > 0
+  return (
+    <span
+      className="text-[11px] font-black flex items-center gap-0.5 leading-none"
+      style={{ color: up ? '#16A34A' : '#EF4444' }}
+    >
+      {up ? '▲' : '▼'}{Math.abs(delta)}
+    </span>
   )
 }
 
@@ -255,8 +286,8 @@ export default function Leaderboard() {
             {entries.length > 0 && (
               <button
                 onClick={shareLeaderboard}
-                className="px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5"
-                style={{ background: 'rgba(201,168,0,0.1)', color: '#C9A800', border: '1px solid rgba(201,168,0,0.25)' }}
+                className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5"
+                style={{ background: 'linear-gradient(135deg,#2a00ff,#00299d)', color: '#FFFFFF', border: '1px solid #0b0077', boxShadow: '0 2px 8px rgba(42,0,255,0.3)' }}
               >
                 📤 Поделиться
               </button>
@@ -266,7 +297,7 @@ export default function Leaderboard() {
 
         {me && (
           <div
-            className="mt-4 p-3 rounded-lg grid grid-cols-3 gap-3 text-center"
+            className="mt-4 p-3 rounded-2xl grid grid-cols-3 gap-3 text-center"
             style={{ background: '#F5F6FA', border: '1px solid rgba(0,0,0,0.06)' }}
           >
             <div>
@@ -321,16 +352,22 @@ export default function Leaderboard() {
             const isMe = entry.userId === tgUserId
             const isOpen = expanded === entry.userId
             const isLoadingThis = predLoading === entry.userId
+            const top3 = entry.rank <= 3
+            const frame = lbMedal(entry.rank).ring // цвет рамки места (золото/серебро/бронза)
+            // Обводка: топ-3 — в цвет рамки; своя карточка — золотой акцент; остальные — нейтрально.
+            const cardBorder = isMe
+              ? `1.5px solid ${isOpen ? 'rgba(201,168,0,0.5)' : 'rgba(201,168,0,0.3)'}`
+              : top3
+              ? `2px solid ${frame}`
+              : `1px solid ${isOpen ? 'rgba(0,0,0,0.14)' : 'rgba(0,0,0,0.06)'}`
             return (
               <div key={entry.userId} className="mb-2">
                 <div
-                  className="flex items-center gap-3 p-3 rounded-lg cursor-pointer select-none"
+                  className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer select-none"
                   style={{
                     background: isMe ? 'rgba(201,168,0,0.08)' : '#FFFFFF',
-                    border: isMe
-                      ? `1.5px solid ${isOpen ? 'rgba(201,168,0,0.5)' : 'rgba(201,168,0,0.3)'}`
-                      : `1px solid ${isOpen ? 'rgba(0,0,0,0.14)' : 'rgba(0,0,0,0.06)'}`,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                    border: cardBorder,
+                    boxShadow: top3 ? `0 2px 10px ${frame}33` : '0 1px 4px rgba(0,0,0,0.04)',
                     borderBottomLeftRadius: isOpen ? 0 : undefined,
                     borderBottomRightRadius: isOpen ? 0 : undefined,
                   }}
@@ -341,6 +378,7 @@ export default function Leaderboard() {
                     rank={entry.rank}
                     firstName={entry.firstName}
                     photoUrl={isMe ? myPhotoUrl : (entry.photoUrl || null)}
+                    isMe={isMe}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold truncate" style={{ color: '#111827' }}>
@@ -350,6 +388,7 @@ export default function Leaderboard() {
                       <div className="text-[10px]" style={{ color: '#9CA3AF' }}>@{entry.username}</div>
                     )}
                   </div>
+                  <RankDelta delta={entry.rankDelta} />
                   <div className="text-right flex-shrink-0 flex flex-col items-end">
                     <div className="text-lg font-black" style={{ color: '#C9A800' }}>{entry.pts}</div>
                     <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>очков</div>
@@ -368,8 +407,8 @@ export default function Leaderboard() {
                       background: '#FAFAFA',
                       border: isMe ? '1.5px solid rgba(201,168,0,0.3)' : '1px solid rgba(0,0,0,0.06)',
                       borderTop: 'none',
-                      borderBottomLeftRadius: 8,
-                      borderBottomRightRadius: 8,
+                      borderBottomLeftRadius: 16,
+                      borderBottomRightRadius: 16,
                     }}
                   >
                     <PredictionsList
