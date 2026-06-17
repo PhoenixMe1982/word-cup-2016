@@ -16,23 +16,20 @@ function haptic(type) {
   } catch { /* нет Telegram — молча пропускаем */ }
 }
 
-function prefersReducedMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
-}
-
 // Залпы из левого и правого нижних углов в течение duration мс.
+// Намеренно НЕ ставим disableForReducedMotion: салют — короткая осознанная
+// награда за угаданный прогноз; на мобильных «уменьшить движение» часто включён
+// невидимо (энергосбережение / убрать анимации) и глушил бы салют целиком.
 function cannons({ duration, perFrame, colors, scalar }) {
   const end = Date.now() + duration
   ;(function frame() {
     confetti({
       particleCount: perFrame, angle: 60, spread: 60,
       startVelocity: 55, origin: { x: 0, y: 0.9 }, colors, scalar,
-      disableForReducedMotion: true,
     })
     confetti({
       particleCount: perFrame, angle: 120, spread: 60,
       startVelocity: 55, origin: { x: 1, y: 0.9 }, colors, scalar,
-      disableForReducedMotion: true,
     })
     if (Date.now() < end) requestAnimationFrame(frame)
   })()
@@ -43,26 +40,21 @@ function burst(colors) {
   confetti({
     particleCount: 90, spread: 360, startVelocity: 35, ticks: 90,
     origin: { x: 0.2 + Math.random() * 0.6, y: 0.2 + Math.random() * 0.25 },
-    colors, scalar: 1.1, disableForReducedMotion: true,
+    colors, scalar: 1.1,
   })
 }
 
 export function fireSalute(level = 'outcome') {
-  // Уважаем системную настройку «уменьшить движение»: салют не пускаем,
-  // но тактильный отклик оставляем — он не «движение» на экране.
-  if (prefersReducedMotion()) {
-    haptic('success')
-    return
-  }
+  // Сначала тактильный отклик, затем салют — чтобы вибро не зависело от того,
+  // успешно ли отрисовался canvas.
+  haptic('success')
 
   if (level === 'exact') {
-    haptic('success')
     cannons({ duration: 1800, perFrame: 7, colors: GOLD, scalar: 1.2 })
     burst(GOLD)
     setTimeout(() => burst(FIFA), 350)
     setTimeout(() => burst(GOLD), 750)
   } else {
-    haptic('success')
     cannons({ duration: 900, perFrame: 4, colors: FIFA, scalar: 1 })
   }
 }
