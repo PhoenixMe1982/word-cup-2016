@@ -51,23 +51,27 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
           </div>
           <div className="text-4xl mb-1">🌐</div>
         </div>
-        <div className="flex overflow-x-auto no-scrollbar px-2 mt-2" style={{ scrollbarWidth: 'none' }}>
-          {SUB_TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => handleSub(t.id)}
-              className="flex-shrink-0 px-4 py-3 text-[11px] font-bold uppercase tracking-wide relative whitespace-nowrap"
-              style={{ color: sub === t.id ? '#C9A800' : 'rgba(255,255,255,0.8)' }}
-            >
-              {t.label}
-              {sub === t.id && (
-                <span
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-t-full"
-                  style={{ width: '70%', background: '#C9A800' }}
-                />
-              )}
-            </button>
-          ))}
+        {/* Каждый подтаб — свой блок, чтобы читался и на белой, и на чёрной части
+            хедера. Активный — жёлтый с белым текстом, остальные — белые с чёрным. */}
+        <div className="flex overflow-x-auto no-scrollbar px-3 pt-2 pb-3 gap-2" style={{ scrollbarWidth: 'none' }}>
+          {SUB_TABS.map((t) => {
+            const active = sub === t.id
+            return (
+              <button
+                key={t.id}
+                onClick={() => handleSub(t.id)}
+                className="flex-shrink-0 px-3 py-2 rounded-full text-[11px] font-bold uppercase tracking-wide whitespace-nowrap"
+                style={{
+                  background: active ? '#C9A800' : '#FFFFFF',
+                  color: active ? '#FFFFFF' : '#111827',
+                  border: active ? 'none' : '1px solid rgba(0,0,0,0.10)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                }}
+              >
+                {t.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 

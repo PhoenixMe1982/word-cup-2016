@@ -159,16 +159,6 @@ body {
 .rank-other { background: rgba(0,0,0,0.07); }
 
 /* ── Splash / loading screen ─────────────────────────────────────────── */
-/* Мяч крутится вокруг своей оси (в плоскости экрана) — всегда полный, без мерцания */
-@keyframes spinBall {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-.splash-ball {
-  display: inline-block;
-  animation: spinBall 1.4s linear infinite;
-  will-change: transform;
-}
 .splash-screen {
   position: fixed;
   inset: 0;

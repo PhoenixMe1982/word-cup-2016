@@ -29,9 +29,7 @@ export default function Splash({ hiding }) {
         </div>
       )}
 
-      <span className="splash-ball" style={{ fontSize: 56, lineHeight: 1 }}>⚽</span>
-
-      <div className="splash-hint text-xs uppercase tracking-[0.25em]" style={{ color: 'rgba(255,255,255,0.7)' }}>
+      <div className="splash-hint text-sm uppercase tracking-[0.3em]" style={{ color: 'rgba(255,255,255,0.7)' }}>
         Загрузка
       </div>
     </div>
