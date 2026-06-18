@@ -13,13 +13,16 @@ export const TOURNAMENT = {
   motto: 'We Are 16',
 };
 
-// Фоновый баннер для шапок страниц — белый градиент поверх картинки
-// держит текст читаемым, а cover/center/no-repeat корректно адаптируют
-// изображение под любую ширину экрана и плотность пикселей.
+// Фоновый баннер для шапок страниц. Новый арт — это готовая «рамка»:
+// слева чёрная зона (с вшитыми флагами хозяев), справа сверху белая карточка,
+// снизу чёрная полоса. Поэтому БЕЗ осветляющего оверлея — он убивал чёрный слева.
+// Заголовки рисуем белым (на чёрном слева), данные справа — чёрным (на белой карточке).
+// position: top center — якорим важную верхнюю полосу (флаги + белая карточка),
+// любой обрез уходит вниз, в чёрную полосу. Высоту шапок держим единой по образцу главной.
 export const HEADER_BANNER_STYLE = {
-  backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.45) 55%, rgba(255,255,255,0.6) 100%), url('${import.meta.env.BASE_URL}header-banner.jpg')`,
+  backgroundImage: `url('${import.meta.env.BASE_URL}header-banner.jpg')`,
   backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  backgroundPosition: 'right top',
   backgroundRepeat: 'no-repeat',
 };
 

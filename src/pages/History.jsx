@@ -287,17 +287,16 @@ export default function History() {
         style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#9CA3AF' }}>1930 – 2022</p>
-            <h1 className="text-2xl font-black" style={{ color: '#111827' }}>История ЧМ</h1>
-            <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>22 турнира · 88 лет футбола</p>
+          <div className="max-w-[50%]">
+            <h1 className="text-2xl font-black" style={{ color: '#FFFFFF' }}>История ЧМ</h1>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>96 лет футбола</p>
           </div>
           <div className="text-5xl trophy-glow">🏆</div>
         </div>
 
         {/* Top Champions */}
         <div className="mt-4">
-          <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#9CA3AF' }}>РЕКОРДНЫЕ ЧЕМПИОНЫ</div>
+          <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Чемпионы</div>
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {topChamps.map(([name, count], i) => {
               const wc = HISTORY.find((w) => w.winner === name || (name === 'Германия' && w.winner === 'ФРГ'))
@@ -307,14 +306,14 @@ export default function History() {
                   onClick={() => setSelectedChamp(name)}
                   className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl cursor-pointer active:opacity-70 transition-opacity"
                   style={{
-                    background: i === 0 ? 'rgba(201,168,0,0.10)' : 'rgba(0,0,0,0.04)',
-                    border: i === 0 ? '1px solid rgba(201,168,0,0.25)' : '1px solid rgba(0,0,0,0.07)',
+                    background: '#FFFFFF',
+                    border: i === 0 ? '1px solid rgba(201,168,0,0.35)' : '1px solid rgba(0,0,0,0.10)',
                   }}
                 >
                   <span className="text-lg">{wc?.winnerFlag}</span>
                   <div>
                     <div className="text-[10px] font-black" style={{ color: '#111827' }}>{name}</div>
-                    <div className="text-[9px]" style={{ color: i === 0 ? '#C9A800' : '#6B7280' }}>
+                    <div className="text-[9px]" style={{ color: '#111827' }}>
                       {count}× чемпион
                     </div>
                   </div>

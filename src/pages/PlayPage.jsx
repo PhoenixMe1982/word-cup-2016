@@ -372,17 +372,17 @@ export default function PlayPage() {
         className="-mx-0 px-4 pt-12 pb-4 mb-4"
         style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
-            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Прогнозы</h1>
-            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Угадывай счёт — зарабатывай очки</p>
+        <div className="flex items-start justify-between mb-3">
+          <div className="max-w-[50%]">
+            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: 'rgba(255,255,255,0.75)' }}>ЧМ 2026</p>
+            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#FFFFFF' }}>Прогнозы</h1>
+            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.75)' }}>Угадывай счёт — зарабатывай очки</p>
           </div>
           {inTg && stats && (
             <div className="text-right">
-              <div className="text-2xl font-black" style={{ color: '#C9A800' }}>{stats.pts || 0}</div>
-              <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>очков</div>
-              {stats.rank && <div className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>#{stats.rank} место</div>}
+              <div className="text-2xl font-black leading-none" style={{ color: '#111827' }}>{stats.pts || 0}</div>
+              <div className="text-[9px] uppercase tracking-wide" style={{ color: '#111827' }}>очков</div>
+              {stats.rank && <div className="text-[9px] uppercase tracking-wide" style={{ color: '#111827' }}>#{stats.rank} место</div>}
             </div>
           )}
         </div>

@@ -112,10 +112,10 @@ export default function Insider() {
         style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
-            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Инсайды</h1>
-            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Новости и аналитика</p>
+          <div className="max-w-[50%]">
+            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: 'rgba(255,255,255,0.75)' }}>ЧМ 2026</p>
+            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#FFFFFF' }}>Инсайды</h1>
+            <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.75)' }}>Новости и аналитика</p>
           </div>
           <div
             className="flex items-center gap-1.5 px-3 py-1.5"

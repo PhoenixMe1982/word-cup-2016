@@ -77,7 +77,7 @@ function UserAvatar({ onTab }) {
       </div>
       <div className="text-sm font-bold truncate max-w-[80px]" style={{ color: '#111827' }}>{name}</div>
       {pts !== null && (
-        <div className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>{pts} очк</div>
+        <div className="text-[10px] uppercase tracking-wide" style={{ color: '#111827' }}>{pts} очк</div>
       )}
     </button>
   )
@@ -468,21 +468,19 @@ export default function Home({ onTab }) {
         className="relative overflow-hidden mb-4 -mx-4 px-4 pt-12 pb-6"
         style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              {TOURNAMENT.hostFlags.map((f, i) => (
-                <span key={i} className="text-lg">{f}</span>
-              ))}
-            </div>
-            <h1 className="text-2xl font-black leading-tight tracking-wide uppercase" style={{ color: '#111827' }}>
+        <div className="relative flex items-start justify-between">
+          <div className="max-w-[50%]">
+            <h1 className="text-2xl font-black leading-tight tracking-wide uppercase" style={{ color: '#FFFFFF' }}>
               FIFA World Cup
             </h1>
-            <p className="text-lg font-black" style={{ color: '#111827', letterSpacing: '0.08em' }}>
+            <p className="text-lg font-black" style={{ color: '#FFFFFF', letterSpacing: '0.08em' }}>
               2026™
             </p>
           </div>
-          <UserAvatar onTab={onTab} />
+          {/* Правый блок поднят к верху, чтобы лечь на белую карточку арта */}
+          <div className="-mt-6">
+            <UserAvatar onTab={onTab} />
+          </div>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
           {[

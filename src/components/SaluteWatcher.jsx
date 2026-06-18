@@ -11,6 +11,10 @@ const CELEBRATED_KEY = 'wc2026_celebrated' // matchId -> true для уже от
 export default function SaluteWatcher() {
   const live = useLiveData()
   const checking = useRef(false)
+  // Первый проход этого маунта — только baseline (без салюта): уже засчитанные
+  // на момент входа исходы празднует попап «итоги визита», а watcher отвечает
+  // лишь за зачёты, происходящие пока приложение открыто.
+  const seeded = useRef(false)
 
   function loadCelebrated() {
     try { return JSON.parse(localStorage.getItem(CELEBRATED_KEY)) || {} }
@@ -34,13 +38,13 @@ export default function SaluteWatcher() {
 
       const correct = preds.filter(p => p.pts >= 1)
       const celebrated = loadCelebrated()
-      const firstRun = localStorage.getItem(CELEBRATED_KEY) === null
 
-      // Первый запуск после установки фичи: помечаем все уже засчитанные
-      // прогнозы как отпразднованные — иначе при открытии прилетит «залп»
-      // фейерверков за всю историю. Салют будет только за новые исходы.
-      if (firstRun) {
-        const seed = {}
+      // Baseline при входе: помечаем все уже засчитанные исходы как
+      // отпразднованные (их празднует попап «итоги визита»), салют не пускаем.
+      // Так избегаем и «залпа» за всю историю, и двойного салюта на входе.
+      if (!seeded.current) {
+        seeded.current = true
+        const seed = { ...celebrated }
         for (const p of correct) seed[p.matchId] = true
         saveCelebrated(seed)
         return

@@ -157,3 +157,42 @@ body {
 .rank-2 { background: linear-gradient(135deg, #C0C0C0, #808080); }
 .rank-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); }
 .rank-other { background: rgba(0,0,0,0.07); }
+
+/* ── Splash / loading screen ─────────────────────────────────────────── */
+/* Мяч крутится вокруг своей оси (в плоскости экрана) — всегда полный, без мерцания */
+@keyframes spinBall {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.splash-ball {
+  display: inline-block;
+  animation: spinBall 1.4s linear infinite;
+  will-change: transform;
+}
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: #000000;
+  transition: opacity 0.45s ease-out;
+}
+.splash-screen.is-hiding { opacity: 0; pointer-events: none; }
+
+/* Дыхание подписи под лого */
+@keyframes splashPulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+.splash-hint { animation: splashPulse 1.6s ease-in-out infinite; }
+
+/* Появление попапа итогов визита */
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.visit-pop { animation: popIn 0.32s cubic-bezier(0.16, 1, 0.3, 1); }

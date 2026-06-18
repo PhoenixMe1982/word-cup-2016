@@ -88,7 +88,12 @@ function fakeSdk() {
   const pts = rank === 1 ? 42 : rank === 2 ? 38 : rank === 3 ? 35 : 4
   return `(function(){
   try{ localStorage.setItem('wc2026_predictionSeen','1'); }catch(e){}
-  var noop=function(){}, RANK=${rank}, PTS=${pts};
+  var noop=function(){}, RANK=${rank}, PTS=${pts}, STATE=${JSON.stringify(tab)};
+  // Состояние 'visit': засеваем старый снимок прошлого визита, чтобы появилась дельта
+  if(STATE==='visit'){ try{
+    localStorage.setItem('wc2026_lastVisit', JSON.stringify({rank:5, pts:30, settledIds:['m1']}));
+    localStorage.removeItem('wc2026_celebrated');
+  }catch(e){} }
   window.Telegram={ WebApp:{
     initData:'mock_init_data', platform:'web', version:'7.2', colorScheme:'light', themeParams:{},
     initDataUnsafe:{ user:{ id:777, first_name:'Алексей', last_name:'', username:'alex', language_code:'ru', photo_url:'${PHOTO}' } },
@@ -110,10 +115,19 @@ function fakeSdk() {
   ];
   var orig = window.fetch ? window.fetch.bind(window) : null;
   function J(o){ return Promise.resolve(new Response(JSON.stringify(o),{status:200,headers:{'Content-Type':'application/json'}})); }
+  function D(o,ms){ return new Promise(function(res){ setTimeout(function(){ res(new Response(JSON.stringify(o),{status:200,headers:{'Content-Type':'application/json'}})); }, ms); }); }
+  // /api/me и засчитанные прогнозы — зависят от состояния
+  var ME = STATE==='visit'
+    ? {userId:'777', pts:42, rank:2, rankDelta:3, predictions:12, exact:3, outcome:2}
+    : {userId:'777', pts:PTS, rank:RANK, predictions:12};
+  var SETTLED = STATE==='visit'
+    ? [{matchId:'m1',pts:3},{matchId:'m2',pts:3},{matchId:'m3',pts:1},{matchId:'m4',pts:0}]
+    : [];
   window.fetch=function(url,opts){ var u=String(url);
     if(u.indexOf('/api/leaderboard')!==-1) return J(LB);
-    if(u.indexOf('/api/me')!==-1) return J({pts:PTS, rank:RANK, predictions:12});
-    if(u.indexOf('/api/predictions/')!==-1) return J([]);
+    // 'splash': задерживаем /api/me, чтобы экран загрузки не исчезал до съёмки
+    if(u.indexOf('/api/me')!==-1) return STATE==='splash' ? D(ME, 6000) : J(ME);
+    if(u.indexOf('/api/predictions/')!==-1) return J(SETTLED);
     if(u.indexOf('/api/my-predictions')!==-1) return J({});
     if(u.indexOf('/api/scorers')!==-1) return J([]);
     if(u.indexOf('/api/goalkeepers')!==-1) return J([]);
@@ -166,6 +180,10 @@ async function main() {
   await sleep(2500)
 
   let file = `${tab}-rank${rank}.png`
+  // splash/visit стартуют на home; имена файлов фиксированные
+  if (tab === 'splash' || tab === 'visit') {
+    file = `${tab}.png`
+  }
   // Навигация по нижним вкладкам: home остаётся стартовым, для остальных
   // кликаем кнопку в nav по тексту (cm → ЧМ).
   const NAV_LABEL = { leaderboard: 'Лидерборд', cm: 'ЧМ', play: 'Играть', history: 'История' }

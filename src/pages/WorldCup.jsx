@@ -45,9 +45,9 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
         style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
         <div className="px-4 pt-12 pb-0 flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
-            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Чемпионат мира</h1>
+          <div className="max-w-[50%]">
+            <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: 'rgba(255,255,255,0.75)' }}>ЧМ 2026</p>
+            <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#FFFFFF' }}>СТАТИСТИКА</h1>
           </div>
           <div className="text-4xl mb-1">🌐</div>
         </div>
@@ -57,7 +57,7 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
               key={t.id}
               onClick={() => handleSub(t.id)}
               className="flex-shrink-0 px-4 py-3 text-[11px] font-bold uppercase tracking-wide relative whitespace-nowrap"
-              style={{ color: sub === t.id ? '#C9A800' : '#111827' }}
+              style={{ color: sub === t.id ? '#C9A800' : 'rgba(255,255,255,0.8)' }}
             >
               {t.label}
               {sub === t.id && (

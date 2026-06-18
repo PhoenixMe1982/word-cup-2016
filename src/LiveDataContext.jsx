@@ -44,6 +44,10 @@ const LiveDataCtx = createContext(FALLBACK)
 
 export function LiveDataProvider({ children }) {
   const [data, setData] = useState(FALLBACK)
+  // ready — первая загрузка завершена (свежие результаты/таблицы готовы).
+  // Сплэш на уровне App держит вход, пока это false, чтобы не показывать
+  // нули из FALLBACK до резолва /api/live.
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -78,6 +82,7 @@ export function LiveDataProvider({ children }) {
         news:        json?.news    || NEWS,
         ticker:      json?.ticker  || TICKER_ITEMS,
       })
+      setReady(true)
     }
 
     load()
@@ -85,7 +90,7 @@ export function LiveDataProvider({ children }) {
     return () => { cancelled = true; clearInterval(t) }
   }, [])
 
-  return <LiveDataCtx.Provider value={data}>{children}</LiveDataCtx.Provider>
+  return <LiveDataCtx.Provider value={{ ...data, ready }}>{children}</LiveDataCtx.Provider>
 }
 
 export const useLiveData = () => useContext(LiveDataCtx)

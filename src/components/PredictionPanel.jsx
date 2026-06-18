@@ -101,10 +101,10 @@ export default function PredictionPanel({ onClose, asPage = false }) {
           style={{ ...HEADER_BANNER_STYLE, borderBottom: '1px solid rgba(0,0,0,0.08)' }}
         >
           <div className="flex items-end justify-between">
-            <div>
-              <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: '#6B7280' }}>ЧМ 2026</p>
-              <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#111827' }}>Прогноз</h1>
-              <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: '#6B7280' }}>Топ-4 по вашей версии</p>
+            <div className="max-w-[50%]">
+              <p className="text-[10px] font-black tracking-widest mb-1 uppercase" style={{ color: 'rgba(255,255,255,0.75)' }}>ЧМ 2026</p>
+              <h1 className="text-2xl font-black uppercase tracking-wide" style={{ color: '#FFFFFF' }}>Прогноз</h1>
+              <p className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.75)' }}>Топ-4 по вашей версии</p>
             </div>
             <div className="text-5xl trophy-glow">🔮</div>
           </div>
