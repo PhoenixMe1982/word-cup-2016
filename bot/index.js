@@ -433,37 +433,6 @@ app.get('/api/health', (_, res) => res.json({ ok: true }))
 // GET /api/live — live match state polled from football-data.org every 5 min
 app.get('/api/live', (_, res) => res.json(liveState))
 
-// ВРЕМЕННЫЙ диагностический эндпоинт: что реально отдаёт football-data по матчам
-// (status/utcDate/счёт) + лимиты тарифа. Только публичные данные матчей, токен
-// не раскрывается. УДАЛИТЬ после диагностики live-счёта.
-app.get('/api/_debug/fd', async (_, res) => {
-  if (!FDORG_TOKEN) return res.json({ error: 'FDORG_TOKEN not set' })
-  try {
-    const r = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
-      headers: { 'X-Auth-Token': FDORG_TOKEN },
-    })
-    const rl = {
-      availableMinute: r.headers.get('X-Requests-Available-Minute'),
-      counterReset: r.headers.get('X-RequestCounter-Reset'),
-    }
-    if (!r.ok) return res.json({ httpStatus: r.status, rl, body: (await r.text()).slice(0, 400) })
-    const data = await r.json()
-    const all = (data.matches || []).map((m) => ({
-      fd: `${m.homeTeam?.tla}_${m.awayTeam?.tla}`,
-      mapped: lookupMatchId(normTLA(m.homeTeam?.tla || ''), normTLA(m.awayTeam?.tla || '')),
-      status: m.status,
-      utcDate: m.utcDate,
-      minute: m.minute ?? null,
-      fullTime: m.score?.fullTime,
-      halfTime: m.score?.halfTime,
-    }))
-    const byStatus = all.reduce((a, m) => { a[m.status] = (a[m.status] || 0) + 1; return a }, {})
-    const inplay = all.filter((m) => ['IN_PLAY', 'PAUSED', 'SUSPENDED'].includes(m.status))
-    const notFinished = all.filter((m) => m.status !== 'FINISHED').slice(0, 10)
-    res.json({ now: new Date().toISOString(), rl, count: all.length, byStatus, inplay, notFinished })
-  } catch (e) { res.json({ error: e.message }) }
-})
-
 // GET /api/results — all settled match results
 app.get('/api/results', async (_, res) => {
   try {
