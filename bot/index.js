@@ -728,26 +728,15 @@ bot.command('scorer', async (ctx) => {
     const list = current.map((s, i) =>
       `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}`
     )
-    const body = `${list.join('\n') || '— пусто —'}`
-    try {
-      // Имя бомбардира со спецсимволом legacy-Markdown (_ * [ ` ) ломает парсинг →
-      // Telegram 400. Поэтому при ошибке шлём тот же список простым текстом.
-      return await ctx.reply(
-        `*Бомбардиры:*\n\n${body}\n\n` +
-        `📝 Обновить: \`/scorer N голы ассисты [матчи]\`\n` +
-        `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\`\n` +
-        `🗑 Удалить: \`/scorer del N\` · ✏️ Имя: \`/scorer ren N Имя\``,
-        { parse_mode: 'Markdown' }
-      )
-    } catch (e) {
-      console.error('[scorer] markdown reply failed, fallback to plain:', e.message)
-      return ctx.reply(
-        `Бомбардиры:\n\n${body}\n\n` +
-        `📝 Обновить: /scorer N голы ассисты [матчи]\n` +
-        `➕ Добавить: /scorer add Имя TLA голы ассисты [матчи]\n` +
-        `🗑 Удалить: /scorer del N · ✏️ Имя: /scorer ren N Имя`
-      )
-    }
+    // Без parse_mode: имена бомбардиров из API могут содержать спецсимволы
+    // legacy-Markdown (_ * [ ` ) и ломать парсинг (Telegram 400). Plain-текст
+    // не падает на форматировании.
+    return ctx.reply(
+      `Бомбардиры:\n\n${list.join('\n') || '— пусто —'}\n\n` +
+      `📝 Обновить: /scorer N голы ассисты [матчи]\n` +
+      `➕ Добавить: /scorer add Имя TLA голы ассисты [матчи]\n` +
+      `🗑 Удалить: /scorer del N · ✏️ Имя: /scorer ren N Имя`
+    )
   }
 
   const replies = lines.filter(Boolean).map(line => applyScorerLine(line, current))
@@ -772,9 +761,9 @@ bot.command('keeper', async (ctx) => {
     const lines = current.map((k, i) =>
       `${i + 1}. ${k.name} (${k.team}) — 🧤${k.cleanSheets} ⏱${k.minutesWithoutGoal}мин 🎮${k.matches}`
     )
+    // Plain-текст: имена вратарей могут содержать спецсимволы legacy-Markdown.
     return ctx.reply(
-      `*Вратари:*\n\n${lines.join('\n')}\n\n📝 Обновить: \`/keeper N сухие минуты матчи\``,
-      { parse_mode: 'Markdown' }
+      `Вратари:\n\n${lines.join('\n')}\n\n📝 Обновить: /keeper N сухие минуты матчи`
     )
   }
 
