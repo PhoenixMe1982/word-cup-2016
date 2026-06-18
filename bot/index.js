@@ -606,16 +606,27 @@ bot.command('stats', async (ctx) => {
   return ctx.reply(`👥 Подписчиков: *${count}*\n🏅 В лидерборде: *${lbCount || 0}*`, { parse_mode: 'Markdown' })
 })
 
-// /score m01 2:1 — зафиксировать результат и начислить очки
+// /score m01 2:1 — зафиксировать точный счёт оконченного матча:
+// показать цифры в «оконченных» в аппке + сверить очки лидерборда.
+// settleMatch идемпотентна и delta-безопасна: повторный/корректирующий ввод
+// НЕ задваивает очки (если счёт тот же — лидерборд не меняется).
 bot.command('score', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
   const raw = ctx.message.text.replace(/^\/score\s*/, '').trim()
   const match = raw.match(/^(\w+)\s+(\d+):(\d+)$/)
   if (!match) return ctx.reply('Формат: /score m01 2:1')
-  const [, matchId, h, a] = match
+  const [, matchId, hs, as] = match
+  const h = parseInt(hs), a = parseInt(as)
   try {
-    const count = await settleMatch(matchId, parseInt(h), parseInt(a))
-    return ctx.reply(`✅ Матч ${matchId} зафиксирован ${h}:${a}\nПодсчитано прогнозов: ${count}`)
+    const count = await settleMatch(matchId, h, a)
+    // Мгновенно отражаем счёт в аппке, не дожидаясь следующего поллинга (≤5 мин).
+    // На последующих циклах поллер подтвердит это из results (источник истины).
+    liveState.matchResults[matchId] = { status: 'finished', scoreHome: h, scoreAway: a }
+    return ctx.reply(
+      `✅ Матч ${matchId}: ${h}:${a}\n` +
+      `• Счёт показан в «оконченных» в аппке (сразу; в Telegram перезайди в мини-апп, если кэш).\n` +
+      `• Прогнозов сверено: ${count}. Очки delta-безопасны — задвоения нет.`
+    )
   } catch (e) {
     return ctx.reply(`❌ Ошибка: ${e.message}`)
   }
