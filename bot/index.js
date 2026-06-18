@@ -433,6 +433,15 @@ app.get('/api/health', (_, res) => res.json({ ok: true }))
 // GET /api/live — live match state polled from football-data.org every 5 min
 app.get('/api/live', (_, res) => res.json(liveState))
 
+// ВРЕМЕННЫЙ диагностический эндпоинт: состояние webhook/getUpdates бота.
+// Работает даже если long-polling лежит. УДАЛИТЬ после диагностики.
+app.get('/api/_debug/bot', async (_, res) => {
+  try {
+    const info = await bot.api.getWebhookInfo()
+    res.json(info)
+  } catch (e) { res.json({ error: e.message }) }
+})
+
 // GET /api/results — all settled match results
 app.get('/api/results', async (_, res) => {
   try {
@@ -853,16 +862,34 @@ bot.catch((err) => {
     .catch(() => {})
 })
 
-bot.start({
-  onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`),
-}).catch((err) => {
-  console.error('Bot crashed:', err.message)
-  if (err.message?.includes('409')) {
-    console.error('409 Conflict — another instance running. API server stays up.')
-  } else {
-    process.exit(1)
+// Чистый long-polling: если на боте зачем-то выставлен webhook, getUpdates даёт
+// 409 НАВСЕГДА (переживает рестарт) — команды не доходят. Снимаем вебхук перед
+// стартом и стартуем с drop_pending_updates, чтобы не разгребать накопленную
+// очередь. Если причина — второй потребитель getUpdates (дубль-инстанс), это
+// видно в логе onStart-ошибки и в /api/_debug/bot (last_error_message).
+async function startBot() {
+  try {
+    const info = await bot.api.getWebhookInfo()
+    if (info.url) {
+      console.warn(`[bot] webhook был выставлен (${info.url}) — снимаю для long-polling`)
+    }
+    await bot.api.deleteWebhook({ drop_pending_updates: false })
+  } catch (e) {
+    console.error('[bot] webhook check/delete failed:', e.message)
   }
-})
+  bot.start({
+    drop_pending_updates: true,
+    onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`),
+  }).catch((err) => {
+    console.error('Bot crashed:', err.message)
+    if (err.message?.includes('409')) {
+      console.error('409 Conflict — webhook или дубль-инстанс держит getUpdates. API stays up.')
+    } else {
+      process.exit(1)
+    }
+  })
+}
+startBot()
 
 const PORT = process.env.PORT || 10000
 app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
