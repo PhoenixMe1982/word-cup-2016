@@ -728,13 +728,26 @@ bot.command('scorer', async (ctx) => {
     const list = current.map((s, i) =>
       `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}`
     )
-    return ctx.reply(
-      `*Бомбардиры:*\n\n${list.join('\n') || '— пусто —'}\n\n` +
-      `📝 Обновить: \`/scorer N голы ассисты [матчи]\`\n` +
-      `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\`\n` +
-      `🗑 Удалить: \`/scorer del N\` · ✏️ Имя: \`/scorer ren N Имя\``,
-      { parse_mode: 'Markdown' }
-    )
+    const body = `${list.join('\n') || '— пусто —'}`
+    try {
+      // Имя бомбардира со спецсимволом legacy-Markdown (_ * [ ` ) ломает парсинг →
+      // Telegram 400. Поэтому при ошибке шлём тот же список простым текстом.
+      return await ctx.reply(
+        `*Бомбардиры:*\n\n${body}\n\n` +
+        `📝 Обновить: \`/scorer N голы ассисты [матчи]\`\n` +
+        `➕ Добавить: \`/scorer add Имя TLA голы ассисты [матчи]\`\n` +
+        `🗑 Удалить: \`/scorer del N\` · ✏️ Имя: \`/scorer ren N Имя\``,
+        { parse_mode: 'Markdown' }
+      )
+    } catch (e) {
+      console.error('[scorer] markdown reply failed, fallback to plain:', e.message)
+      return ctx.reply(
+        `Бомбардиры:\n\n${body}\n\n` +
+        `📝 Обновить: /scorer N голы ассисты [матчи]\n` +
+        `➕ Добавить: /scorer add Имя TLA голы ассисты [матчи]\n` +
+        `🗑 Удалить: /scorer del N · ✏️ Имя: /scorer ren N Имя`
+      )
+    }
   }
 
   const replies = lines.filter(Boolean).map(line => applyScorerLine(line, current))
@@ -839,6 +852,16 @@ bot.on('message', async (ctx) => {
 
   const { sent, failed, total } = await broadcast(broadcastFn)
   return ctx.reply(`✅ Готово: ${sent}/${total} отправлено, ${failed} ошибок`)
+})
+
+// Глобальная страховка: если обработчик команды бросит исключение (например,
+// Telegram отверг Markdown-сообщение), бот раньше «молчал». Теперь логируем и
+// сообщаем пользователю, что команда не выполнена — не оставляем в тишине.
+bot.catch((err) => {
+  const cmd = err.ctx?.message?.text || err.ctx?.update?.message?.text || '?'
+  console.error(`[bot] handler error on "${cmd}":`, err.error?.message || err.error)
+  err.ctx?.reply?.('⚠️ Команда не выполнена (ошибка форматирования или сети). Попробуй ещё раз.')
+    .catch(() => {})
 })
 
 bot.start({
