@@ -433,15 +433,6 @@ app.get('/api/health', (_, res) => res.json({ ok: true }))
 // GET /api/live — live match state polled from football-data.org every 5 min
 app.get('/api/live', (_, res) => res.json(liveState))
 
-// ВРЕМЕННЫЙ диагностический эндпоинт: состояние webhook/getUpdates бота.
-// Работает даже если long-polling лежит. УДАЛИТЬ после диагностики.
-app.get('/api/_debug/bot', async (_, res) => {
-  try {
-    const info = await bot.api.getWebhookInfo()
-    res.json(info)
-  } catch (e) { res.json({ error: e.message }) }
-})
-
 // GET /api/results — all settled match results
 app.get('/api/results', async (_, res) => {
   try {
@@ -734,15 +725,25 @@ bot.command('scorer', async (ctx) => {
     .filter((l, i) => i === 0 || l)
 
   if (lines.length === 1 && !lines[0]) {
-    const list = current.map((s, i) =>
-      `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}`
-    )
-    // Без parse_mode: имена бомбардиров из API могут содержать спецсимволы
-    // legacy-Markdown (_ * [ ` ) и ломать парсинг (Telegram 400). Plain-текст
-    // не падает на форматировании.
+    // Лимит сообщения Telegram — 4096 символов. После автосинка бомбардиров
+    // бывает 100+ игроков → полный список не влезает и ctx.reply падает с 400.
+    // Режем по бюджету символов, сохраняя РЕАЛЬНЫЕ номера (правка по /scorer N
+    // остаётся валидной для любого индекса). Plain-текст: имена из API могут
+    // содержать спецсимволы legacy-Markdown.
+    let out = ''
+    let shown = 0
+    for (let i = 0; i < current.length; i++) {
+      const s = current[i]
+      const line = `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}\n`
+      if (out.length + line.length > 3500) break
+      out += line
+      shown++
+    }
+    const more = current.length - shown
     return ctx.reply(
-      `Бомбардиры:\n\n${list.join('\n') || '— пусто —'}\n\n` +
-      `📝 Обновить: /scorer N голы ассисты [матчи]\n` +
+      `Бомбардиры (${current.length}):\n\n${current.length ? out : '— пусто —\n'}` +
+      (more > 0 ? `…и ещё ${more}. Правь по номеру напрямую: /scorer N голы ассисты\n` : '') +
+      `\n📝 Обновить: /scorer N голы ассисты [матчи]\n` +
       `➕ Добавить: /scorer add Имя TLA голы ассисты [матчи]\n` +
       `🗑 Удалить: /scorer del N · ✏️ Имя: /scorer ren N Имя`
     )
