@@ -208,6 +208,52 @@ async function settleMatch(matchId, homeScore, awayScore) {
   return Object.keys(matchPreds).length
 }
 
+// ── Ранжирование лидерборда с тай-брейками ────────────────────────────────
+// Очки в Redis (sorted set) задают основной порядок, но при равенстве очков
+// Redis сортирует лексикографически по userId (фактически случайно). Поэтому
+// финальный порядок считаем в JS по каскаду тай-брейков (см. compareRank).
+
+// Подгружаем по каждому участнику лидерборда статистику для тай-брейков:
+// pts (из sorted set), число точных счетов (+3), число ЗАСЧИТАННЫХ прогнозов
+// (у которых уже определён pts) и время первого прогноза (min savedAt).
+async function loadRankingStats() {
+  const raw = await redisExec('ZREVRANGE', K.leaderboard, 0, -1, 'WITHSCORES')
+  if (!raw || raw.length === 0) return []
+  const ids = []
+  const ptsById = {}
+  for (let i = 0; i < raw.length; i += 2) {
+    ids.push(raw[i])
+    ptsById[raw[i]] = parseInt(raw[i + 1]) || 0
+  }
+  const upredsList = await Promise.all(ids.map((id) => rget(K.upreds(id))))
+  return ids.map((userId, idx) => {
+    const up = upredsList[idx] || {}
+    let exact = 0, settled = 0, firstAt = Infinity
+    for (const p of Object.values(up)) {
+      if (p.pts !== undefined) { settled++; if (p.pts === 3) exact++ }
+      if (p.savedAt) {
+        const t = Date.parse(p.savedAt)
+        if (!Number.isNaN(t) && t < firstAt) firstAt = t
+      }
+    }
+    return { userId, pts: ptsById[userId], exact, settled, firstAt }
+  })
+}
+
+// Каскад приоритетов среди равных по очкам — следующий пункт сравнивается
+// только при равенстве предыдущего:
+//   1) больше точных счетов (прогнозов на +3);
+//   2) больше засчитанных прогнозов;
+//   3) раньше сделан первый прогноз (меньший savedAt);
+//   4) стабильный фолбэк по userId (чтобы порядок не «прыгал»).
+function compareRank(a, b) {
+  return (b.pts - a.pts)
+    || (b.exact - a.exact)
+    || (b.settled - a.settled)
+    || (a.firstAt - b.firstAt)
+    || (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0)
+}
+
 // ── Изменение позиции относительно последнего зачёта ──────────────────────
 // Реконструируем рейтинг ДО последнего зачтённого матча: у текущих очков
 // вычитаем баллы, полученные именно за этот матч, и пересортировываем. Так
@@ -215,13 +261,14 @@ async function settleMatch(matchId, homeScore, awayScore) {
 // хранения отдельных снимков в Redis (работает сразу после деплоя).
 // Возвращает map userId -> delta (prevRank - currentRank): >0 поднялся,
 // <0 опустился, 0 без изменений.
-async function computeRankDeltas() {
-  const raw = await redisExec('ZREVRANGE', K.leaderboard, 0, -1, 'WITHSCORES')
-  if (!raw || raw.length === 0) return {}
-  const cur = []
-  for (let i = 0; i < raw.length; i += 2) {
-    cur.push({ userId: raw[i], pts: parseInt(raw[i + 1]) || 0, currentRank: cur.length + 1 })
-  }
+// stats — результат loadRankingStats() (можно передать готовый, чтобы не читать
+// Redis дважды); если не передан — подгружается сам.
+async function computeRankDeltas(stats) {
+  if (!stats) stats = await loadRankingStats()
+  if (stats.length === 0) return {}
+  // Текущий ранг — по тому же каскаду тай-брейков, что и в лидерборде.
+  const cur = [...stats].sort(compareRank)
+  cur.forEach((e, i) => { e.currentRank = i + 1 })
 
   const results = (await rget(K.results)) || {}
   let last = null
@@ -236,17 +283,26 @@ async function computeRankDeltas() {
     return deltas
   }
 
+  // Реконструируем статистику ДО последнего зачёта: убираем у каждого баллы,
+  // точный счёт и факт «засчитанного прогноза», полученные именно за этот матч
+  // (savedAt/firstAt зачётом не меняется). Затем ранжируем тем же компаратором.
   const lastPreds = (await rget(K.preds(last.matchId))) || {}
   const lastResult = { home: last.r.home, away: last.r.away }
-  for (const e of cur) {
+  const prev = cur.map((e) => {
     const p = lastPreds[e.userId]
-    e.prevPts = e.pts - (p ? calcPoints(p, lastResult) : 0)
-  }
-  // Тай-брейк по текущему рангу: среди равных по prevPts сохраняем текущий
-  // порядок, чтобы изменение позиции возникало только из-за реальных очков.
-  const prev = [...cur].sort((a, b) => b.prevPts - a.prevPts || a.currentRank - b.currentRank)
-  prev.forEach((e, i) => { e.prevRank = i + 1 })
-  for (const e of cur) deltas[e.userId] = e.prevRank - e.currentRank
+    const gained = p ? calcPoints(p, lastResult) : 0
+    return {
+      userId: e.userId,
+      pts: e.pts - gained,
+      exact: e.exact - (gained === 3 ? 1 : 0),
+      settled: e.settled - (p ? 1 : 0),
+      firstAt: e.firstAt,
+    }
+  })
+  prev.sort(compareRank)
+  const prevRank = {}
+  prev.forEach((e, i) => { prevRank[e.userId] = i + 1 })
+  for (const e of cur) deltas[e.userId] = prevRank[e.userId] - e.currentRank
   return deltas
 }
 
@@ -493,17 +549,24 @@ app.post('/api/predict', withAuth, async (req, res) => {
 app.get('/api/leaderboard', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
-    const raw = await redisExec('ZREVRANGE', K.leaderboard, 0, limit - 1, 'WITHSCORES')
-    if (!raw) return res.json([])
+    // Полный набор участников + статистика для тай-брейков, затем сортировка
+    // по каскаду приоритетов (compareRank) и срез top-N.
+    const stats = await loadRankingStats()
+    if (stats.length === 0) return res.json([])
+    stats.sort(compareRank)
 
-    const [users, deltas] = await Promise.all([loadUsers(), computeRankDeltas()])
-    const entries = []
-    for (let i = 0; i < raw.length; i += 2) {
-      const userId = raw[i]
-      const pts = parseInt(raw[i + 1]) || 0
-      const u = users[userId] || {}
-      entries.push({ userId, pts, firstName: u.firstName || 'Игрок', username: u.username || null, rank: entries.length + 1, rankDelta: deltas[userId] ?? null })
-    }
+    const [users, deltas] = await Promise.all([loadUsers(), computeRankDeltas(stats)])
+    const entries = stats.slice(0, limit).map((e, i) => {
+      const u = users[e.userId] || {}
+      return {
+        userId: e.userId,
+        pts: e.pts,
+        firstName: u.firstName || 'Игрок',
+        username: u.username || null,
+        rank: i + 1,
+        rankDelta: deltas[e.userId] ?? null,
+      }
+    })
     res.json(entries)
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
@@ -528,19 +591,22 @@ app.get('/api/goalkeepers', async (_, res) => {
 app.get('/api/me', withAuth, async (req, res) => {
   try {
     const userId = String(req.tgUser.id)
-    const [score, rank, deltas] = await Promise.all([
-      redisExec('ZSCORE', K.leaderboard, userId),
-      redisExec('ZREVRANK', K.leaderboard, userId),
-      computeRankDeltas(),
-    ])
+    // Свой ранг берём из общего ранжирования (с тай-брейками), а не из ZREVRANK,
+    // иначе для равных по очкам место разошлось бы со списком лидерборда.
+    const stats = await loadRankingStats()
+    stats.sort(compareRank)
+    const deltas = await computeRankDeltas(stats)
+    const idx = stats.findIndex(e => e.userId === userId)
+    const myStat = idx >= 0 ? stats[idx] : null
+
     const upreds = (await rget(K.upreds(userId))) || {}
     const total = Object.keys(upreds).length
     const correct = Object.values(upreds).filter(p => p.pts === 3).length
     const partial = Object.values(upreds).filter(p => p.pts === 1).length
     res.json({
       userId,
-      pts: parseInt(score) || 0,
-      rank: rank != null ? rank + 1 : null,
+      pts: myStat ? myStat.pts : 0,
+      rank: idx >= 0 ? idx + 1 : null,
       rankDelta: deltas[userId] ?? null,
       predictions: total,
       exact: correct,
