@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-06-21T17:56:58.611Z",
+  "_updated": "2026-06-21T19:56:50.570Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
@@ -178,12 +178,14 @@
       "scoreAway": 4
     },
     "m37": {
-      "status": "live",
-      "scoreHome": 4,
+      "status": "finished",
+      "scoreHome": 5,
       "scoreAway": 0
     },
     "m38": {
-      "status": "upcoming"
+      "status": "live",
+      "scoreHome": 0,
+      "scoreAway": 1
     },
     "m40": {
       "status": "upcoming"
