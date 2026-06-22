@@ -9,12 +9,15 @@ import PredictionPanel from './components/PredictionPanel.jsx'
 import SaluteWatcher from './components/SaluteWatcher.jsx'
 import Splash from './components/Splash.jsx'
 import VisitSummary from './components/VisitSummary.jsx'
+import AnnouncementModal from './components/AnnouncementModal.jsx'
 import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
 const SEEN_KEY = 'wc2026_predictionSeen'
 const LAST_VISIT_KEY = 'wc2026_lastVisit' // снимок {rank, pts, settledIds} прошлого визита
+// Разовый попап-разъяснение про исправление счёта матча m37 (Испания—С.Аравия, 5:0→4:0)
+const ANNOUNCE_KEY = 'wc2026_announce_m37_score_fix'
 
 // Сплэш висит минимум столько (чтобы не мигал на быстрой сети) и максимум
 // столько (фолбэк: если Render холодный/завис — всё равно пускаем внутрь).
@@ -68,6 +71,9 @@ function AppShell() {
   const [worldcupSub, setWorldcupSub] = useState('groups')
   const [showPredictionModal, setShowPredictionModal] = useState(
     () => !localStorage.getItem(SEEN_KEY)
+  )
+  const [showAnnounce, setShowAnnounce] = useState(
+    () => !localStorage.getItem(ANNOUNCE_KEY)
   )
 
   // ── Splash / readiness ───────────────────────────────────────────────
@@ -150,6 +156,11 @@ function AppShell() {
     setShowPredictionModal(false)
   }
 
+  const handleCloseAnnounce = () => {
+    localStorage.setItem(ANNOUNCE_KEY, '1')
+    setShowAnnounce(false)
+  }
+
   const pages = {
     home:        <Home onTab={handleTab} />,
     play:        <PlayPage />,
@@ -158,10 +169,12 @@ function AppShell() {
     leaderboard: <Leaderboard />,
   }
 
-  // Попап итогов визита показываем первым делом после входа (если есть что показать),
-  // и только потом — первичный модал прогноза, чтобы не накладывались.
-  const showVisit = entered && visit
-  const showPrediction = entered && !showVisit && showPredictionModal
+  // Приоритет попапов после входа (показываем строго по одному, не внахлёст):
+  // 1) разъяснение про исправление счёта m37 → 2) итоги визита → 3) первичный
+  // модал прогноза.
+  const showAnnouncement = entered && showAnnounce
+  const showVisit = entered && !showAnnouncement && visit
+  const showPrediction = entered && !showAnnouncement && !showVisit && showPredictionModal
 
   return (
     <>
@@ -171,6 +184,9 @@ function AppShell() {
           {pages[tab] ?? pages.home}
         </div>
         <BottomNav active={tab} onTab={handleTab} />
+
+        {/* Разовое уведомление об исправлении счёта матча m37 */}
+        {showAnnouncement && <AnnouncementModal onClose={handleCloseAnnounce} />}
 
         {/* Итоги визита — что изменилось с прошлого раза */}
         {showVisit && <VisitSummary summary={visit} onClose={() => setVisit(null)} />}
