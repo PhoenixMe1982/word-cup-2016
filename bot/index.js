@@ -803,27 +803,45 @@ bot.command('scorer', async (ctx) => {
 
   if (lines.length === 1 && !lines[0]) {
     // Лимит сообщения Telegram — 4096 символов. После автосинка бомбардиров
-    // бывает 100+ игроков → полный список не влезает и ctx.reply падает с 400.
-    // Режем по бюджету символов, сохраняя РЕАЛЬНЫЕ номера (правка по /scorer N
-    // остаётся валидной для любого индекса). Plain-текст: имена из API могут
-    // содержать спецсимволы legacy-Markdown.
-    let out = ''
-    let shown = 0
-    for (let i = 0; i < current.length; i++) {
-      const s = current[i]
-      const line = `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}\n`
-      if (out.length + line.length > 3500) break
-      out += line
-      shown++
-    }
-    const more = current.length - shown
-    return ctx.reply(
-      `Бомбардиры (${current.length}):\n\n${current.length ? out : '— пусто —\n'}` +
-      (more > 0 ? `…и ещё ${more}. Правь по номеру напрямую: /scorer N голы ассисты\n` : '') +
+    // бывает 100+ игроков → полный список в одно сообщение не влезает. Раньше
+    // список обрезался («…и ещё N»), и игроков с хвоста нельзя было править.
+    // Теперь бьём на НЕСКОЛЬКО сообщений по бюджету символов, сохраняя РЕАЛЬНЫЕ
+    // номера (правка /scorer N валидна для любого индекса). Plain-текст: имена
+    // из API могут содержать спецсимволы legacy-Markdown.
+    const header = `Бомбардиры (${current.length}):\n\n`
+    const footer =
       `\n📝 Обновить: /scorer N голы ассисты [матчи]\n` +
       `➕ Добавить: /scorer add Имя TLA голы ассисты [матчи]\n` +
       `🗑 Удалить: /scorer del N · ✏️ Имя: /scorer ren N Имя`
-    )
+
+    if (current.length === 0) {
+      return ctx.reply(`${header}— пусто —\n${footer}`)
+    }
+
+    // Собираем строки в чанки: новый чанк, когда добавление строки превысит
+    // бюджет (запас от 4096 под заголовок/футер/эмодзи-байты).
+    const BUDGET = 3500
+    const chunks = []
+    let cur = ''
+    for (let i = 0; i < current.length; i++) {
+      const s = current[i]
+      const line = `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}\n`
+      if (cur && cur.length + line.length > BUDGET) { chunks.push(cur); cur = '' }
+      cur += line
+    }
+    if (cur) chunks.push(cur)
+
+    // Заголовок — к первому сообщению, подсказка по командам — к последнему.
+    // Шлём по порядку с небольшой паузой, чтобы не упереться в флуд-лимит чата.
+    for (let i = 0; i < chunks.length; i++) {
+      let msg = chunks[i]
+      if (i === 0) msg = header + msg
+      if (i === chunks.length - 1) msg = msg + footer
+      else msg = msg + `\n— продолжение (${i + 2}/${chunks.length}) ниже —`
+      await ctx.reply(msg)
+      if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 120))
+    }
+    return
   }
 
   const replies = lines.filter(Boolean).map(line => applyScorerLine(line, current))
