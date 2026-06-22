@@ -260,10 +260,17 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
           {isUpcoming ? (
             <span className="text-sm font-black" style={{ color: '#9CA3AF' }}>vs</span>
           ) : (
-            <div className="flex items-center gap-1">
-              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome ?? '–'}</span>
-              <span style={{ color: '#9CA3AF' }}>:</span>
-              <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway ?? '–'}</span>
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1">
+                <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreHome ?? '–'}</span>
+                <span style={{ color: '#9CA3AF' }}>:</span>
+                <span className="text-xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway ?? '–'}</span>
+              </div>
+              {match.penHome != null && (
+                <span className="text-[10px] font-semibold whitespace-nowrap" style={{ color: '#6B7280' }}>
+                  пен. {match.penHome}:{match.penAway}
+                </span>
+              )}
             </div>
           )}
         </div>

@@ -176,17 +176,25 @@ function calcPoints(pred, result) {
   return predOutcome === realOutcome ? 1 : 0
 }
 
-async function settleMatch(matchId, homeScore, awayScore) {
+async function settleMatch(matchId, homeScore, awayScore, meta = {}) {
   const results = (await rget(K.results)) || {}
 
-  // Idempotency guard — same score already settled, skip to avoid double-counting
+  // Idempotency guard — same score already settled, skip to avoid double-counting.
+  // Очки зависят только от home/away, поэтому сверяем именно их. Доп. метаданные
+  // (пенальти/победитель/длительность) дописываем даже при том же счёте — они
+  // влияют лишь на отображение карточки, не на лидерборд.
   const existing = results[matchId]
   if (existing && existing.home === homeScore && existing.away === awayScore) {
-    console.log(`[settle] ${matchId} already settled ${homeScore}:${awayScore}, skip`)
+    const merged = { ...existing, ...meta }
+    if (JSON.stringify(merged) !== JSON.stringify(existing)) {
+      results[matchId] = merged
+      await rset(K.results, results)
+    }
+    console.log(`[settle] ${matchId} already settled ${homeScore}:${awayScore}, skip (meta refreshed)`)
     return 0
   }
 
-  const result = { home: homeScore, away: awayScore, settledAt: new Date().toISOString() }
+  const result = { home: homeScore, away: awayScore, settledAt: new Date().toISOString(), ...meta }
   results[matchId] = result
   await rset(K.results, results)
 
@@ -318,6 +326,42 @@ const FD_STATUS_MAP = {
 
 const liveState = { updated: null, matchResults: {} }
 
+// Гейт фиксации итога: возвращает финальный результат ТОЛЬКО если матч
+// действительно завершён И финальный счёт реально присутствует. Иначе null —
+// тогда матч не фиксируется в results, не зачитывается в лидерборд и не
+// показывается в карточке как завершённый. Это защищает от двух ситуаций:
+//   • football-data на миг отдаёт FINISHED, но fullTime ещё null (раньше код
+//     молча подставлял счёт ПЕРВОГО ТАЙМА и фиксировал неверный итог);
+//   • статус «мигает» FINISHED↔SCHEDULED до реального окончания.
+// Доп. поля (penHome/penAway, winner, duration) собираем защитно из тех полей,
+// что реально пришли — для корректного отображения нокаута/пенальти в карточке.
+// На очки они не влияют: calcPoints считает по home/away (счёт fullTime).
+function extractFinalResult(m) {
+  if (m.status !== 'FINISHED' && m.status !== 'AWARDED') return null
+  const sc = m.score || {}
+  const ft = sc.fullTime
+  if (!ft || ft.home == null || ft.away == null) return null
+
+  const result = { home: ft.home, away: ft.away }
+  const duration = sc.duration || 'REGULAR'
+  if (duration !== 'REGULAR') result.duration = duration
+  if (sc.penalties && sc.penalties.home != null && sc.penalties.away != null) {
+    result.penHome = sc.penalties.home
+    result.penAway = sc.penalties.away
+  }
+  if (sc.winner) result.winner = sc.winner // HOME_TEAM | AWAY_TEAM | DRAW
+  return result
+}
+
+// Поля карточки завершённого матча из записанного/полученного результата.
+function finishedEntry(r) {
+  const entry = { status: 'finished', scoreHome: r.home, scoreAway: r.away }
+  if (r.penHome != null) { entry.penHome = r.penHome; entry.penAway = r.penAway }
+  if (r.winner) entry.winner = r.winner
+  if (r.duration) entry.duration = r.duration
+  return entry
+}
+
 async function pollFootballData() {
   if (!FDORG_TOKEN) return
   try {
@@ -341,34 +385,45 @@ async function pollFootballData() {
       // Зачтённый в Redis матч — источник истины: football-data.org иногда
       // временно откатывает FINISHED обратно в SCHEDULED, не даём ему понизить статус
       if (settled[matchId]) {
-        next[matchId] = { status: 'finished', scoreHome: settled[matchId].home, scoreAway: settled[matchId].away }
+        next[matchId] = finishedEntry(settled[matchId])
         continue
       }
 
-      const status = FD_STATUS_MAP[m.status] || 'upcoming'
-      const entry = { status }
-      const score = m.score?.fullTime?.home != null ? m.score.fullTime
-        : m.score?.halfTime?.home != null ? m.score.halfTime : null
-      if (score) { entry.scoreHome = score.home; entry.scoreAway = score.away }
-      if (status === 'live') {
-        liveCount++
-        if (m.minute != null) entry.time = String(m.minute)
-      }
-      next[matchId] = entry
+      // Строгий гейт: «завершён» = только подтверждённый финальный счёт (fullTime).
+      const finalResult = extractFinalResult(m)
+      const rawStatus = FD_STATUS_MAP[m.status] || 'upcoming'
 
-      // Авто-зачёт очков: матч завершён, счёт есть, в Redis ещё не зачтён
-      if (status === 'finished' && score && !settled[matchId]) {
+      if (finalResult) {
+        // Итог подтверждён → показываем как завершённый и зачитываем очки.
+        next[matchId] = finishedEntry(finalResult)
         try {
-          const count = await settleMatch(matchId, score.home, score.away)
+          const { home, away, ...meta } = finalResult
+          const count = await settleMatch(matchId, home, away, meta)
           if (ADMIN_ID) {
+            const pen = finalResult.penHome != null
+              ? ` (пен. ${finalResult.penHome}:${finalResult.penAway})` : ''
             bot.api.sendMessage(ADMIN_ID,
-              `⚽ *${m.homeTeam.name} ${score.home}:${score.away} ${m.awayTeam.name}*\nПрогнозов зачтено: ${count}`,
+              `⚽ *${m.homeTeam.name} ${finalResult.home}:${finalResult.away} ${m.awayTeam.name}*${pen}\nПрогнозов зачтено: ${count}`,
               { parse_mode: 'Markdown' }).catch(() => {})
           }
         } catch (e) {
           console.error(`[live] settle ${matchId} failed:`, e.message)
         }
+        continue
       }
+
+      // Итог НЕ подтверждён. Если FD уже отдаёт FINISHED, но fullTime ещё нет —
+      // удерживаем матч как 'live', чтобы карточка не показала непроверённый счёт.
+      const status = rawStatus === 'finished' ? 'live' : rawStatus
+      const entry = { status }
+      const liveScore = m.score?.fullTime?.home != null ? m.score.fullTime
+        : m.score?.halfTime?.home != null ? m.score.halfTime : null
+      if (liveScore) { entry.scoreHome = liveScore.home; entry.scoreAway = liveScore.away }
+      if (status === 'live') {
+        liveCount++
+        if (m.minute != null) entry.time = String(m.minute)
+      }
+      next[matchId] = entry
     }
 
     liveState.matchResults = next
