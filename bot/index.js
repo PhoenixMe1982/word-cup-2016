@@ -818,16 +818,31 @@ bot.command('scorer', async (ctx) => {
       return ctx.reply(`${header}— пусто —\n${footer}`)
     }
 
-    // Собираем строки в чанки: новый чанк, когда добавление строки превысит
-    // бюджет (запас от 4096 под заголовок/футер/эмодзи-байты).
+    // Группируем по сборной (так удобнее искать игрока), команды — по алфавиту.
+    // ВАЖНО: номер в строке — это РЕАЛЬНЫЙ индекс в массиве current (i+1), по нему
+    // работает /scorer N. Хранилище отсортировано по голам (этот же порядок идёт
+    // в /api/scorers → доска бомбардиров на фронте), поэтому номера внутри
+    // сборной идут не подряд — это нормально и нужно для корректной правки.
+    // Внутри сборной игроки идут в порядке голов (current уже goals-sorted).
+    const byTeam = {}
+    current.forEach((s, i) => { (byTeam[s.team || '—'] ||= []).push({ ...s, n: i + 1 }) })
+    const blocks = Object.keys(byTeam).sort().map((t) => {
+      const rows = byTeam[t]
+        .map((p) => `${p.n}. ${p.name} — ⚽${p.goals} 🅰️${p.assists} 🎮${p.matches}`)
+        .join('\n')
+      return `${t} (${byTeam[t].length}):\n${rows}`
+    })
+
+    // Бьём по бюджету (запас от 4096 под заголовок/футер/эмодзи-байты), но
+    // НЕ дробим блок одной сборной между сообщениями (макс ~26 игроков ≈ 1100
+    // символов, в бюджет всегда влезает).
     const BUDGET = 3500
     const chunks = []
     let cur = ''
-    for (let i = 0; i < current.length; i++) {
-      const s = current[i]
-      const line = `${i + 1}. ${s.name} (${s.team}) — ⚽${s.goals} 🅰️${s.assists} 🎮${s.matches}\n`
-      if (cur && cur.length + line.length > BUDGET) { chunks.push(cur); cur = '' }
-      cur += line
+    for (const block of blocks) {
+      const piece = (cur ? '\n\n' : '') + block
+      if (cur && cur.length + piece.length > BUDGET) { chunks.push(cur); cur = block }
+      else cur += piece
     }
     if (cur) chunks.push(cur)
 
