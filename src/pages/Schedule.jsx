@@ -375,7 +375,7 @@ export default function Schedule({ embedded = false }) {
   const toggleExpand = (id) => setExpandedId((prev) => (prev === id ? null : id))
 
   return (
-    <div className={embedded ? '' : 'page-content'}>
+    <div className="page-content">
       {!embedded && (
         <div
           className="px-4 pt-12 pb-4"

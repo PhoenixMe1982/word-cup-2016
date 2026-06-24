@@ -1,214 +1,138 @@
+import { useMemo } from 'react'
 import { TEAMS } from '../data.js'
-import { useLiveData } from '../LiveDataContext.jsx'
 
-const MAX_MINUTES = 270
+// Статистика вратарей группового этапа ЧМ-2026 (на 24 июня 2026).
+// Источник: сводка Opta (Squawka/ESPN), TNT Sports, Goalkeeper Magazine.
+// mp — матчи, saves — сейвы, ga — пропущено, savepct — % сейвов, cs — сухие,
+// pom — приз «Игрок матча». «Балл» считается ниже по прозрачной формуле.
+const GK_DATA = [
+  { name: 'Алиреза Бейранванд',    team: 'IRN', mp: 2, saves: 9,  ga: 0, savepct: 100,  cs: 2, pom: true  },
+  { name: 'Элой Рум',              team: 'CUW', mp: 2, saves: 18, ga: 1, savepct: 94.7, cs: 1, pom: true  },
+  { name: 'Мохаммад Аль-Овайс',    team: 'KSA', mp: 2, saves: 13, ga: 2, savepct: 86.7, cs: 0, pom: true  },
+  { name: 'Возинья',               team: 'CPV', mp: 2, saves: 11, ga: 2, savepct: 84.6, cs: 1, pom: true  },
+  { name: 'Алиссон',               team: 'BRA', mp: 2, saves: 6,  ga: 1, savepct: 85.7, cs: 1, pom: false },
+  { name: 'Ян Зоммер',             team: 'SUI', mp: 2, saves: 7,  ga: 1, savepct: 87.5, cs: 1, pom: false },
+  { name: 'Барт Вербрюгген',       team: 'NED', mp: 2, saves: 8,  ga: 2, savepct: 80.0, cs: 1, pom: false },
+  { name: 'Максим Крепо',          team: 'CAN', mp: 2, saves: 7,  ga: 1, savepct: 87.5, cs: 1, pom: false },
+  { name: 'Джордан Пикфорд',       team: 'ENG', mp: 2, saves: 5,  ga: 1, savepct: 83.3, cs: 1, pom: false },
+  { name: 'Мануэль Нойер',         team: 'GER', mp: 2, saves: 6,  ga: 1, savepct: 85.7, cs: 1, pom: false },
+]
 
-function RatingBar({ value, max = 10 }) {
-  const pct = (value / max) * 100
-  return (
-    <div className="stat-bar mt-1.5">
-      <div
-        className="stat-bar-fill"
-        style={{
-          width: `${pct}%`,
-          background: value >= 9 ? '#C9A800' : value >= 8.5 ? '#16A34A' : value >= 8 ? '#0EA5E9' : '#60a5fa',
-        }}
-      />
-    </div>
-  )
+// Сводный балл (0–10): нормируем четыре метрики и берём взвешенное среднее.
+//   % сейвов — 35% · сейвы за матч — 25% · сухие матчи — 25% · пропущено за матч — 15% (инверсия)
+// Балл сопоставим только внутри этой выборки и на этом отрезке (1–2 матча).
+function withScores(data) {
+  const max = {
+    saves: Math.max(...data.map((d) => d.saves / d.mp)),
+    cs: Math.max(...data.map((d) => d.cs)),
+    gaInv: Math.max(...data.map((d) => d.ga / d.mp)),
+  }
+  return data.map((d) => {
+    const savesN = (d.saves / d.mp) / max.saves * 10
+    const pctN = d.savepct / 100 * 10
+    const csN = (max.cs ? d.cs / max.cs : 0) * 10
+    const gaN = (1 - (d.ga / d.mp) / (max.gaInv || 1)) * 10
+    const score = +(pctN * 0.35 + savesN * 0.25 + csN * 0.25 + gaN * 0.15).toFixed(2)
+    return { ...d, score }
+  })
 }
 
-function CleanSheetRing({ cleanSheets, matches }) {
-  const pct = matches > 0 ? (cleanSheets / matches) * 100 : 0
-  const r = 18
-  const circ = 2 * Math.PI * r
-  const dash = (pct / 100) * circ
-
-  return (
-    <div className="relative w-12 h-12 flex items-center justify-center">
-      <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
-        <circle cx="24" cy="24" r={r} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="3" />
-        <circle
-          cx="24" cy="24" r={r} fill="none"
-          stroke={cleanSheets > 0 ? '#16A34A' : '#D1D5DB'}
-          strokeWidth="3"
-          strokeDasharray={`${dash} ${circ}`}
-          strokeLinecap="square"
-        />
-      </svg>
-      <span className="text-lg relative z-10">🧤</span>
-    </div>
-  )
-}
-
-function GKRow({ gk }) {
-  const team = TEAMS[gk.team]
-  const minutePct = Math.min((gk.minutesWithoutGoal / MAX_MINUTES) * 100, 100)
-
-  return (
-    <div
-      className="p-4 mb-2"
-      style={{
-        background: '#FFFFFF',
-        border: gk.rank === 1
-          ? '1px solid rgba(22,163,74,0.25)'
-          : gk.rank <= 3
-          ? '1px solid rgba(22,163,74,0.15)'
-          : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 16,
-        boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-      }}
-    >
-      <div className="flex items-start gap-3">
-        {/* Rank */}
-        <div
-          className="w-7 h-7 flex items-center justify-center text-xs font-black flex-shrink-0 mt-1"
-          style={{
-            borderRadius: 16,
-            background: gk.rank === 1 ? 'linear-gradient(135deg,#FFD700,#FF8C00)' :
-              gk.rank === 2 ? 'linear-gradient(135deg,#C0C0C0,#909090)' :
-              gk.rank === 3 ? 'linear-gradient(135deg,#CD7F32,#8B4513)' :
-              'rgba(0,0,0,0.07)',
-            color: gk.rank <= 2 ? '#000' : gk.rank === 3 ? '#fff' : '#6B7280',
-          }}
-        >
-          {gk.rank}
-        </div>
-
-        {/* GK Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <div>
-              <div className="text-sm font-black uppercase" style={{ color: '#111827' }}>{gk.name}</div>
-              <div className="text-[10px] mt-0.5" style={{ color: '#6B7280' }}>
-                {team?.flag} {team?.name} · {gk.club}
-              </div>
-            </div>
-            <CleanSheetRing cleanSheets={gk.cleanSheets} matches={gk.matches} />
-          </div>
-
-          {/* Minutes without goal bar */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Мин. без гола</span>
-              <span className="text-sm font-black" style={{ color: '#16A34A' }}>
-                {gk.minutesWithoutGoal > 0 ? `${gk.minutesWithoutGoal}'` : '—'}
-              </span>
-            </div>
-            <div className="stat-bar">
-              <div
-                className="stat-bar-fill"
-                style={{
-                  width: gk.minutesWithoutGoal > 0 ? `${minutePct}%` : '2%',
-                  background: gk.cleanSheets > 0
-                    ? 'linear-gradient(90deg, #16A34A, #22c55e)'
-                    : 'linear-gradient(90deg, #1d4ed8, #3b82f6)',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { label: 'Матчи', value: gk.matches || '—' },
-              { label: 'Сухих', value: gk.cleanSheets || '—' },
-              { label: 'Сэйвы', value: gk.saves || '—' },
-              { label: 'Рейтинг', value: gk.rating },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="text-center"
-                style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 10, padding: '4px 2px', border: '1px solid rgba(0,0,0,0.06)' }}
-              >
-                <div className="text-sm font-black" style={{ color: '#111827' }}>{s.value}</div>
-                <div className="text-[9px] uppercase" style={{ color: '#9CA3AF' }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Rating bar */}
-          <div className="mt-2">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Рейтинг (прогноз)</span>
-              <span className="text-[10px] font-bold" style={{
-                color: gk.rating >= 9 ? '#C9A800' : gk.rating >= 8.5 ? '#16A34A' : '#0EA5E9'
-              }}>{gk.rating}</span>
-            </div>
-            <RatingBar value={gk.rating} />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+function scoreColor(score, maxScore) {
+  if (score >= maxScore - 0.01) return '#C9A800'
+  if (score >= 8.5) return '#16A34A'
+  return '#0EA5E9'
 }
 
 export default function Goalkeepers() {
-  const { goalkeepers } = useLiveData()
-  const sorted = [...goalkeepers].sort((a, b) => b.rating - a.rating)
-    .map((g, i) => ({ ...g, rank: i + 1 }))
+  const ranked = useMemo(() => {
+    return withScores(GK_DATA)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+      .map((g, i) => ({ ...g, rank: i + 1 }))
+  }, [])
 
-  const topGK = sorted[0]
-  const topTeam = topGK ? TEAMS[topGK.team] : null
-
-  if (!topGK) {
-    return (
-      <div className="page-content">
-        <div className="px-4 pt-4 pb-3">
-          <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>🧤 Статистика появится после первых матчей</p>
-        </div>
-      </div>
-    )
-  }
+  const maxScore = ranked[0]?.score ?? 10
 
   return (
     <div className="page-content">
       {/* Info strip (заголовок раздела уже в шапке ЧМ) */}
       <div className="px-4 pt-4 pb-3">
-        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>Претенденты на Золотую перчатку</p>
-
-        {/* Top GK Card */}
-        <div
-          className="mt-4 p-4 flex items-center gap-4"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-        >
-          <div className="text-4xl">🧤</div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#16A34A' }}>Фаворит — Золотая перчатка</div>
-            <div className="text-lg font-black truncate uppercase" style={{ color: '#111827' }}>{topGK.name}</div>
-            <div className="text-xs" style={{ color: '#6B7280' }}>{topTeam?.flag} {topGK.club}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-black" style={{ color: '#16A34A' }}>{topGK.rating}</div>
-            <div className="text-[10px]" style={{ color: '#9CA3AF' }}>рейтинг</div>
-            <div className="text-[10px] font-black mt-0.5 uppercase" style={{ color: '#16A34A' }}>
-              Прогноз
-            </div>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-3 flex items-center gap-4 text-[10px]" style={{ color: '#9CA3AF' }}>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#16A34A', borderRadius: 8 }} />
-            <span className="uppercase tracking-wide">Сухой матч</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#3b82f6', borderRadius: 8 }} />
-            <span className="uppercase tracking-wide">Пропустил</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3" style={{ background: '#C9A800', borderRadius: 8 }} />
-            <span className="uppercase tracking-wide">Рейтинг ≥9</span>
-          </div>
-        </div>
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>
+          Топ-10 вратарей · групповой этап
+        </p>
+        <p className="text-[11px] mt-1.5 leading-snug" style={{ color: '#9CA3AF' }}>
+          «Балл» — сводная оценка по формуле: % сейвов (35%), сейвы за матч (25%),
+          сухие матчи (25%), пропущено за матч (15%). Сопоставим внутри этой выборки
+          на отрезке 1–2 матчей. <span style={{ color: '#C9A800' }}>★</span> — приз «Игрок матча».
+        </p>
       </div>
 
-      {/* List */}
-      <div className="px-4 mt-3">
-        {sorted.map((gk) => (
-          <GKRow key={gk.name} gk={gk} />
-        ))}
+      {/* Таблица */}
+      <div className="px-4">
+        <div
+          style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'hidden' }}
+        >
+          <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontVariantNumeric: 'tabular-nums' }}>
+            <colgroup>
+              <col />
+              <col style={{ width: 30 }} />
+              <col style={{ width: 42 }} />
+              <col style={{ width: 34 }} />
+              <col style={{ width: 42 }} />
+              <col style={{ width: 52 }} />
+            </colgroup>
+            <thead>
+              <tr style={{ background: 'rgba(201,168,0,0.08)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                <th className="text-left text-[10px] font-black uppercase tracking-wide pl-3 pr-1 py-2.5" style={{ color: '#6B7280' }}>Вратарь</th>
+                <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Игры">И</th>
+                <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Сейвы">Сейв</th>
+                <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Сухие матчи">Сух</th>
+                <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Пропущено">Проп</th>
+                <th className="text-center text-[10px] font-black uppercase pr-2 py-2.5" style={{ color: '#111827' }} title="Средний балл">Балл</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map((gk) => {
+                const team = TEAMS[gk.team]
+                const medal = gk.rank === 1 ? '🥇' : gk.rank === 2 ? '🥈' : gk.rank === 3 ? '🥉' : null
+                return (
+                  <tr key={gk.name} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                    {/* Вратарь + сборная */}
+                    <td className="pl-3 pr-1 py-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[11px] font-black w-4 flex-shrink-0 text-center" style={{ color: '#9CA3AF' }}>
+                          {medal || gk.rank}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[12px] font-black truncate uppercase" style={{ color: '#111827' }}>{gk.name}</span>
+                            {gk.pom && <span className="text-[10px] flex-shrink-0" style={{ color: '#C9A800' }}>★</span>}
+                          </div>
+                          <div className="text-[10px] truncate" style={{ color: '#9CA3AF' }}>
+                            {team?.flag} {team?.name}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-center text-[13px] py-2" style={{ color: '#6B7280' }}>{gk.mp}</td>
+                    <td className="text-center text-[13px] font-bold py-2" style={{ color: '#111827' }}>{gk.saves}</td>
+                    <td className="text-center text-[13px] py-2" style={{ color: gk.cs > 0 ? '#16A34A' : '#9CA3AF' }}>{gk.cs}</td>
+                    <td className="text-center text-[13px] py-2" style={{ color: '#6B7280' }}>{gk.ga}</td>
+                    <td className="text-center pr-2 py-2">
+                      <span className="text-[15px] font-black" style={{ color: scoreColor(gk.score, maxScore) }}>
+                        {gk.score.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="text-[10px] mt-3 text-center" style={{ color: '#9CA3AF' }}>
+          ФИФА не публикует сводный балл вратарей — оценка рассчитана по live-метрикам, а не официальный показатель.
+        </p>
       </div>
     </div>
   )

@@ -2,6 +2,9 @@ import { useMemo } from 'react'
 import { TEAMS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
+// Голы — историческая база по итогам ЧМ-2022. Действующим (active) игрокам
+// голы текущего ЧМ-2026 прибавляются динамически из live-бомбардиров
+// (см. mergeCurrentGoals), поэтому здесь хранится именно счёт «до 2026».
 const ALL_TIME_SCORERS = [
   { rank: 1,  name: 'Мирослав Клозе',      nat: 'GER', goals: 16, years: '2002–2014', active: false, note: 'Рекордсмен ЧМ' },
   { rank: 2,  name: 'Роналдо Р9',           nat: 'BRA', goals: 15, years: '1994–2006', active: false, note: '2× чемпион' },
@@ -12,17 +15,19 @@ const ALL_TIME_SCORERS = [
   { rank: 7,  name: 'Килиан Мбаппе',        nat: 'FRA', goals: 12, years: '2018–2022', active: true,  note: 'Действующий' },
   { rank: 8,  name: 'Шандор Кочиш',         nat: 'HUN', goals: 11, years: '1954',      active: false, note: 'Золотая команда' },
   { rank: 9,  name: 'Юрген Клинсманн',      nat: 'GER', goals: 11, years: '1990–1998', active: false, note: '1990 чемпион' },
-  { rank: 10, name: 'Теофило Кубильяс',     nat: 'PER', goals: 10, years: '1970–1978', active: false, note: 'Легенда Перу' },
-  { rank: 11, name: 'Гэри Линекер',         nat: 'ENG', goals: 10, years: '1986–1990', active: false, note: 'Золотая бутса 1986' },
-  { rank: 12, name: 'Габриэль Батистута',   nat: 'ARG', goals: 10, years: '1994–2002', active: false, note: 'Король голов' },
-  { rank: 13, name: 'Гжегож Лято',          nat: 'POL', goals: 10, years: '1974–1982', active: false, note: 'Золотая бутса 1974' },
-  { rank: 14, name: 'Томас Мюллер',         nat: 'GER', goals: 10, years: '2010–2018', active: false, note: '2014 чемпион' },
-  { rank: 15, name: 'К.-Х. Румменигге',     nat: 'GER', goals: 10, years: '1978–1986', active: false, note: 'Финалист 1982' },
-  { rank: 16, name: 'Эйсебио',              nat: 'POR', goals: 9,  years: '1966',      active: false, note: 'Золотая бутса 1966' },
-  { rank: 17, name: 'Адемир',               nat: 'BRA', goals: 9,  years: '1950',      active: false, note: 'Легенда 1950' },
-  { rank: 18, name: 'Вава',                 nat: 'BRA', goals: 9,  years: '1958–1962', active: false, note: '2× чемпион' },
-  { rank: 19, name: 'Роберто Баджо',        nat: 'ITA', goals: 9,  years: '1990–1998', active: false, note: 'Финалист 1994' },
-  { rank: 20, name: 'Харри Кейн',           nat: 'ENG', goals: 9,  years: '2018–2022', active: true,  note: 'Золотая бутса 2018' },
+  { rank: 10, name: 'Гельмут Ран',          nat: 'GER', goals: 10, years: '1954–1958', active: false, note: 'Герой финала 1954' },
+  { rank: 11, name: 'Теофило Кубильяс',     nat: 'PER', goals: 10, years: '1970–1978', active: false, note: 'Легенда Перу' },
+  { rank: 12, name: 'Гэри Линекер',         nat: 'ENG', goals: 10, years: '1986–1990', active: false, note: 'Золотая бутса 1986' },
+  { rank: 13, name: 'Габриэль Батистута',   nat: 'ARG', goals: 10, years: '1994–2002', active: false, note: 'Король голов' },
+  { rank: 14, name: 'Гжегож Лято',          nat: 'POL', goals: 10, years: '1974–1982', active: false, note: 'Золотая бутса 1974' },
+  { rank: 15, name: 'Томас Мюллер',         nat: 'GER', goals: 10, years: '2010–2018', active: false, note: '2014 чемпион' },
+  { rank: 16, name: 'Криштиану Роналду',    nat: 'POR', goals: 8,  years: '2006–2022', active: true,  note: 'Голы на 6 ЧМ подряд' },
+  { rank: 17, name: 'К.-Х. Румменигге',     nat: 'GER', goals: 9,  years: '1978–1986', active: false, note: 'Финалист 1982' },
+  { rank: 18, name: 'Эйсебио',              nat: 'POR', goals: 9,  years: '1966',      active: false, note: 'Золотая бутса 1966' },
+  { rank: 19, name: 'Адемир',               nat: 'BRA', goals: 9,  years: '1950',      active: false, note: 'Легенда 1950' },
+  { rank: 20, name: 'Вава',                 nat: 'BRA', goals: 9,  years: '1958–1962', active: false, note: '2× чемпион' },
+  { rank: 21, name: 'Роберто Баджо',        nat: 'ITA', goals: 9,  years: '1990–1998', active: false, note: 'Финалист 1994' },
+  { rank: 22, name: 'Харри Кейн',           nat: 'ENG', goals: 8,  years: '2018–2022', active: true,  note: 'Золотая бутса 2018' },
 ]
 
 const NAT_FLAGS = {
@@ -138,7 +143,7 @@ export default function AllTimeScorers() {
     <div className="page-content">
       {/* Info strip (заголовок раздела уже в шапке ЧМ) */}
       <div className="px-4 pt-4 pb-3">
-        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>ЧМ 1930–2026 · Топ-20 бомбардиров всех времён</p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>ЧМ 1930–2026 · Лучшие бомбардиры всех времён</p>
 
         {/* Record holder card */}
         <div
