@@ -5,19 +5,14 @@ import WorldCup from './pages/WorldCup.jsx'
 import PlayPage from './pages/PlayPage.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
 import BottomNav from './components/BottomNav.jsx'
-import PredictionPanel from './components/PredictionPanel.jsx'
 import SaluteWatcher from './components/SaluteWatcher.jsx'
 import Splash from './components/Splash.jsx'
 import VisitSummary from './components/VisitSummary.jsx'
-import AnnouncementModal from './components/AnnouncementModal.jsx'
 import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
-const SEEN_KEY = 'wc2026_predictionSeen'
 const LAST_VISIT_KEY = 'wc2026_lastVisit' // снимок {rank, pts, settledIds} прошлого визита
-// Разовый попап-разъяснение про исправление счёта матча m37 (Испания—С.Аравия, 5:0→4:0)
-const ANNOUNCE_KEY = 'wc2026_announce_m37_score_fix'
 
 // Сплэш висит минимум столько (чтобы не мигал на быстрой сети) и максимум
 // столько (фолбэк: если Render холодный/завис — всё равно пускаем внутрь).
@@ -69,12 +64,6 @@ function AppShell() {
 
   const [tab, setTab] = useState('home')
   const [worldcupSub, setWorldcupSub] = useState('groups')
-  const [showPredictionModal, setShowPredictionModal] = useState(
-    () => !localStorage.getItem(SEEN_KEY)
-  )
-  const [showAnnounce, setShowAnnounce] = useState(
-    () => !localStorage.getItem(ANNOUNCE_KEY)
-  )
 
   // ── Splash / readiness ───────────────────────────────────────────────
   const inTg = !!window.Telegram?.WebApp?.initData
@@ -151,16 +140,6 @@ function AppShell() {
     return () => tg.BackButton.offClick(handleBack)
   }, [tab])
 
-  const handleClosePredictionModal = () => {
-    localStorage.setItem(SEEN_KEY, '1')
-    setShowPredictionModal(false)
-  }
-
-  const handleCloseAnnounce = () => {
-    localStorage.setItem(ANNOUNCE_KEY, '1')
-    setShowAnnounce(false)
-  }
-
   const pages = {
     home:        <Home onTab={handleTab} />,
     play:        <PlayPage />,
@@ -169,12 +148,8 @@ function AppShell() {
     leaderboard: <Leaderboard />,
   }
 
-  // Приоритет попапов после входа (показываем строго по одному, не внахлёст):
-  // 1) разъяснение про исправление счёта m37 → 2) итоги визита → 3) первичный
-  // модал прогноза.
-  const showAnnouncement = entered && showAnnounce
-  const showVisit = entered && !showAnnouncement && visit
-  const showPrediction = entered && !showAnnouncement && !showVisit && showPredictionModal
+  // После входа показываем итоги визита (что изменилось с прошлого раза).
+  const showVisit = entered && visit
 
   return (
     <>
@@ -185,37 +160,8 @@ function AppShell() {
         </div>
         <BottomNav active={tab} onTab={handleTab} />
 
-        {/* Разовое уведомление об исправлении счёта матча m37 */}
-        {showAnnouncement && <AnnouncementModal onClose={handleCloseAnnounce} />}
-
         {/* Итоги визита — что изменилось с прошлого раза */}
         {showVisit && <VisitSummary summary={visit} onClose={() => setVisit(null)} />}
-
-        {/* First-visit prediction modal */}
-        {showPrediction && (
-          <div
-            className="fixed inset-0 z-[100] flex items-end justify-center"
-            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-            onClick={(e) => { if (e.target === e.currentTarget) handleClosePredictionModal() }}
-          >
-            <div
-              className="w-full max-w-[480px] overflow-y-auto"
-              style={{
-                background: '#F5F6FA',
-                borderRadius: '16px 16px 0 0',
-                maxHeight: '90vh',
-                paddingBottom: 'env(safe-area-inset-bottom, 16px)',
-              }}
-            >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(0,0,0,0.15)' }} />
-              </div>
-              <div className="px-4 pb-6">
-                <PredictionPanel onClose={handleClosePredictionModal} />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {!entered && <Splash hiding={hidingSplash} />}

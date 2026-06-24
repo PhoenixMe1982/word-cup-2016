@@ -13,6 +13,16 @@ const tg = window.Telegram?.WebApp
 if (tg) {
   tg.ready()
   tg.expand()
+  // Bot API 8.0+: разворачиваем Mini-App на весь экран. Особенно важно на
+  // планшетах/iPad, где expand() оставляет приложение маленьким окном.
+  // requestFullscreen есть не во всех клиентах — вызываем защитно.
+  try {
+    if (typeof tg.requestFullscreen === 'function' && !tg.isFullscreen) {
+      tg.requestFullscreen()
+    }
+  } catch { /* клиент не поддерживает полноэкранный режим */ }
+  // Чтобы свайп вниз не сворачивал приложение из полноэкранного режима.
+  tg.disableVerticalSwipes?.()
   tg.setHeaderColor?.('#080c15')
   tg.setBackgroundColor?.('#080c15')
 }
