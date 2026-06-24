@@ -2,7 +2,7 @@
 // Sync WC 2026 match results from football-data.org
 // Runs every 5 min via GitHub Actions cron during the tournament
 
-const { lookupMatchId, normTLA } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, settleScore, resultMeta } = require('./match-lookup.js')
 
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const BOT_TOKEN   = (process.env.BOT_TOKEN   || '').trim()
@@ -33,11 +33,11 @@ async function fetchCurrentResults() {
   return res.json()
 }
 
-async function postScore(matchId, home, away) {
+async function postScore(matchId, home, away, meta) {
   const res = await fetch(`${API_URL}/api/score`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-admin-key': BOT_TOKEN },
-    body: JSON.stringify({ matchId, home, away }),
+    body: JSON.stringify({ matchId, home, away, meta }),
   })
   if (!res.ok) {
     const body = await res.text()
@@ -92,18 +92,22 @@ async function main() {
     // Already in Redis → skip
     if (settled[matchId]) continue
 
-    const homeScore = m.score?.fullTime?.home
-    const awayScore = m.score?.fullTime?.away
-    if (homeScore == null || awayScore == null) {
-      console.warn(`[sync] ${matchId} has no fullTime score yet, skipping`)
+    // Зачётный счёт: группа — fullTime; нокаут по пенальти — 120′ без серии
+    // (общий хелпер, см. match-lookup.js). null ⇒ счёт ещё недостоверен, ждём.
+    const score = settleScore(m.score, m.stage)
+    if (!score) {
+      console.warn(`[sync] ${matchId} has no reliable final score yet, skipping`)
       continue
     }
+    const homeScore = score.home, awayScore = score.away
+    const meta = resultMeta(m.score)
 
-    console.log(`[sync] New result: ${matchId} ${key} → ${homeScore}:${awayScore}`)
+    const penStr = meta.penHome != null ? ` (пен. ${meta.penHome}:${meta.penAway})` : ''
+    console.log(`[sync] New result: ${matchId} ${key} → ${homeScore}:${awayScore}${penStr}`)
     try {
-      const res = await postScore(matchId, homeScore, awayScore)
+      const res = await postScore(matchId, homeScore, awayScore, meta)
       console.log(`[sync] ✅ ${matchId} settled, scored ${res.scored} predictions`)
-      notifications.push(`⚽ *${m.homeTeam.name} ${homeScore}:${awayScore} ${m.awayTeam.name}*\nПрогнозов зачтено: ${res.scored}`)
+      notifications.push(`⚽ *${m.homeTeam.name} ${homeScore}:${awayScore} ${m.awayTeam.name}*${penStr}\nПрогнозов зачтено: ${res.scored}`)
     } catch (e) {
       console.error(`[sync] ❌ ${matchId}:`, e.message)
     }

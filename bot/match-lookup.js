@@ -44,4 +44,65 @@ function lookupMatchId(homeTLA, awayTLA) {
   return MATCH_LOOKUP[`${normTLA(homeTLA)}_${normTLA(awayTLA)}`]
 }
 
-module.exports = { MATCH_LOOKUP, TLA_ALIASES, normTLA, lookupMatchId }
+// ── Зачётный счёт матча (этап 1: фикс нокаут-бага) ──────────────────────────
+// football-data.org отдаёт stage: GROUP_STAGE | LAST_16 | QUARTER_FINALS |
+// SEMI_FINALS | THIRD_PLACE | FINAL. Нокаут — всё, кроме группового этапа.
+function isKnockoutStage(stage) {
+  return !!stage && stage !== 'GROUP_STAGE'
+}
+
+// Возвращает зачётный счёт {home, away} по объекту score из football-data.org,
+// либо null, если посчитать достоверно нельзя (тогда матч НЕ фиксируется — ждём
+// следующего цикла поллинга).
+//
+// Группа и нокаут без серии (победа в основное/доп. время): fullTime как есть.
+// Нокаут, ушедший на пенальти: берём счёт на 120′ БЕЗ голов серии. На серии
+// football-data может отдавать fullTime кумулятивом (reg+et+pen) — тогда финал
+// по пенальти зачёлся бы неверным счётом (напр. 5:4 вместо 1:1). Поэтому 120′
+// реконструируем из regularTime+extraTime (на серии это всегда ничья), а
+// fullTime для такого матча не доверяем.
+//
+// Очки в этапе 1 по-прежнему считаются по home/away (calcPoints не тронут) —
+// меняется лишь то, КАКОЙ счёт записывается как итог нокаут-матча по пенальти.
+function settleScore(score, stage) {
+  const sc = score || {}
+  const ft = sc.fullTime
+  if (!ft || ft.home == null || ft.away == null) return null
+
+  const hasPens = sc.penalties && sc.penalties.home != null && sc.penalties.away != null
+  if (!isKnockoutStage(stage) || !hasPens) {
+    return { home: ft.home, away: ft.away }
+  }
+
+  const reg = sc.regularTime, et = sc.extraTime
+  if (reg && reg.home != null && reg.away != null) {
+    return {
+      home: reg.home + (et && et.home != null ? et.home : 0),
+      away: reg.away + (et && et.away != null ? et.away : 0),
+    }
+  }
+  // regularTime недоступен: если fullTime уже ничейный, это и есть 120′-счёт
+  // (серия игралась с ничьей) — берём его. Иначе достоверно вычислить нельзя.
+  if (ft.home === ft.away) return { home: ft.home, away: ft.away }
+  return null
+}
+
+// Доп. поля результата для отображения нокаута/пенальти в карточке. На очки в
+// этапе 1 не влияют — собираются защитно из реально пришедших полей FD.
+function resultMeta(score) {
+  const sc = score || {}
+  const meta = {}
+  const duration = sc.duration || 'REGULAR'
+  if (duration !== 'REGULAR') meta.duration = duration
+  if (sc.penalties && sc.penalties.home != null && sc.penalties.away != null) {
+    meta.penHome = sc.penalties.home
+    meta.penAway = sc.penalties.away
+  }
+  if (sc.winner) meta.winner = sc.winner // HOME_TEAM | AWAY_TEAM | DRAW
+  return meta
+}
+
+module.exports = {
+  MATCH_LOOKUP, TLA_ALIASES, normTLA, lookupMatchId,
+  isKnockoutStage, settleScore, resultMeta,
+}

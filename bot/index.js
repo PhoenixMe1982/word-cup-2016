@@ -4,7 +4,7 @@ const path = require('path')
 const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
-const { lookupMatchId, normTLA } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, settleScore, resultMeta } = require('./match-lookup.js')
 const { toRussianName } = require('./names-ru.js')
 
 const TOKEN    = (process.env.BOT_TOKEN || '').trim()
@@ -327,30 +327,21 @@ const FD_STATUS_MAP = {
 const liveState = { updated: null, matchResults: {} }
 
 // Гейт фиксации итога: возвращает финальный результат ТОЛЬКО если матч
-// действительно завершён И финальный счёт реально присутствует. Иначе null —
+// действительно завершён И зачётный счёт достоверно вычисляется. Иначе null —
 // тогда матч не фиксируется в results, не зачитывается в лидерборд и не
-// показывается в карточке как завершённый. Это защищает от двух ситуаций:
+// показывается в карточке как завершённый. Это защищает от ситуаций:
 //   • football-data на миг отдаёт FINISHED, но fullTime ещё null (раньше код
 //     молча подставлял счёт ПЕРВОГО ТАЙМА и фиксировал неверный итог);
-//   • статус «мигает» FINISHED↔SCHEDULED до реального окончания.
-// Доп. поля (penHome/penAway, winner, duration) собираем защитно из тех полей,
-// что реально пришли — для корректного отображения нокаута/пенальти в карточке.
-// На очки они не влияют: calcPoints считает по home/away (счёт fullTime).
+//   • статус «мигает» FINISHED↔SCHEDULED до реального окончания;
+//   • нокаут по пенальти, где fullTime приходит кумулятивом (reg+et+pen).
+// Зачётный счёт и доп. поля (penHome/penAway, winner, duration) считает общий
+// хелпер settleScore/resultMeta (см. match-lookup.js) — единый для поллера и
+// резервного sync-results.js. На групповых матчах поведение не меняется.
 function extractFinalResult(m) {
   if (m.status !== 'FINISHED' && m.status !== 'AWARDED') return null
-  const sc = m.score || {}
-  const ft = sc.fullTime
-  if (!ft || ft.home == null || ft.away == null) return null
-
-  const result = { home: ft.home, away: ft.away }
-  const duration = sc.duration || 'REGULAR'
-  if (duration !== 'REGULAR') result.duration = duration
-  if (sc.penalties && sc.penalties.home != null && sc.penalties.away != null) {
-    result.penHome = sc.penalties.home
-    result.penAway = sc.penalties.away
-  }
-  if (sc.winner) result.winner = sc.winner // HOME_TEAM | AWAY_TEAM | DRAW
-  return result
+  const score = settleScore(m.score, m.stage)
+  if (!score) return null
+  return { ...score, ...resultMeta(m.score) }
 }
 
 // Поля карточки завершённого матча из записанного/полученного результата.
@@ -696,10 +687,18 @@ app.get('/api/predictions/:userId', async (req, res) => {
 app.post('/api/score', async (req, res) => {
   const adminKey = req.headers['x-admin-key']
   if (adminKey !== TOKEN) return res.status(403).json({ error: 'Forbidden' })
-  const { matchId, home, away } = req.body
+  const { matchId, home, away, meta } = req.body
   if (!matchId || home == null || away == null) return res.status(400).json({ error: 'matchId, home, away required' })
   try {
-    const count = await settleMatch(matchId, home, away)
+    // Резервный путь (sync-results.js) может прислать отображаемые поля нокаута.
+    // Берём только белый список — на очки они не влияют, лишь на карточку.
+    const safeMeta = {}
+    if (meta && typeof meta === 'object') {
+      for (const k of ['penHome', 'penAway', 'winner', 'duration']) {
+        if (meta[k] != null) safeMeta[k] = meta[k]
+      }
+    }
+    const count = await settleMatch(matchId, home, away, safeMeta)
     res.json({ ok: true, scored: count })
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
