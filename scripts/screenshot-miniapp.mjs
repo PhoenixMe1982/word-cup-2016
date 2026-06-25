@@ -33,8 +33,11 @@ const CDP = 'http://localhost:9222'
 const IS_WIN = process.platform === 'win32'
 const NPM = IS_WIN ? 'npm.cmd' : 'npm'
 
-const tab = (process.argv[2] || 'home').toLowerCase()       // home | leaderboard
+const tab = (process.argv[2] || 'home').toLowerCase()       // home | leaderboard | play | kotut
 const rank = parseInt(process.argv[3] || '1', 10)            // self rank for home view
+// Нокаут-режим (этап 2): `play ko` — страница прогнозов с включённым плей-офф и
+// замоканными нокаут-прогнозами/результатами; `kotut` — туториал-попап плей-офф.
+const ko = process.argv.includes('ko') || tab === 'kotut'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -88,7 +91,14 @@ function fakeSdk() {
   const pts = rank === 1 ? 42 : rank === 2 ? 38 : rank === 3 ? 35 : 4
   return `(function(){
   try{ localStorage.setItem('wc2026_predictionSeen','1'); }catch(e){}
-  var noop=function(){}, RANK=${rank}, PTS=${pts}, STATE=${JSON.stringify(tab)};
+  var noop=function(){}, RANK=${rank}, PTS=${pts}, STATE=${JSON.stringify(tab)}, KO=${ko};
+  // Плей-офф: включаем тест-флаг фичи. Туториал показываем только в режиме kotut,
+  // иначе помечаем как закрытый, чтобы попап не перекрывал страницу прогнозов.
+  try{ if(KO) localStorage.setItem('wc2026_knockoutTest','1'); else localStorage.removeItem('wc2026_knockoutTest'); }catch(e){}
+  // Профиль Chrome переиспользуется между прогонами — флаг dismissed надо явно
+  // выставлять/снимать, иначе он «протекает» из прошлого запуска.
+  try{ if(STATE==='kotut') localStorage.removeItem('wc2026_knockoutTutorialDismissed');
+       else localStorage.setItem('wc2026_knockoutTutorialDismissed','1'); }catch(e){}
   // Состояние 'visit': засеваем старый снимок прошлого визита, чтобы появилась дельта
   if(STATE==='visit'){ try{
     localStorage.setItem('wc2026_lastVisit', JSON.stringify({rank:5, pts:30, settledIds:['m1']}));
@@ -123,12 +133,17 @@ function fakeSdk() {
   var SETTLED = STATE==='visit'
     ? [{matchId:'m1',pts:3},{matchId:'m2',pts:3},{matchId:'m3',pts:1},{matchId:'m4',pts:0}]
     : [];
+  // Нокаут-моки: m75 — завершённый матч по пенальти (показывает разбивку и очки),
+  // m73 — открытый матч с прогнозом на чистую победу 90′.
+  var KO_PREDS = {m75:{home:1,away:1,et:{home:2,away:2},penWinner:'HOME'}, m73:{home:2,away:0}, m74:{home:1,away:1,et:{home:1,away:1},penWinner:'AWAY'}};
+  var KO_RESULTS = {m75:{home:2,away:2,knockout:true,reg:{home:1,away:1},et:{home:2,away:2},penHome:4,penAway:3,winner:'HOME_TEAM'}};
   window.fetch=function(url,opts){ var u=String(url);
     if(u.indexOf('/api/leaderboard')!==-1) return J(LB);
     // 'splash': задерживаем /api/me, чтобы экран загрузки не исчезал до съёмки
     if(u.indexOf('/api/me')!==-1) return STATE==='splash' ? D(ME, 6000) : J(ME);
+    if(u.indexOf('/api/results')!==-1) return J(KO ? KO_RESULTS : {});
     if(u.indexOf('/api/predictions/')!==-1) return J(SETTLED);
-    if(u.indexOf('/api/my-predictions')!==-1) return J({});
+    if(u.indexOf('/api/my-predictions')!==-1) return J(KO ? KO_PREDS : {});
     if(u.indexOf('/api/scorers')!==-1) return J([]);
     if(u.indexOf('/api/goalkeepers')!==-1) return J([]);
     if(u.indexOf('/api/live')!==-1) return J({});
@@ -180,8 +195,8 @@ async function main() {
   await sleep(2500)
 
   let file = `${tab}-rank${rank}.png`
-  // splash/visit стартуют на home; имена файлов фиксированные
-  if (tab === 'splash' || tab === 'visit') {
+  // splash/visit/kotut стартуют на home; имена файлов фиксированные
+  if (tab === 'splash' || tab === 'visit' || tab === 'kotut') {
     file = `${tab}.png`
   }
   // Навигация по нижним вкладкам: home остаётся стартовым, для остальных
@@ -196,6 +211,17 @@ async function main() {
     })
     console.log('nav:', r.result?.value)
     await sleep(1800)
+  }
+
+  // Нокаут-режим на странице прогнозов: жмём фильтр «Плей-офф», чтобы показать
+  // только матчи плей-офф (каскад + разбивка).
+  if (ko && tab === 'play') {
+    const r = await cli.send('Runtime.evaluate', {
+      expression: `(function(){ var b=[].slice.call(document.querySelectorAll('button')).find(function(x){return /Плей-офф/.test(x.textContent);}); if(b){b.click(); return 'ok';} return 'ko-filter-not-found'; })()`,
+      returnByValue: true,
+    })
+    console.log('ko-filter:', r.result?.value)
+    await sleep(1200)
   }
 
   const { data } = await cli.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false })

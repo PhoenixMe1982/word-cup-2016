@@ -4,13 +4,17 @@ const path = require('path')
 const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
-const { lookupMatchId, normTLA, settleScore, resultMeta } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, settleScore, resultMeta, knockoutResultFields, isKnockoutMatchId } = require('./match-lookup.js')
+const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
 const TOKEN    = (process.env.BOT_TOKEN || '').trim()
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const ADMIN_ID = parseInt(process.env.ADMIN_ID, 10)
 const APP_URL  = (process.env.APP_URL || 'https://phoenixme1982.github.io/word-cup-2016/').trim()
+// Гейт фичи плей-офф (этап 2). По умолчанию ВЫКЛ — код деплоится дормантным,
+// приём нокаут-прогнозов закрыт до выставления KNOCKOUT_ENABLED=1 (отмашка Чеслава).
+const KNOCKOUT_ENABLED = ['1', 'true', 'yes'].includes((process.env.KNOCKOUT_ENABLED || '').trim().toLowerCase())
 const USERS_FILE = path.join(__dirname, 'users.json')
 
 const REDIS_URL   = (process.env.UPSTASH_REDIS_REST_URL || '').trim()
@@ -170,6 +174,9 @@ const KICKOFFS = (() => {
 })()
 
 function calcPoints(pred, result) {
+  // Нокаут — отдельная стек-ветка (этап 2). Срабатывает ТОЛЬКО когда результат
+  // помечен knockout: на групповых матчах флага нет → логика ниже не меняется.
+  if (result.knockout) return calcPointsKnockout(pred, result)
   if (pred.home === result.home && pred.away === result.away) return 3
   const predOutcome = Math.sign(pred.home - pred.away)
   const realOutcome = Math.sign(result.home - result.away)
@@ -341,7 +348,9 @@ function extractFinalResult(m) {
   if (m.status !== 'FINISHED' && m.status !== 'AWARDED') return null
   const score = settleScore(m.score, m.stage)
   if (!score) return null
-  return { ...score, ...resultMeta(m.score) }
+  // knockoutResultFields добавляет {knockout, reg, et} только на плей-офф —
+  // на группе пусто, поведение не меняется.
+  return { ...score, ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
 }
 
 // Поля карточки завершённого матча из записанного/полученного результата.
@@ -554,10 +563,29 @@ app.get('/api/my-predictions', withAuth, async (req, res) => {
 // POST /api/predict — save a prediction
 app.post('/api/predict', withAuth, async (req, res) => {
   try {
-    const { matchId, home, away } = req.body
+    const { matchId, home, away, et, penWinner } = req.body
     if (!matchId || home == null || away == null) return res.status(400).json({ error: 'matchId, home, away required' })
-    if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0 || home > 20 || away > 20)
-      return res.status(400).json({ error: 'Invalid score' })
+    const validScore = (h, a) => Number.isInteger(h) && Number.isInteger(a) && h >= 0 && a >= 0 && h <= 20 && a <= 20
+    if (!validScore(home, away)) return res.status(400).json({ error: 'Invalid score' })
+
+    const knockout = isKnockoutMatchId(matchId)
+    // Гейт: приём нокаут-прогнозов закрыт, пока фича не включена (этап 2).
+    if (knockout && !KNOCKOUT_ENABLED)
+      return res.status(403).json({ error: 'Плей-офф ещё не открыт' })
+
+    // Каскадная схема прогноза (только плей-офф): счёт 90′ → если ничья, счёт
+    // 120′ (et) → если снова ничья, победитель серии (penWinner). Поля вне
+    // каскада игнорируются. Принимаем и частичный каскад — фронт требует полноту.
+    const pred = { home, away }
+    if (knockout && home === away && et != null) {
+      if (!validScore(et.home, et.away)) return res.status(400).json({ error: 'Invalid extra-time score' })
+      pred.et = { home: et.home, away: et.away }
+      if (et.home === et.away && penWinner != null) {
+        if (penWinner !== 'HOME' && penWinner !== 'AWAY')
+          return res.status(400).json({ error: 'Invalid penWinner' })
+        pred.penWinner = penWinner
+      }
+    }
 
     const results = (await rget(K.results)) || {}
     if (results[matchId]) return res.status(403).json({ error: 'Match already settled' })
@@ -571,12 +599,12 @@ app.post('/api/predict', withAuth, async (req, res) => {
 
     // Store in match predictions index
     const mp = (await rget(K.preds(matchId))) || {}
-    mp[userId] = { home, away }
+    mp[userId] = pred
     await rset(K.preds(matchId), mp)
 
     // Store in user predictions
     const up = (await rget(K.upreds(userId))) || {}
-    up[matchId] = { home, away, savedAt: new Date().toISOString() }
+    up[matchId] = { ...pred, savedAt: new Date().toISOString() }
     await rset(K.upreds(userId), up)
 
     // Ensure user is on leaderboard with at least 0 pts
@@ -690,12 +718,19 @@ app.post('/api/score', async (req, res) => {
   const { matchId, home, away, meta } = req.body
   if (!matchId || home == null || away == null) return res.status(400).json({ error: 'matchId, home, away required' })
   try {
-    // Резервный путь (sync-results.js) может прислать отображаемые поля нокаута.
-    // Берём только белый список — на очки они не влияют, лишь на карточку.
+    // Резервный путь (sync-results.js) может прислать поля нокаута. Берём только
+    // белый список с валидацией. penHome/penAway/winner/duration — отображение
+    // (на очки не влияют); knockout/reg/et нужны нокаут-скорингу calcPoints.
     const safeMeta = {}
     if (meta && typeof meta === 'object') {
       for (const k of ['penHome', 'penAway', 'winner', 'duration']) {
         if (meta[k] != null) safeMeta[k] = meta[k]
+      }
+      if (meta.knockout === true) {
+        safeMeta.knockout = true
+        const okScore = (s) => s && Number.isInteger(s.home) && Number.isInteger(s.away)
+        if (okScore(meta.reg)) safeMeta.reg = { home: meta.reg.home, away: meta.reg.away }
+        if (okScore(meta.et)) safeMeta.et = { home: meta.et.home, away: meta.et.away }
       }
     }
     const count = await settleMatch(matchId, home, away, safeMeta)

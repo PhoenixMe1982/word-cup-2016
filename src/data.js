@@ -232,6 +232,46 @@ export const MATCHES = [
   { id: 'm72', group: 'J', date: '28 июня', time: '05:00 МСК', status: 'upcoming', home: 'JOR', away: 'ARG',  venue: 'AT&T Stadium, Арлингтон',               goals: [] },
 ];
 
+// ── Плей-офф (этап 2) ───────────────────────────────────────────────────────
+// Гейт фичи прогнозов на плей-офф. Прод-переключатель KNOCKOUT_LIVE по умолчанию
+// false → весь нокаут-UI и подмешивание матчей выключены (код дормантный). Для
+// теста без раскатки на пользователей: ?knockout=1 в URL (или localStorage
+// 'wc2026_knockoutTest'='1') включает фичу ТОЛЬКО на этом устройстве; ?knockout=0
+// выключает. Реальная раскатка — выставить KNOCKOUT_LIVE=true по сигналу.
+export const KNOCKOUT_LIVE = false;
+
+export function knockoutEnabled() {
+  if (KNOCKOUT_LIVE) return true;
+  try {
+    if (typeof window === 'undefined') return false;
+    const q = new URLSearchParams(window.location.search).get('knockout');
+    if (q === '1') localStorage.setItem('wc2026_knockoutTest', '1');
+    if (q === '0') localStorage.removeItem('wc2026_knockoutTest');
+    return localStorage.getItem('wc2026_knockoutTest') === '1';
+  } catch { return false; }
+}
+
+// Стадии плей-офф: id матча → подпись. Матч плей-офф отличается от группового
+// наличием поля `stage` (у групповых его нет).
+export const KNOCKOUT_STAGE_LABELS = {
+  r32: '1/16', r16: '1/8', qf: '1/4', sf: '1/2', final: 'Финал', bronze: 'За 3-е место',
+};
+
+export const isKnockoutMatch = (m) => !!m && !!m.stage;
+
+// ЗАГЛУШКА-сетка для разработки/теста. Пары вымышленные (реальные станут
+// известны после группового этапа) — заменить настоящей сеткой при жеребьёвке
+// плей-офф. id плей-офф начинаются с m73 (контракт совпадает с бэкендом).
+export const KNOCKOUT_MATCHES = [
+  { id: 'm73', stage: 'r32',   date: '28 июня', time: '23:00 МСК', status: 'upcoming', home: 'BRA', away: 'SUI', venue: 'SoFi Stadium, Инглвуд',        goals: [] },
+  { id: 'm74', stage: 'r32',   date: '29 июня', time: '23:00 МСК', status: 'upcoming', home: 'ARG', away: 'NOR', venue: 'MetLife Stadium, Нью-Джерси',  goals: [] },
+  { id: 'm75', stage: 'r16',   date: '5 июля',  time: '22:00 МСК', status: 'upcoming', home: 'ESP', away: 'URU', venue: 'Estadio Azteca, Мехико',      goals: [] },
+  { id: 'm76', stage: 'qf',    date: '10 июля', time: '23:00 МСК', status: 'upcoming', home: 'FRA', away: 'ENG', venue: 'AT&T Stadium, Арлингтон',     goals: [] },
+  { id: 'm77', stage: 'sf',    date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: 'GER', away: 'POR', venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
+  { id: 'm78', stage: 'bronze',date: '18 июля', time: '22:00 МСК', status: 'upcoming', home: 'POR', away: 'BRA', venue: 'Hard Rock Stadium, Майами',   goals: [] },
+  { id: 'm79', stage: 'final', date: '19 июля', time: '22:00 МСК', status: 'upcoming', home: 'GER', away: 'FRA', venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
+];
+
 // Претенденты на Золотую бутсу — турнир не начался, голов нет
 export const TOP_SCORERS = [
   { rank: 1,  name: 'Килиан Мбаппе',        team: 'FRA', club: 'Real Madrid',    goals: 0, assists: 0, matches: 0, avatar: '⚡' },

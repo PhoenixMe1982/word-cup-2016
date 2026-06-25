@@ -1,5 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { MATCHES, TOP_SCORERS, GOALKEEPERS, GROUPS, NEWS, TICKER_ITEMS } from './data.js'
+import { MATCHES, KNOCKOUT_MATCHES, knockoutEnabled, TOP_SCORERS, GOALKEEPERS, GROUPS, NEWS, TICKER_ITEMS } from './data.js'
+
+// Источник матчей: группа всегда; плей-офф подмешивается только при включённой
+// фиче (гейт KNOCKOUT_LIVE / тест-флаг). Вычисляется один раз при загрузке модуля.
+const SOURCE_MATCHES = knockoutEnabled() ? [...MATCHES, ...KNOCKOUT_MATCHES] : MATCHES
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -8,7 +12,7 @@ const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com
 const REFRESH_MS = 60 * 1000
 
 const FALLBACK = {
-  matches: MATCHES,
+  matches: SOURCE_MATCHES,
   scorers: TOP_SCORERS,
   goalkeepers: GOALKEEPERS,
   groups: GROUPS,
@@ -24,6 +28,7 @@ function computeGroups(matches) {
   for (const g of Object.values(groups)) for (const t of g.teams) rowByCode[t.code] = t
 
   for (const m of matches) {
+    if (m.stage) continue // плей-офф не влияет на групповые таблицы
     if (m.status !== 'finished' || m.scoreHome == null || m.scoreAway == null) continue
     const h = rowByCode[m.home]
     const a = rowByCode[m.away]
@@ -68,7 +73,7 @@ export function LiveDataProvider({ children }) {
         ? apiLive.matchResults
         : null
 
-      const matches = MATCHES.map(m => ({
+      const matches = SOURCE_MATCHES.map(m => ({
         ...m,
         ...(staticResults[m.id] || {}),
         ...((liveResults && liveResults[m.id]) || {}),

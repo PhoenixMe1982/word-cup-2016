@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { TEAMS, HEADER_BANNER_STYLE } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS, isKnockoutMatch, knockoutEnabled } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime, matchUTCDate } from '../utils.js'
+import { toLocalDateTime, matchUTCDate, calcKnockoutBreakdown, calcKnockoutPoints } from '../utils.js'
+import { KnockoutLegend } from '../components/KnockoutScoring.jsx'
+
+const KO_ENABLED = knockoutEnabled()
 
 const LIVE_YELLOW = '#FACC15'
 const GREEN = '#16A34A'
@@ -53,27 +56,34 @@ function ScoreInput({ value, onChange, disabled }) {
   )
 }
 
+// Очки могут быть 0/1/3 (группа) либо до 7 (плей-офф, стек). Цвет по порогам:
+// зелёный ≥3, золотой 1–2, серый 0.
 function PointsBadge({ pts }) {
-  if (pts === 3) return (
-    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: 'rgba(22,163,74,0.12)', border: '1.5px solid rgba(22,163,74,0.3)' }}>
-      <span className="text-sm font-black" style={{ color: '#16A34A' }}>+3</span>
-    </div>
-  )
-  if (pts === 1) return (
-    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: 'rgba(201,168,0,0.1)', border: '1.5px solid rgba(201,168,0,0.3)' }}>
-      <span className="text-sm font-black" style={{ color: '#C9A800' }}>+1</span>
-    </div>
-  )
+  const green = pts >= 3, gold = pts >= 1 && pts < 3
+  const bg = green ? 'rgba(22,163,74,0.12)' : gold ? 'rgba(201,168,0,0.1)' : 'rgba(0,0,0,0.04)'
+  const border = green ? 'rgba(22,163,74,0.3)' : gold ? 'rgba(201,168,0,0.3)' : 'rgba(0,0,0,0.1)'
+  const color = green ? '#16A34A' : gold ? '#C9A800' : '#9CA3AF'
   return (
-    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: 'rgba(0,0,0,0.04)', border: '1.5px solid rgba(0,0,0,0.1)' }}>
-      <span className="text-sm font-black" style={{ color: '#9CA3AF' }}>0</span>
+    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-2xl" style={{ background: bg, border: `1.5px solid ${border}` }}>
+      <span className="text-sm font-black" style={{ color }}>{pts > 0 ? `+${pts}` : '0'}</span>
     </div>
   )
+}
+
+// Сравнение прогнозов (учитывает каскад плей-офф) — нужно для «✓ Сохранено».
+function samePred(a, b) {
+  if (!a || !b) return false
+  if (Number(a.home) !== Number(b.home) || Number(a.away) !== Number(b.away)) return false
+  if (!!a.et !== !!b.et) return false
+  if (a.et && b.et && (Number(a.et.home) !== Number(b.et.home) || Number(a.et.away) !== Number(b.et.away))) return false
+  if ((a.penWinner || null) !== (b.penWinner || null)) return false
+  return true
 }
 
 function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
+  const knockout = isKnockoutMatch(match)
   const isSettled = !!result
   const kickoffUTC = matchUTCDate(match.date, match.time)
   const isTimeStarted = kickoffUTC ? new Date() >= kickoffUTC : false
@@ -85,25 +95,55 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 
   const [homeVal, setHomeVal] = useState(hasPred ? myPred.home : '')
   const [awayVal, setAwayVal] = useState(hasPred ? myPred.away : '')
+  const [etHome, setEtHome] = useState(hasPred && myPred.et ? myPred.et.home : '')
+  const [etAway, setEtAway] = useState(hasPred && myPred.et ? myPred.et.away : '')
+  const [penWinner, setPenWinner] = useState(hasPred && myPred.penWinner ? myPred.penWinner : null)
   const [saved, setSaved] = useState(hasPred)
 
   useEffect(() => {
     if (myPred != null) {
       setHomeVal(myPred.home)
       setAwayVal(myPred.away)
+      setEtHome(myPred.et ? myPred.et.home : '')
+      setEtAway(myPred.et ? myPred.et.away : '')
+      setPenWinner(myPred.penWinner || null)
       setSaved(true)
     }
   }, [myPred])
 
-  const canSubmit = homeVal !== '' && awayVal !== '' && !isLocked && !saving
-  const hasChanged = saved && (homeVal !== myPred?.home || awayVal !== myPred?.away)
+  // Каскад плей-офф: счёт 90′ → если ничья, счёт 120′ (et) → если снова ничья,
+  // победитель серии (penWinner). Поля вне каскада в payload не попадают.
+  const draw90 = homeVal !== '' && awayVal !== '' && Number(homeVal) === Number(awayVal)
+  const etFilled = etHome !== '' && etAway !== ''
+  const draw120 = etFilled && Number(etHome) === Number(etAway)
+  const showEt = knockout && draw90
+  const showPen = knockout && draw90 && draw120
+
+  function buildPayload() {
+    const p = { home: Number(homeVal), away: Number(awayVal) }
+    if (knockout && draw90 && etFilled) {
+      p.et = { home: Number(etHome), away: Number(etAway) }
+      if (draw120 && penWinner) p.penWinner = penWinner
+    }
+    return p
+  }
+
+  const cascadeComplete = homeVal !== '' && awayVal !== '' && (
+    !knockout || !draw90 ? true : !etFilled ? false : !draw120 ? true : penWinner != null
+  )
+  const canSubmit = cascadeComplete && !isLocked && !saving
+  const hasChanged = saved && !samePred(buildPayload(), myPred)
   const { time: localTime, date: localDate } = toLocalDateTime(match.date, match.time)
+  const metaLabel = knockout ? (KNOCKOUT_STAGE_LABELS[match.stage] || 'Плей-офф') : `Группа ${match.group}`
+  const koBreak = (knockout && isSettled && hasPred) ? calcKnockoutBreakdown(myPred, result) : null
 
   // Цвет рамки сразу показывает игроку, насколько точным был его прогноз:
   // жёлтая — матч идёт и прогноз заблокирован, зелёная/синяя/красная — итог матча.
+  // Пороги работают и для группы (0/1/3), и для плей-офф (0..7): ≥3 зелёный,
+  // 1–2 синий, 0 красный.
   let outcomeColor = null
   if (isLive) outcomeColor = LIVE_YELLOW
-  else if (isSettled && hasPred) outcomeColor = myPred.pts === 3 ? GREEN : myPred.pts === 1 ? BLUE : RED
+  else if (isSettled && hasPred) outcomeColor = myPred.pts >= 3 ? GREEN : myPred.pts >= 1 ? BLUE : RED
 
   const cardBorder = outcomeColor
     ? `2.5px solid ${outcomeColor}`
@@ -114,7 +154,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 
   async function handleSave() {
     if (!canSubmit) return
-    const ok = await onSave(match.id, Number(homeVal), Number(awayVal))
+    const ok = await onSave(match.id, buildPayload())
     if (ok) setSaved(true)
   }
 
@@ -125,13 +165,13 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
     let text
     if (isFinished && finalHome != null && myPred) {
       const pts = myPred.pts ?? calcPointsLocal(myPred, { home: finalHome, away: finalAway })
-      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${finalHome}:${finalAway} ${away.name} ${away.flag}\n🔮 Мой прогноз: ${myPred.home}:${myPred.away} (+${pts} оч.)\n📲 @Mundial_26_bot`
+      text = `⚽ ЧМ 2026 | ${metaLabel}\n${home.flag} ${home.name} ${finalHome}:${finalAway} ${away.name} ${away.flag}\n🔮 Мой прогноз: ${myPred.home}:${myPred.away} (+${pts} оч.)\n📲 @Mundial_26_bot`
     } else if (isFinished && finalHome != null) {
-      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${finalHome}:${finalAway} ${away.name} ${away.flag}\n📲 Прогнозируй матчи: @Mundial_26_bot`
+      text = `⚽ ЧМ 2026 | ${metaLabel}\n${home.flag} ${home.name} ${finalHome}:${finalAway} ${away.name} ${away.flag}\n📲 Прогнозируй матчи: @Mundial_26_bot`
     } else if (myPred && saved) {
-      text = `🔮 Прогноз ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} ${myPred.home}:${myPred.away} ${away.name} ${away.flag}\n📲 Угадывай счёт: @Mundial_26_bot`
+      text = `🔮 Прогноз ЧМ 2026 | ${metaLabel}\n${home.flag} ${home.name} ${myPred.home}:${myPred.away} ${away.name} ${away.flag}\n📲 Угадывай счёт: @Mundial_26_bot`
     } else {
-      text = `⚽ ЧМ 2026 | Группа ${match.group}\n${home.flag} ${home.name} vs ${away.name} ${away.flag}\n📅 ${localDate} · ${localTime}\n📲 @Mundial_26_bot`
+      text = `⚽ ЧМ 2026 | ${metaLabel}\n${home.flag} ${home.name} vs ${away.name} ${away.flag}\n📅 ${localDate} · ${localTime}\n📲 @Mundial_26_bot`
     }
     const url = 'https://t.me/Mundial_26_bot'
     if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -166,18 +206,20 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
 
       {/* Match meta */}
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: '#9CA3AF' }}>
-          Группа {match.group} · {localDate} · {localTime}
+        <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: knockout ? '#C9A800' : '#9CA3AF' }}>
+          {knockout && '🏆 '}{metaLabel} · {localDate} · {localTime}
         </span>
         {isSettled && myPred != null && (
           <span
             className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-2xl"
             style={{
-              background: myPred.pts === 3 ? 'rgba(22,163,74,0.1)' : myPred.pts === 1 ? 'rgba(201,168,0,0.1)' : 'rgba(0,0,0,0.05)',
-              color: myPred.pts === 3 ? '#16A34A' : myPred.pts === 1 ? '#C9A800' : '#9CA3AF',
+              background: myPred.pts >= 3 ? 'rgba(22,163,74,0.1)' : myPred.pts >= 1 ? 'rgba(201,168,0,0.1)' : 'rgba(0,0,0,0.05)',
+              color: myPred.pts >= 3 ? '#16A34A' : myPred.pts >= 1 ? '#C9A800' : '#9CA3AF',
             }}
           >
-            {myPred.pts === 3 ? '⚽ Точный счёт' : myPred.pts === 1 ? '✓ Исход угадан' : '✗ Мимо'}
+            {knockout
+              ? (myPred.pts > 0 ? `+${myPred.pts} очк.` : '✗ Мимо')
+              : (myPred.pts === 3 ? '⚽ Точный счёт' : myPred.pts === 1 ? '✓ Исход угадан' : '✗ Мимо')}
           </span>
         )}
         {!isLocked && saved && !hasChanged && (
@@ -234,10 +276,13 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
             </div>
           ) : (
             <>
+              {knockout && <span className="text-[8px] font-black uppercase tracking-wide mr-0.5" style={{ color: '#9CA3AF' }}>90′</span>}
               <ScoreInput value={homeVal} onChange={setHomeVal} disabled={false} />
               <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>:</span>
               <ScoreInput value={awayVal} onChange={setAwayVal} disabled={false} />
-              {saved && !hasChanged ? (
+              {/* Для группы — кнопка сейва/шаринга прямо тут; для плей-офф она
+                  переезжает под каскадную панель (см. ниже). */}
+              {!knockout && (saved && !hasChanged ? (
                 <button
                   onClick={handleShare}
                   className="w-10 h-10 rounded-2xl text-base flex items-center justify-center flex-shrink-0"
@@ -258,7 +303,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
                 >
                   {saving === match.id ? '…' : canSubmit ? '⚽' : '→'}
                 </button>
-              )}
+              ))}
             </>
           )}
         </div>
@@ -270,11 +315,96 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
         </div>
       </div>
 
-      {/* Prediction shown under settled match */}
-      {isSettled && myPred != null && (
+      {/* Каскадная панель плей-офф (только редактируемый нокаут-матч) */}
+      {knockout && !isLocked && (
+        <div className="mt-2.5 pt-2.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }} onClick={(e) => e.stopPropagation()}>
+          {/* Шаг 2 — счёт в доп. время, раскрывается при ничьей 90′ */}
+          {showEt && (
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>Ничья? Счёт в доп. время (120′)</span>
+              <div className="flex items-center gap-1.5">
+                <ScoreInput value={etHome} onChange={setEtHome} disabled={false} />
+                <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>:</span>
+                <ScoreInput value={etAway} onChange={setEtAway} disabled={false} />
+              </div>
+            </div>
+          )}
+          {/* Шаг 3 — кто пройдёт по пенальти, при ничьей 120′ */}
+          {showPen && (
+            <div className="mb-2">
+              <div className="text-[10px] font-bold uppercase tracking-wide mb-1.5" style={{ color: '#C9A800' }}>Снова ничья? Кто пройдёт по пенальти</div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[['HOME', home], ['AWAY', away]].map(([side, t]) => (
+                  <button
+                    key={side}
+                    onClick={() => setPenWinner(side)}
+                    className="flex items-center justify-center gap-1 py-2 rounded-2xl text-xs font-black"
+                    style={{
+                      background: penWinner === side ? '#C9A800' : 'rgba(0,0,0,0.04)',
+                      color: penWinner === side ? '#fff' : '#6B7280',
+                      border: penWinner === side ? '1.5px solid #C9A800' : '1.5px solid rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    <span className="text-base">{t.flag}</span>
+                    <span className="truncate">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Кнопка сохранения / поделиться */}
+          <div className="flex items-center gap-2">
+            {saved && !hasChanged ? (
+              <>
+                <span className="flex-1 text-[10px] font-black uppercase tracking-wide" style={{ color: '#16A34A' }}>✓ Прогноз сохранён</span>
+                <button onClick={handleShare} className="px-3 h-9 rounded-2xl text-sm flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#2a00ff,#00299d)', border: '1px solid #0b0077', color: '#FFFFFF' }}>📤</button>
+              </>
+            ) : (
+              <button
+                onClick={handleSave}
+                disabled={!canSubmit}
+                className="flex-1 h-9 rounded-2xl text-xs font-black uppercase tracking-wide flex items-center justify-center"
+                style={{ background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)', color: canSubmit ? '#fff' : '#9CA3AF' }}
+              >
+                {saving === match.id ? 'Сохраняю…' : canSubmit ? '⚽ Сохранить прогноз' : draw90 && !etFilled ? 'Введи счёт доп. времени' : showPen && !penWinner ? 'Выбери победителя серии' : 'Заполни счёт 90′'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Прогноз под завершённым ГРУППОВЫМ матчем — без изменений к этапу 1 */}
+      {isSettled && myPred != null && !knockout && (
         <div className="mt-2 pt-2 flex items-center gap-1.5 text-[10px]" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
           <span style={{ color: '#9CA3AF' }}>Твой прогноз:</span>
           <span className="font-black" style={{ color: '#6B7280' }}>{myPred.home} : {myPred.away}</span>
+        </div>
+      )}
+
+      {/* Разбивка итога и очков под завершённым матчем ПЛЕЙ-ОФФ */}
+      {isSettled && myPred != null && knockout && (
+        <div className="mt-2 pt-2 text-[10px]" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1" style={{ color: '#6B7280' }}>
+            <span style={{ color: '#9CA3AF' }}>Итог:</span>
+            <span className="font-black">90′ {result.reg ? `${result.reg.home}:${result.reg.away}` : `${result.home}:${result.away}`}</span>
+            {result.et && <span className="font-black">· доп. {result.et.home}:{result.et.away}</span>}
+            {result.penHome != null && <span className="font-black">· пен. {result.penHome}:{result.penAway}</span>}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span style={{ color: '#9CA3AF' }}>Твой прогноз:</span>
+            <span className="font-black" style={{ color: '#6B7280' }}>{myPred.home}:{myPred.away}</span>
+            {myPred.et && <span className="font-black" style={{ color: '#6B7280' }}>· доп. {myPred.et.home}:{myPred.et.away}</span>}
+            {myPred.penWinner && <span className="font-black" style={{ color: '#6B7280' }}>· пен. {(myPred.penWinner === 'HOME' ? home : away).flag}</span>}
+          </div>
+          {koBreak && (
+            <div className="flex flex-wrap items-center gap-x-1.5 mt-1 pt-1 text-[9px]" style={{ borderTop: '1px dashed rgba(0,0,0,0.06)', color: '#9CA3AF' }}>
+              {koBreak.p90 > 0 && <span>90′ +{koBreak.p90}</span>}
+              {koBreak.p120 > 0 && <span>· доп. +{koBreak.p120}</span>}
+              {koBreak.pPen > 0 && <span>· пен. +{koBreak.pPen}</span>}
+              {koBreak.pAdv > 0 && <span>· проход +{koBreak.pAdv}</span>}
+              <span className="font-black ml-auto" style={{ color: koBreak.total > 0 ? '#16A34A' : '#9CA3AF' }}>= +{koBreak.total} очк.</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -319,17 +449,18 @@ export default function PlayPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  async function handleSave(matchId, home, away) {
+  // payload: { home, away } для группы; для плей-офф + опц. { et:{home,away}, penWinner }
+  async function handleSave(matchId, payload) {
     setSaving(matchId)
     setError(null)
     try {
       await apiFetch('/api/predict', {
         method: 'POST',
-        body: JSON.stringify({ matchId, home, away }),
+        body: JSON.stringify({ matchId, ...payload }),
       })
       setMyPreds((prev) => ({
         ...prev,
-        [matchId]: { home, away, savedAt: new Date().toISOString() },
+        [matchId]: { ...payload, savedAt: new Date().toISOString() },
       }))
       if (stats) setStats((s) => ({ ...s, predictions: (s.predictions || 0) + (myPreds?.[matchId] ? 0 : 1) }))
       return true
@@ -343,7 +474,10 @@ export default function PlayPage() {
 
   const filteredMatches = filter === 'all'
     ? matches
+    : filter === 'ko'
+    ? matches.filter((m) => isKnockoutMatch(m))
     : matches.filter((m) => m.group === filter)
+  const hasKnockout = KO_ENABLED && matches.some((m) => isKnockoutMatch(m))
 
   const predCount = myPreds ? Object.keys(myPreds).length : 0
   const settledWithPred = myPreds
@@ -437,6 +571,18 @@ export default function PlayPage() {
           >
             Все
           </button>
+          {hasKnockout && (
+            <button
+              onClick={() => setFilter('ko')}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide"
+              style={{
+                background: filter === 'ko' ? '#C9A800' : 'rgba(201,168,0,0.12)',
+                color: filter === 'ko' ? '#fff' : '#C9A800',
+              }}
+            >
+              🏆 Плей-офф
+            </button>
+          )}
           {GROUPS.map((g) => (
             <button
               key={g}
@@ -458,8 +604,9 @@ export default function PlayPage() {
         {filteredMatches.map((match) => {
           const result = results[match.id] || null
           const pred = myPreds?.[match.id]
+          const kn = isKnockoutMatch(match)
           const predWithPts = result && pred
-            ? { ...pred, pts: pred.pts ?? calcPointsLocal(pred, result) }
+            ? { ...pred, pts: pred.pts ?? (kn ? calcKnockoutPoints(pred, result) : calcPointsLocal(pred, result)) }
             : pred
           const isSelected = selectedMatch === match.id
           return (
@@ -486,23 +633,27 @@ export default function PlayPage() {
 
       {/* Scoring legend */}
       <div className="px-4 mt-4 mb-2">
-        <div
-          className="p-3 rounded-2xl grid grid-cols-3 gap-2 text-center text-[10px]"
-          style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
-        >
-          <div>
-            <div className="font-black text-sm" style={{ color: '#16A34A' }}>3 очка</div>
-            <div style={{ color: '#6B7280' }}>Точный счёт</div>
+        {filter === 'ko' ? (
+          <KnockoutLegend />
+        ) : (
+          <div
+            className="p-3 rounded-2xl grid grid-cols-3 gap-2 text-center text-[10px]"
+            style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
+          >
+            <div>
+              <div className="font-black text-sm" style={{ color: '#16A34A' }}>3 очка</div>
+              <div style={{ color: '#6B7280' }}>Точный счёт</div>
+            </div>
+            <div>
+              <div className="font-black text-sm" style={{ color: '#C9A800' }}>1 очко</div>
+              <div style={{ color: '#6B7280' }}>Исход угадан</div>
+            </div>
+            <div>
+              <div className="font-black text-sm" style={{ color: '#9CA3AF' }}>0 очков</div>
+              <div style={{ color: '#6B7280' }}>Промах</div>
+            </div>
           </div>
-          <div>
-            <div className="font-black text-sm" style={{ color: '#C9A800' }}>1 очко</div>
-            <div style={{ color: '#6B7280' }}>Исход угадан</div>
-          </div>
-          <div>
-            <div className="font-black text-sm" style={{ color: '#9CA3AF' }}>0 очков</div>
-            <div style={{ color: '#6B7280' }}>Промах</div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )

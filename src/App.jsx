@@ -8,6 +8,8 @@ import BottomNav from './components/BottomNav.jsx'
 import SaluteWatcher from './components/SaluteWatcher.jsx'
 import Splash from './components/Splash.jsx'
 import VisitSummary from './components/VisitSummary.jsx'
+import { KnockoutTutorial, knockoutTutorialDismissed } from './components/KnockoutScoring.jsx'
+import { knockoutEnabled } from './data.js'
 import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
@@ -151,6 +153,14 @@ function AppShell() {
   // После входа показываем итоги визита (что изменилось с прошлого раза).
   const showVisit = entered && visit
 
+  // Туториал плей-офф: при включённой фиче показываем при каждом входе, пока
+  // пользователь не нажмёт «Не показывать снова» (флаг в localStorage). Ждём
+  // закрытия итогов визита, чтобы окна не накладывались.
+  const [koTutorial, setKoTutorial] = useState(false)
+  useEffect(() => {
+    if (entered && knockoutEnabled() && !knockoutTutorialDismissed()) setKoTutorial(true)
+  }, [entered])
+
   return (
     <>
       <SaluteWatcher />
@@ -162,6 +172,9 @@ function AppShell() {
 
         {/* Итоги визита — что изменилось с прошлого раза */}
         {showVisit && <VisitSummary summary={visit} onClose={() => setVisit(null)} />}
+
+        {/* Туториал плей-офф (после закрытия итогов визита) */}
+        <KnockoutTutorial open={koTutorial && !showVisit} onClose={() => setKoTutorial(false)} />
       </div>
 
       {!entered && <Splash hiding={hidingSplash} />}

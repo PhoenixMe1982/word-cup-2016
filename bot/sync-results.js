@@ -2,7 +2,7 @@
 // Sync WC 2026 match results from football-data.org
 // Runs every 5 min via GitHub Actions cron during the tournament
 
-const { lookupMatchId, normTLA, settleScore, resultMeta } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, settleScore, resultMeta, knockoutResultFields } = require('./match-lookup.js')
 
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const BOT_TOKEN   = (process.env.BOT_TOKEN   || '').trim()
@@ -100,7 +100,7 @@ async function main() {
       continue
     }
     const homeScore = score.home, awayScore = score.away
-    const meta = resultMeta(m.score)
+    const meta = { ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
 
     const penStr = meta.penHome != null ? ` (пен. ${meta.penHome}:${meta.penAway})` : ''
     console.log(`[sync] New result: ${matchId} ${key} → ${homeScore}:${awayScore}${penStr}`)

@@ -102,7 +102,49 @@ function resultMeta(score) {
   return meta
 }
 
+// Контракт идентификаторов: группа — m01..m72, плей-офф — m73.. (этап 2).
+// Используется для каскадной валидации прогноза и гейта приёма на бэкенде.
+function isKnockoutMatchId(id) {
+  const m = /^m(\d+)$/.exec(id || '')
+  return m ? Number(m[1]) >= 73 : false
+}
+
+// Разбивка нокаут-результата на стадии для стек-очков (этап 2).
+// Возвращает { reg:{home,away}|null, et:{home,away}|null }:
+//   reg — счёт на 90′ (regularTime; фолбэк на fullTime, если матч решён в осн.);
+//   et  — счёт на 120′ (reg + голы ОТ), присутствует ТОЛЬКО если игрался ОТ
+//         (duration EXTRA_TIME/PENALTY_SHOOTOUT либо есть голы extraTime).
+// Согласовано с settleScore: на серии пенальти et == 120′-ничья == зачётный счёт.
+function knockoutBreakdown(score) {
+  const sc = score || {}
+  const reg = sc.regularTime && sc.regularTime.home != null
+    ? { home: sc.regularTime.home, away: sc.regularTime.away }
+    : (sc.fullTime && sc.fullTime.home != null ? { home: sc.fullTime.home, away: sc.fullTime.away } : null)
+  const playedET = sc.duration === 'EXTRA_TIME' || sc.duration === 'PENALTY_SHOOTOUT'
+    || (sc.extraTime && sc.extraTime.home != null)
+  let et = null
+  if (playedET && reg) {
+    et = {
+      home: reg.home + (sc.extraTime && sc.extraTime.home != null ? sc.extraTime.home : 0),
+      away: reg.away + (sc.extraTime && sc.extraTime.away != null ? sc.extraTime.away : 0),
+    }
+  }
+  return { reg, et }
+}
+
+// Поля результата, нужные нокаут-скорингу (этап 2). Для группы — пустой объект
+// (флаг knockout не выставляется → calcPoints идёт прежней групповой веткой).
+// Для нокаута: { knockout:true, reg:{...}, et?:{...} }. На очки группы не влияет.
+function knockoutResultFields(score, stage) {
+  if (!isKnockoutStage(stage)) return {}
+  const { reg, et } = knockoutBreakdown(score)
+  const out = { knockout: true }
+  if (reg) out.reg = reg
+  if (et) out.et = et
+  return out
+}
+
 module.exports = {
   MATCH_LOOKUP, TLA_ALIASES, normTLA, lookupMatchId,
-  isKnockoutStage, settleScore, resultMeta,
+  isKnockoutStage, isKnockoutMatchId, settleScore, resultMeta, knockoutBreakdown, knockoutResultFields,
 }
