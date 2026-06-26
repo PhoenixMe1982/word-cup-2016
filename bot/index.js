@@ -688,6 +688,15 @@ app.get('/api/scorers', async (_, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
+// TEMP DEBUG (удаляется после сверки бомбардиров): сырые строки со всеми полями
+app.get('/api/_scorers_raw', async (req, res) => {
+  if (req.query.dump !== 'czeslaw-2026') return res.status(403).json({ error: 'nope' })
+  try {
+    const data = (await rget(K.scorers)) || []
+    res.json(data)
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
 // GET /api/goalkeepers — goalkeeper stats (Redis override or null → frontend uses static)
 app.get('/api/goalkeepers', async (_, res) => {
   try {
