@@ -11,6 +11,10 @@ const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com
 // бэкенд сам опрашивает football-data.org каждые 5 минут.
 const REFRESH_MS = 60 * 1000
 
+// Сборка, на которой реально работает открытая вкладка (подставляется Vite-define
+// на билде). В dev/тестах константы нет → 'dev', проверку обновлений пропускаем.
+const RUNNING_BUILD = (typeof __BUILD_ID__ !== 'undefined') ? __BUILD_ID__ : 'dev'
+
 const FALLBACK = {
   matches: SOURCE_MATCHES,
   scorers: TOP_SCORERS,
@@ -31,8 +35,14 @@ export function computeGroups(matches, { includeLive = false } = {}) {
 
   for (const m of matches) {
     if (m.stage) continue // плей-офф не влияет на групповые таблицы
-    const counts = m.status === 'finished' || (includeLive && m.status === 'live')
-    if (!counts || m.scoreHome == null || m.scoreAway == null) continue
+    if (m.scoreHome == null || m.scoreAway == null) continue
+    // Зачёт: завершённые — всегда. В провизорном режиме — любой НЕзавершённый
+    // матч, по которому уже есть счёт (идёт сейчас). ВАЖНО: бэкенд держит in-play
+    // матч в статусе 'upcoming' и просто пушит текущий счёт (status не меняется
+    // на 'live'), поэтому ориентируемся на наличие счёта, а не на статус 'live' —
+    // иначе провизорная таблица не пересчитывалась бы при изменении счёта.
+    const counts = m.status === 'finished' || (includeLive && m.status !== 'finished')
+    if (!counts) continue
     const h = rowByCode[m.home]
     const a = rowByCode[m.away]
     if (!h || !a) continue
@@ -56,19 +66,29 @@ export function LiveDataProvider({ children }) {
   // Сплэш на уровне App держит вход, пока это false, чтобы не показывать
   // нули из FALLBACK до резолва /api/live.
   const [ready, setReady] = useState(false)
+  // updateAvailable — задеплоена сборка новее текущей открытой вкладки; App
+  // показывает мягкую плашку «Обновить». Взводится один раз и не сбрасывается.
+  const [updateAvailable, setUpdateAvailable] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
       const liveUrl = import.meta.env.BASE_URL + 'live-data.json?t=' + Date.now()
-      const [json, apiLive, apiScorers, apiKeepers] = await Promise.all([
+      const verUrl = import.meta.env.BASE_URL + 'version.json?t=' + Date.now()
+      const [json, apiLive, apiScorers, apiKeepers, ver] = await Promise.all([
         fetch(liveUrl).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${API}/api/live`).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${API}/api/scorers`).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${API}/api/goalkeepers`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(verUrl).then(r => r.ok ? r.json() : null).catch(() => null),
       ])
       if (cancelled) return
+
+      // Новая сборка на сервере → плашка «Обновить» (только в собранном приложении).
+      if (RUNNING_BUILD !== 'dev' && ver?.build && ver.build !== RUNNING_BUILD) {
+        setUpdateAvailable(true)
+      }
 
       // Приоритет: /api/live (свежее, раз в 5 мин) → live-data.json (GitHub Actions) → статика
       const staticResults = json?.matchResults || {}
@@ -98,7 +118,7 @@ export function LiveDataProvider({ children }) {
     return () => { cancelled = true; clearInterval(t) }
   }, [])
 
-  return <LiveDataCtx.Provider value={{ ...data, ready }}>{children}</LiveDataCtx.Provider>
+  return <LiveDataCtx.Provider value={{ ...data, ready, updateAvailable }}>{children}</LiveDataCtx.Provider>
 }
 
 export const useLiveData = () => useContext(LiveDataCtx)

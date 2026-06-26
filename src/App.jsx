@@ -61,6 +61,36 @@ function computeVisitSummary(me, settled) {
   }
 }
 
+// Мягкая плашка обновления: появляется, когда задеплоена сборка новее открытой
+// вкладки. По тапу «Обновить» — перезагрузка (подтянется новый бандл). Крестик
+// прячет до конца сессии (флаг живёт в контексте, плашка вернётся при перезаходе).
+function UpdateToast() {
+  const [hidden, setHidden] = useState(false)
+  if (hidden) return null
+  return (
+    <div
+      className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 flex justify-center"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 92px)', zIndex: 60 }}
+    >
+      <div
+        className="flex items-center gap-2.5 pl-4 pr-2 py-2 update-toast-in"
+        style={{ background: '#111827', borderRadius: 16, boxShadow: '0 8px 28px rgba(0,0,0,0.28)' }}
+      >
+        <span className="text-base">✨</span>
+        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: '#FFFFFF' }}>Доступно обновление</span>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-[11px] font-black uppercase tracking-wide px-3 py-1.5"
+          style={{ background: '#C9A800', color: '#FFFFFF', borderRadius: 16 }}
+        >
+          Обновить
+        </button>
+        <button onClick={() => setHidden(true)} className="text-sm px-1.5" style={{ color: 'rgba(255,255,255,0.55)' }} aria-label="Закрыть">✕</button>
+      </div>
+    </div>
+  )
+}
+
 function AppShell() {
   const live = useLiveData()
 
@@ -175,6 +205,9 @@ function AppShell() {
 
         {/* Туториал плей-офф (после закрытия итогов визита) */}
         <KnockoutTutorial open={koTutorial && !showVisit} onClose={() => setKoTutorial(false)} />
+
+        {/* Мягкая плашка обновления — когда задеплоена новая сборка */}
+        {entered && live.updateAvailable && <UpdateToast />}
       </div>
 
       {!entered && <Splash hiding={hidingSplash} />}
