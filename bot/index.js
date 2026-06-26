@@ -440,18 +440,43 @@ async function pollFootballData() {
 
 const lastWord = (s) => s.trim().split(/\s+/).pop().toLowerCase().replace(/ё/g, 'е')
 
+// Эндпоинт /scorers — это РЕЙТИНГ топ-бомбардиров по голам (desc). Одной страницы
+// (limit=100) к плей-офф уже не хватает: забивших > 100, и игроки с 1 голом из
+// хвоста (напр. эквадорцы) обрезаются и никогда не попадают в таблицу. Тянем ВСЕХ
+// постранично через документированную пагинацию limit/offset.
+// Защита: если offset не поддерживается (API отдаёт ту же первую страницу) —
+// дедуп по player.id обнулит «свежих» и мы остановимся на топ-100 (как раньше,
+// без регрессии). PAGE=100 — заведомо принимаемое значение лимита.
+async function fetchAllFdScorers() {
+  const PAGE = 100
+  const all = []
+  const seen = new Set()
+  for (let offset = 0; offset < 1000; offset += PAGE) {
+    const res = await fetch(
+      `https://api.football-data.org/v4/competitions/WC/scorers?limit=${PAGE}&offset=${offset}`,
+      { headers: { 'X-Auth-Token': FDORG_TOKEN } },
+    )
+    if (!res.ok) {
+      // Первая страница упала — это реальная ошибка; дальше — отдаём что набрали.
+      if (offset === 0) { console.error(`[scorers] football-data.org ${res.status}`); return null }
+      break
+    }
+    const page = (await res.json()).scorers || []
+    if (page.length === 0) break
+    const fresh = page.filter(s => s.player?.id && !seen.has(s.player.id))
+    if (fresh.length === 0) break          // offset проигнорирован → дальше дублей нет смысла тянуть
+    fresh.forEach(s => seen.add(s.player.id))
+    all.push(...fresh)
+    if (page.length < PAGE) break          // последняя (неполная) страница
+  }
+  return all
+}
+
 async function pollScorers() {
   if (!FDORG_TOKEN) return
   try {
-    const res = await fetch('https://api.football-data.org/v4/competitions/WC/scorers?limit=100', {
-      headers: { 'X-Auth-Token': FDORG_TOKEN },
-    })
-    if (!res.ok) {
-      console.error(`[scorers] football-data.org ${res.status}`)
-      return
-    }
-    const data = await res.json()
-    const fdScorers = data.scorers || []
+    const fdScorers = await fetchAllFdScorers()
+    if (fdScorers === null) return
     if (fdScorers.length === 0) return
 
     const current = (await rget(K.scorers)) || []
@@ -501,12 +526,22 @@ async function pollScorers() {
     console.log(`[scorers] synced: ${fdScorers.length} from API, ${added.length} new`)
 
     if (added.length > 0 && ADMIN_ID) {
-      const lines = added.map(a =>
-        `⚽ ${a.name} (${a.tla}) — ${a.goals} гол.` +
-        (a.exact ? '' : '\n⚠️ имя транслитерировано автоматически — проверь: /scorer ren N Имя')
-      )
-      bot.api.sendMessage(ADMIN_ID, `🥅 *Новые бомбардиры (авто)*\n\n${lines.join('\n')}`,
-        { parse_mode: 'Markdown' }).catch(() => {})
+      // После расширения пагинации первый прогон может разом догрузить десятки
+      // игроков из хвоста — полный список не влезет в одно сообщение (4096),
+      // поэтому при большой пачке шлём краткую сводку.
+      let msg
+      if (added.length > 20) {
+        const needCheck = added.filter(a => !a.exact).length
+        msg = `🥅 *Новые бомбардиры (авто)*\n\nДогружено из API: ${added.length}.` +
+          (needCheck ? `\n⚠️ ${needCheck} имён транслитерированы автоматически — проверь список: /scorer` : '')
+      } else {
+        const lines = added.map(a =>
+          `⚽ ${a.name} (${a.tla}) — ${a.goals} гол.` +
+          (a.exact ? '' : '\n⚠️ имя транслитерировано автоматически — проверь: /scorer ren N Имя')
+        )
+        msg = `🥅 *Новые бомбардиры (авто)*\n\n${lines.join('\n')}`
+      }
+      bot.api.sendMessage(ADMIN_ID, msg, { parse_mode: 'Markdown' }).catch(() => {})
     }
   } catch (e) {
     console.error('[scorers] poll failed:', e.message)
