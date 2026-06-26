@@ -21,15 +21,18 @@ const FALLBACK = {
 }
 
 // Турнирные таблицы групп считаются из завершённых матчей:
-// победа 3 очка, ничья 1, сортировка на странице групп — очки → разница → забитые
-function computeGroups(matches) {
+// победа 3 очка, ничья 1, сортировка на странице групп — очки → разница → забитые.
+// includeLive=true — провизорный режим: идущие матчи засчитываются по текущему
+// счёту «как будто матч закончился сейчас» (для живой карточки группы на главной).
+export function computeGroups(matches, { includeLive = false } = {}) {
   const groups = JSON.parse(JSON.stringify(GROUPS))
   const rowByCode = {}
   for (const g of Object.values(groups)) for (const t of g.teams) rowByCode[t.code] = t
 
   for (const m of matches) {
     if (m.stage) continue // плей-офф не влияет на групповые таблицы
-    if (m.status !== 'finished' || m.scoreHome == null || m.scoreAway == null) continue
+    const counts = m.status === 'finished' || (includeLive && m.status === 'live')
+    if (!counts || m.scoreHome == null || m.scoreAway == null) continue
     const h = rowByCode[m.home]
     const a = rowByCode[m.away]
     if (!h || !a) continue
