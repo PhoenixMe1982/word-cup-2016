@@ -26,6 +26,7 @@ const K = {
   results:     `${KEY_PREFIX}wc2026_results`,
   leaderboard: `${KEY_PREFIX}wc2026_lb`,
   scorers:     `${KEY_PREFIX}wc2026_scorers`,
+  reconV1:     `${KEY_PREFIX}wc2026_scorers_recon_v1`,
   keepers:     `${KEY_PREFIX}wc2026_keepers`,
   preds:  (matchId)  => `${KEY_PREFIX}wc2026_mp:${matchId}`,
   upreds: (userId)   => `${KEY_PREFIX}wc2026_up:${userId}`,
@@ -472,6 +473,11 @@ async function fetchAllFdScorers() {
   return all
 }
 
+// Фантомные fdId из FD-фида (см. пояснение в pollScorers). Снос — в reconcileScorers.
+// ВНИМАНИЕ: 3820 = Мехди Тареми (IRN) — реальный игрок; если Иран пройдёт дальше и он
+// забьёт по-настоящему, убрать его id отсюда, иначе настоящий гол не зачтётся.
+const BLOCKED_FDIDS = new Set([3820, 44033, 115828, 243911])
+
 async function pollScorers() {
   if (!FDORG_TOKEN) return
   try {
@@ -489,6 +495,10 @@ async function pollScorers() {
       const goals = s.goals || 0
       const matches = s.playedMatches || 0
       if (!fdId || !tla) continue
+      // FD free-фид приписывает некоторым игрокам чужие автоголы/отменённые голы
+      // (Тареми — отменён по офсайду; Торстведт/Хухи/Нематов — автоголы соперников).
+      // Эти fdId игнорируем, иначе поллер раз за разом воскрешает фантомные голы.
+      if (BLOCKED_FDIDS.has(fdId)) continue
 
       let row = current.find(r => r.fdId === fdId)
       if (!row) {
@@ -695,6 +705,93 @@ app.get('/api/_scorers_raw', async (req, res) => {
     const data = (await rget(K.scorers)) || []
     res.json(data)
   } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// TEMP one-shot: сверка бомбардиров с Wikipedia Module:Goalscorers/data/2026 (2026-06-26).
+// Голы приводим к эталону (чек-сумма 165 = сумма счетов 60 матчей). Ассисты — сохраняем,
+// дубли (отдельная ассист-строка того же игрока) сводим в одну. Идемпотентно: ключ reconV1.
+const RECON_REMOVE_FDIDS = [3820, 44033, 115828, 243911] // фантомы (см. BLOCKED_FDIDS)
+const RECON_MERGES = [ // свести задвоенных (gol-строка + ручная ассист-строка)
+  { team: 'GER', names: ['Дениз Ундав'] },
+  { team: 'GER', names: ['Натаниел Бровн'] },
+  { team: 'IRN', names: ['Рамин Резаейан'] },
+  { team: 'JPN', names: ['Кейто Накамура', 'Кэито Накамура'] },
+  { team: 'USA', names: ['Алекс Фриман', 'Алекс Фримен'] },
+  { team: 'ENG', names: ['Букайо Сака'] },
+]
+const RECON_SETGOALS = [ // голы на уже существующих ассист-строках
+  { team: 'MAR', name: 'Ашраф Хакими', goals: 1 },
+  { team: 'MAR', name: 'Суфьян Хакими', goals: 1, rename: 'Суфьян Рахими' }, // в проде искажена фамилия Rahimi
+]
+const RECON_ADD = [ // забившие, которых FD free-фид не довёз
+  { name: 'Лерой Сане', team: 'GER' },
+  { name: 'Дайзен Маэда', team: 'JPN' },
+  { name: 'Жессим Яссин', team: 'MAR' },
+  { name: 'Матео Чавес', team: 'MEX' },
+  { name: 'Тапело Масеко', team: 'RSA' },
+  { name: 'Хазем Мастури', team: 'TUN' },
+  { name: 'Каан Айхан', team: 'TUR' },
+  { name: 'Арда Гюлер', team: 'TUR' },
+  { name: 'Барыш Альпер Йылмаз', team: 'TUR' },
+  { name: 'Себастьян Берхалтер', team: 'USA' },
+  { name: 'Остон Трасти', team: 'USA' },
+]
+
+async function reconcileScorers() {
+  const log = []
+  let cur = (await rget(K.scorers)) || []
+  const before = cur.length
+
+  // 1) снос фантомных голов по fdId
+  const rem = new Set(RECON_REMOVE_FDIDS)
+  cur.filter(r => rem.has(r.fdId)).forEach(r => log.push(`− фантом: ${r.name} (${r.team})`))
+  cur = cur.filter(r => !rem.has(r.fdId))
+
+  // 2) слияние дублей: оставить fd-строку (иначе с клубом, иначе с голами), ассисты = max
+  for (const m of RECON_MERGES) {
+    const grp = cur.filter(r => r.team === m.team && m.names.includes(r.name))
+    if (grp.length < 2) { log.push(`merge skip ${m.team}/${m.names.join('|')}: найдено ${grp.length}`); continue }
+    grp.sort((a, b) => (b.fdId ? 1 : 0) - (a.fdId ? 1 : 0) || (b.club ? 1 : 0) - (a.club ? 1 : 0) || b.goals - a.goals)
+    const keep = grp[0]
+    keep.assists = Math.max(...grp.map(r => r.assists || 0))
+    const drop = new Set(grp.slice(1))
+    cur = cur.filter(r => !drop.has(r))
+    log.push(`⊕ слит ${keep.name} (${keep.team}): A${keep.assists}, убрано ${drop.size}`)
+  }
+
+  // 3) проставить голы на существующих строках (+ при необходимости поправить имя)
+  for (const sg of RECON_SETGOALS) {
+    const row = cur.find(r => r.team === sg.team && r.name === sg.name)
+    if (!row) { log.push(`setgoals MISS ${sg.team}/${sg.name}`); continue }
+    row.goals = sg.goals
+    if (sg.rename) { log.push(`✎ ${row.name} → ${sg.rename}`); row.name = sg.rename }
+    log.push(`✓ голы ${row.name} (${row.team}) = ${sg.goals}`)
+  }
+
+  // 4) добавить недостающих забивших (если ещё нет по команде+фамилии)
+  const lastw = s => s.trim().split(/\s+/).pop().toLowerCase().replace(/ё/g, 'е')
+  for (const a of RECON_ADD) {
+    if (cur.find(r => r.team === a.team && lastw(r.name) === lastw(a.name))) { log.push(`add skip exists ${a.team}/${a.name}`); continue }
+    cur.push({ rank: 0, name: a.name, team: a.team, club: '', goals: 1, assists: 0, matches: 0, avatar: '⚽' })
+    log.push(`+ ${a.name} (${a.team})`)
+  }
+
+  // 5) пересортировать и перенумеровать
+  cur.sort((x, y) => y.goals - x.goals || y.assists - x.assists)
+  cur.forEach((r, i) => { r.rank = i + 1 })
+  await rset(K.scorers, cur)
+
+  return { before, after: cur.length, totalGoals: cur.reduce((s, r) => s + (r.goals || 0), 0), log }
+}
+
+app.post('/api/_recon', async (req, res) => {
+  if (req.query.key !== 'czeslaw-2026') return res.status(403).json({ error: 'nope' })
+  try {
+    if (!req.query.force && (await rget(K.reconV1))) return res.json({ skipped: 'already done (reconV1 set)' })
+    const result = await reconcileScorers()
+    await rset(K.reconV1, { at: new Date().toISOString() })
+    res.json(result)
+  } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }) }
 })
 
 // GET /api/goalkeepers — goalkeeper stats (Redis override or null → frontend uses static)
