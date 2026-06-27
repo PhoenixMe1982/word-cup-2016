@@ -697,44 +697,6 @@ app.get('/api/scorers', async (_, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
-// TEMP one-shot reconV2 (2026-06-27): добить забивших, которых FD free-фид не довёз за
-// матчи m61–m66 (сверка с Wikipedia: чек-сумма 184+12 = 196 = сумма счетов). Апсерт по
-// команде+фамилии: если строка есть (напр. Лукаку из статик-сида с 0) — проставить голы,
-// иначе создать. Поллер их не тронет: FD держит этих игроков на 0 → их нет в фиде /scorers.
-const RECON2_UPSERTS = [
-  { name: 'Кевин Де Брёйне', team: 'BEL', goals: 1 },
-  { name: 'Ромелу Лукаку', team: 'BEL', goals: 1 },
-  { name: 'Алексис Салемакерс', team: 'BEL', goals: 1 },
-  { name: 'Махмуд Сабер', team: 'EGY', goals: 1 },
-  { name: 'Алекс Баэна', team: 'ESP', goals: 1 },
-  { name: 'Дезире Дуэ', team: 'FRA', goals: 1 },
-  { name: 'Тело Осгор', team: 'NOR', goals: 1 },
-  { name: 'Хабиб Диарра', team: 'SEN', goals: 1 },
-  { name: 'Илиман Ндиай', team: 'SEN', goals: 1 },
-]
-
-app.post('/api/_recon2', async (req, res) => {
-  if (req.query.key !== 'czeslaw-2026') return res.status(403).json({ error: 'nope' })
-  try {
-    if (!req.query.force && (await rget(`${KEY_PREFIX}wc2026_scorers_recon_v2`)))
-      return res.json({ skipped: 'already done' })
-    const cur = (await rget(K.scorers)) || []
-    const before = cur.length
-    const lastw = s => s.trim().split(/\s+/).pop().toLowerCase().replace(/ё/g, 'е')
-    const log = []
-    for (const u of RECON2_UPSERTS) {
-      const row = cur.find(r => r.team === u.team && lastw(r.name) === lastw(u.name))
-      if (row) { row.goals = u.goals; log.push(`✓ set ${row.name} (${row.team}) = ${u.goals}`) }
-      else { cur.push({ rank: 0, name: u.name, team: u.team, club: '', goals: u.goals, assists: 0, matches: 0, avatar: '⚽' }); log.push(`+ ${u.name} (${u.team})`) }
-    }
-    cur.sort((a, b) => b.goals - a.goals || b.assists - a.assists)
-    cur.forEach((r, i) => { r.rank = i + 1 })
-    await rset(K.scorers, cur)
-    await rset(`${KEY_PREFIX}wc2026_scorers_recon_v2`, { at: new Date().toISOString() })
-    res.json({ before, after: cur.length, totalGoals: cur.reduce((s, r) => s + (r.goals || 0), 0), log })
-  } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }) }
-})
-
 // GET /api/goalkeepers — goalkeeper stats (Redis override or null → frontend uses static)
 app.get('/api/goalkeepers', async (_, res) => {
   try {
