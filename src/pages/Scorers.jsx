@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { TEAMS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
@@ -94,7 +93,9 @@ function ScorerRow({ scorer, maxVal, view }) {
 
 export default function Scorers() {
   const { scorers } = useLiveData()
-  const [view, setView] = useState('goals')
+  // Ассисты пока не считаем (до конца турнира — потом возьмём официальные данные ФИФА),
+  // поэтому раздел зафиксирован на голах, переключатель скрыт.
+  const view = 'goals'
 
   const sorted = [...scorers]
     .filter(s => view === 'goals' ? s.goals > 0 : s.assists > 0)
@@ -139,7 +140,7 @@ export default function Scorers() {
             </div>
             <div className="space-y-1.5">
               {contenders.map((c) => (
-                <div key={c.name} className="flex items-center gap-2 min-w-0">
+                <div key={`${c.team}-${c.name}`} className="flex items-center gap-2 min-w-0">
                   <span className="text-base flex-shrink-0">{TEAMS[c.team]?.flag}</span>
                   <span className="text-base font-black uppercase truncate" style={{ color: '#111827' }}>{c.name}</span>
                   <span className="text-[11px] truncate" style={{ color: '#6B7280' }}>{c.club || TEAMS[c.team]?.name}</span>
@@ -154,32 +155,6 @@ export default function Scorers() {
         )}
       </div>
 
-      {/* View Toggle */}
-      <div className="px-4 mt-3 mb-3">
-        <div
-          className="flex p-1"
-          style={{ background: 'rgba(0,0,0,0.05)', borderRadius: 16, border: '1px solid rgba(0,0,0,0.08)' }}
-        >
-          {[
-            { id: 'goals', label: '⚽ Голы' },
-            { id: 'assists', label: '🎯 Ассисты' },
-          ].map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setView(v.id)}
-              className="flex-1 py-2 text-xs font-black transition-all duration-200 uppercase tracking-wide"
-              style={{
-                background: view === v.id ? '#C9A800' : 'transparent',
-                color: view === v.id ? '#FFFFFF' : '#6B7280',
-                borderRadius: 10,
-              }}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* List */}
       <div className="px-4 pb-4">
         {sorted.length === 0 ? (
@@ -191,7 +166,7 @@ export default function Scorers() {
           </div>
         ) : (
           sorted.map((scorer) => (
-            <ScorerRow key={scorer.name} scorer={scorer} maxVal={maxVal} view={view} />
+            <ScorerRow key={`${scorer.team}-${scorer.name}`} scorer={scorer} maxVal={maxVal} view={view} />
           ))
         )}
       </div>
