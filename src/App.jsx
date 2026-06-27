@@ -8,6 +8,7 @@ import BottomNav from './components/BottomNav.jsx'
 import SaluteWatcher from './components/SaluteWatcher.jsx'
 import Splash from './components/Splash.jsx'
 import VisitSummary from './components/VisitSummary.jsx'
+import AnnouncementModal from './components/AnnouncementModal.jsx'
 import { KnockoutTutorial, knockoutTutorialDismissed } from './components/KnockoutScoring.jsx'
 import { knockoutEnabled } from './data.js'
 import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
@@ -15,6 +16,8 @@ import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
 const LAST_VISIT_KEY = 'wc2026_lastVisit' // снимок {rank, pts, settledIds} прошлого визита
+// Разовый попап-разъяснение про исправление счёта матча m65 (Египет—Иран, 1:2→1:1)
+const ANNOUNCE_KEY = 'wc2026_announce_m65_score_fix'
 
 // Сплэш висит минимум столько (чтобы не мигал на быстрой сети) и максимум
 // столько (фолбэк: если Render холодный/завис — всё равно пускаем внутрь).
@@ -103,6 +106,9 @@ function AppShell() {
   const [hidingSplash, setHidingSplash] = useState(false)
   const [entered, setEntered] = useState(false)
   const [visit, setVisit] = useState(null)
+  const [showAnnounce, setShowAnnounce] = useState(() => {
+    try { return !localStorage.getItem(ANNOUNCE_KEY) } catch { return false }
+  })
   const enteredRef = useRef(false)
   const mountedAt = useRef(Date.now())
 
@@ -180,8 +186,15 @@ function AppShell() {
     leaderboard: <Leaderboard />,
   }
 
-  // После входа показываем итоги визита (что изменилось с прошлого раза).
-  const showVisit = entered && visit
+  const handleCloseAnnounce = () => {
+    try { localStorage.setItem(ANNOUNCE_KEY, '1') } catch { /* приватный режим */ }
+    setShowAnnounce(false)
+  }
+
+  // Приоритет попапов после входа (строго по одному, не внахлёст):
+  // 1) разъяснение про исправление счёта m65 → 2) итоги визита → 3) туториал плей-офф.
+  const showAnnouncement = entered && showAnnounce
+  const showVisit = entered && !showAnnouncement && visit
 
   // Туториал плей-офф: при включённой фиче показываем при каждом входе, пока
   // пользователь не нажмёт «Не показывать снова» (флаг в localStorage). Ждём
@@ -200,11 +213,14 @@ function AppShell() {
         </div>
         <BottomNav active={tab} onTab={handleTab} />
 
+        {/* Разовое уведомление об исправлении счёта матча m65 (Египет—Иран) */}
+        {showAnnouncement && <AnnouncementModal onClose={handleCloseAnnounce} />}
+
         {/* Итоги визита — что изменилось с прошлого раза */}
         {showVisit && <VisitSummary summary={visit} onClose={() => setVisit(null)} />}
 
         {/* Туториал плей-офф (после закрытия итогов визита) */}
-        <KnockoutTutorial open={koTutorial && !showVisit} onClose={() => setKoTutorial(false)} />
+        <KnockoutTutorial open={koTutorial && !showVisit && !showAnnouncement} onClose={() => setKoTutorial(false)} />
 
         {/* Мягкая плашка обновления — когда задеплоена новая сборка */}
         {entered && live.updateAvailable && <UpdateToast />}
