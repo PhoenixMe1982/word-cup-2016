@@ -1,10 +1,10 @@
 import { TEAMS, KNOCKOUT_LAYOUT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
-// Классическая сетка плей-офф «периферия → центр» (как на афише): левая и правая
-// половины сходятся к кубку. Команды — ТОЛЬКО флаги. Колоночная раскладка с
-// CSS-коннекторами: первая колонка — пары R32 (по 2 флага), дальше — чипы
-// победителей, заполняются из live-результатов по мере резолва.
+// Классическая сетка плей-офф «периферия → центр» (как на афише). Команды — ТОЛЬКО
+// флаги; будущие раунды показаны пустыми ячейками-плейсхолдерами, заполняются
+// победителями по мере резолва. Сплошные дорожки-коннекторы; растягивается по
+// ширине экрана (колонки раундов фиксированы, колонки-коннекторы тянутся flex'ом).
 
 const CUP = `${import.meta.env.BASE_URL}cup-pic.png`
 const L = KNOCKOUT_LAYOUT
@@ -22,38 +22,46 @@ function winnerCode(m) {
   return null
 }
 
-function flagOf(code) {
-  return code ? (TEAMS[code]?.flag || '') : ''
+const flagOf = (code) => (code ? (TEAMS[code]?.flag || '') : '')
+
+// Колонка раунда: фикс. ширина, ячейки flex:1 (центры выстраиваются для пар).
+function RoundCol({ cells, kind }) {
+  const team = kind === 'team'
+  return (
+    <div className="kb-rcol" style={{ width: team ? 40 : 24 }}>
+      {cells.map((c, i) => {
+        const code = team ? c.code : c
+        return (
+          <div className="kb-rcell" key={i}>
+            <div
+              className={`kb-box ${team ? 'kb-box-team' : 'kb-box-slot'}`}
+              style={team && c.dim ? { opacity: 0.32 } : undefined}
+            >
+              {code ? <span className={team ? 'kb-flag' : 'kb-flag kb-flag-sm'}>{flagOf(code)}</span> : null}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
-// Колонка ячеек одинаковой высоты (flex:1) — центры выстраиваются для бракетных
-// соединений. kind: 'team' (флаг-пилюля) | 'win' (чип победителя).
-function Col({ cells, kind, last }) {
+// Колонка-коннектор: тянется по ширине (flex:1). count углов = половине ячеек слева.
+function ConnCol({ count }) {
   return (
-    <div className={`kb-col ${last ? 'kb-col-last' : ''}`}>
-      {cells.map((c, i) => (
-        <div className="kb-cell" key={i}>
-          {kind === 'team' ? (
-            <div className="kb-pill" style={{ opacity: c.dim ? 0.32 : 1 }}>
-              {c.code ? <span className="kb-flag">{flagOf(c.code)}</span> : <span className="kb-tbd" />}
-            </div>
-          ) : c ? (
-            <div className="kb-win"><span className="kb-flag">{flagOf(c)}</span></div>
-          ) : (
-            <div className="kb-dot" />
-          )}
+    <div className="kb-ccol">
+      {Array.from({ length: count }).map((_, i) => (
+        <div className="kb-elbow" key={i}>
+          <i className="e-t" /><i className="e-b" /><i className="e-v" /><i className="e-o" />
         </div>
       ))}
     </div>
   )
 }
 
-// Колонки одной половины. side: 'left' | 'right'. Для правой — зеркалим контейнер,
-// флаги разворачиваем обратно (CSS .kb-mirror .kb-flag).
 function Half({ side, byId }) {
   const lay = L[side]
-  // Колонка команд: для каждого матча R32 — два флага (с затемнением вылетевших).
-  const teamCells = lay.r32.flatMap((id) => {
+  const teams = lay.r32.flatMap((id) => {
     const m = byId[id]
     const w = winnerCode(m)
     return [
@@ -61,17 +69,28 @@ function Half({ side, byId }) {
       { code: m?.away, dim: w && w !== m?.away },
     ]
   })
-  const r32w = lay.r32.map((id) => winnerCode(byId[id]))
-  const r16w = lay.r16.map((id) => winnerCode(byId[id]))
-  const qfw = lay.qf.map((id) => winnerCode(byId[id]))
-  // Колонку 1/2 не рисуем — полуфиналисты сходятся прямо к центру (финалисты в кубке).
+  const c1 = lay.r32.map((id) => winnerCode(byId[id])) // 8 — участники 1/8
+  const c2 = lay.r16.map((id) => winnerCode(byId[id])) // 4 — участники 1/4
+  const c3 = lay.qf.map((id) => winnerCode(byId[id]))  // 2 — участники 1/2
 
   return (
     <div className={`kb-side ${side === 'right' ? 'kb-mirror' : ''}`}>
-      <Col cells={teamCells} kind="team" />
-      <Col cells={r32w} kind="win" />
-      <Col cells={r16w} kind="win" />
-      <Col cells={qfw} kind="win" />
+      <RoundCol cells={teams} kind="team" />
+      <ConnCol count={8} />
+      <RoundCol cells={c1} kind="slot" />
+      <ConnCol count={4} />
+      <RoundCol cells={c2} kind="slot" />
+      <ConnCol count={2} />
+      <RoundCol cells={c3} kind="slot" />
+      <ConnCol count={1} />
+    </div>
+  )
+}
+
+function FinBox({ code, sm }) {
+  return (
+    <div className={`kb-finbox ${sm ? 'kb-finbox-sm' : ''}`}>
+      {code ? <span className="kb-flag kb-flag-sm">{flagOf(code)}</span> : null}
     </div>
   )
 }
@@ -84,6 +103,7 @@ export default function PlayoffBracket({ onOpen }) {
   const leftFinalist = winnerCode(byId[L.left.sf[0]])
   const rightFinalist = winnerCode(byId[L.right.sf[0]])
   const champion = winnerCode(byId[L.final])
+  const bronze = byId[L.bronze] || {}
 
   return (
     <section className="mb-5">
@@ -104,7 +124,7 @@ export default function PlayoffBracket({ onOpen }) {
           borderTop: '1px solid rgba(201,168,0,0.25)',
           borderBottom: '1px solid rgba(201,168,0,0.25)',
           boxShadow: '0 2px 14px rgba(0,0,0,0.07)',
-          padding: '16px 4px 10px',
+          padding: '16px 4px 12px',
           overflow: 'hidden',
           marginLeft: -16,   // full-bleed: выходим за padding страницы (px-4)
           marginRight: -16,
@@ -114,19 +134,23 @@ export default function PlayoffBracket({ onOpen }) {
           <Half side="left" byId={byId} />
 
           <div className="kb-center">
-            {champion ? (
-              <div className="kb-champ">
-                <span className="kb-crown">👑</span>
-                <span className="kb-flag" style={{ fontSize: 34 }}>{flagOf(champion)}</span>
+            <div className="kb-fin-wrap">
+              <FinBox code={leftFinalist} />
+              <div className="kb-cup-col">
+                {champion && <span className="kb-crown">👑</span>}
+                <img src={CUP} alt="Кубок мира" className="kb-cup" />
+                <span className="kb-final-label">Финал</span>
               </div>
-            ) : (
-              <div className="kb-fin-row">
-                <span className="kb-fin">{leftFinalist ? <span className="kb-flag">{flagOf(leftFinalist)}</span> : <span className="kb-dot" />}</span>
-                <span className="kb-fin">{rightFinalist ? <span className="kb-flag">{flagOf(rightFinalist)}</span> : <span className="kb-dot" />}</span>
+              <FinBox code={rightFinalist} />
+            </div>
+
+            <div className="kb-bronze">
+              <span className="kb-bronze-label">За 3-е место</span>
+              <div className="kb-bronze-row">
+                <FinBox code={bronze.home} sm />
+                <FinBox code={bronze.away} sm />
               </div>
-            )}
-            <img src={CUP} alt="Кубок мира" className="kb-cup" />
-            <span className="kb-final-label">Финал</span>
+            </div>
           </div>
 
           <Half side="right" byId={byId} />
@@ -141,75 +165,67 @@ export default function PlayoffBracket({ onOpen }) {
 
       <style>{`
         .kb-root {
-          display: flex; align-items: stretch; justify-content: center;
-          height: 520px; --kb-line: rgba(201,168,0,0.5); --kb-gap: 6px;
+          display: flex; align-items: stretch; width: 100%;
+          height: 540px; --kb-line: rgba(201,168,0,0.6);
         }
-        .kb-side { display: flex; flex: 0 0 auto; }
+        .kb-side { flex: 1 1 0; display: flex; min-width: 0; }
         .kb-mirror { transform: scaleX(-1); }
         .kb-mirror .kb-flag { display: inline-block; transform: scaleX(-1); }
 
-        .kb-col {
-          display: flex; flex-direction: column;
-          margin-right: var(--kb-gap);
+        .kb-rcol { flex: 0 0 auto; display: flex; flex-direction: column; }
+        .kb-rcell { flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-height: 0; }
+        .kb-box {
+          width: 100%; background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12);
+          border-radius: 7px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+          display: flex; align-items: center; justify-content: center;
         }
-        .kb-col-last { margin-right: 0; }
-        .kb-cell {
-          flex: 1 1 0; display: flex; align-items: center; justify-content: flex-start;
-          position: relative; padding: 1px 0;
-        }
-        /* Горизонтальный отвод вправо у каждой ячейки, кроме последней колонки */
-        .kb-col:not(.kb-col-last) .kb-cell::after {
-          content: ''; position: absolute; left: 100%; top: 50%;
-          width: var(--kb-gap); height: 2px; transform: translateY(-1px);
-          background: var(--kb-line);
-        }
-        /* Вертикаль, соединяющая пару (верхняя ячейка пары → нижняя) */
-        .kb-col:not(.kb-col-last) .kb-cell:nth-child(odd)::before {
-          content: ''; position: absolute; left: calc(100% + var(--kb-gap) - 1px);
-          top: 50%; height: 100%; width: 2px; background: var(--kb-line);
-        }
+        .kb-box-team { height: 30px; }
+        .kb-box-slot { height: 22px; border-style: dashed; border-color: rgba(201,168,0,0.4); background: rgba(255,253,245,0.7); }
+        .kb-flag { font-size: 27px; line-height: 1; }
+        .kb-flag-sm { font-size: 14px; }
 
-        .kb-pill {
-          display: flex; align-items: center; justify-content: center;
-          width: 42px; height: 32px; flex-shrink: 0;
-          background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12);
-          border-radius: 9px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        .kb-win {
-          display: flex; align-items: center; justify-content: center;
-          width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-          background: #FFFFFF; border: 1.5px solid #C9A800; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
-        .kb-win .kb-flag { font-size: 13px; }
-        .kb-flag { font-size: 28px; line-height: 1; }
-        .kb-tbd { width: 16px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.12); }
-        .kb-dot { width: 9px; height: 9px; border-radius: 50%; border: 2px dashed rgba(0,0,0,0.16); flex-shrink: 0; }
+        /* Колонки-коннекторы тянутся по ширине → схема заполняет экран */
+        .kb-ccol { flex: 1 1 0; min-width: 6px; display: flex; flex-direction: column; }
+        .kb-elbow { flex: 1 1 0; position: relative; }
+        .kb-elbow i { position: absolute; background: var(--kb-line); }
+        .e-t { left: 0; top: 25%; width: 50%; height: 2px; transform: translateY(-1px); }
+        .e-b { left: 0; top: 75%; width: 50%; height: 2px; transform: translateY(-1px); }
+        .e-v { left: calc(50% - 1px); top: 25%; height: 50%; width: 2px; }
+        .e-o { left: 50%; top: 50%; width: 50%; height: 2px; transform: translateY(-1px); }
 
         .kb-center {
-          flex: 0 0 auto; width: 92px; display: flex; flex-direction: column;
-          align-items: center; justify-content: center; gap: 6px; padding: 0 2px;
+          flex: 0 0 auto; width: 96px; position: relative; display: flex;
+          flex-direction: column; align-items: center; justify-content: center;
         }
-        .kb-cup { width: 60px; height: auto; filter: drop-shadow(0 3px 6px rgba(201,168,0,0.45)); }
+        .kb-fin-wrap { display: flex; align-items: center; justify-content: center; gap: 3px; }
+        .kb-cup-col { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .kb-crown { position: absolute; top: -14px; font-size: 16px; line-height: 1; z-index: 2; }
+        .kb-cup { width: 40px; height: auto; filter: drop-shadow(0 3px 6px rgba(201,168,0,0.45)); }
         .kb-final-label {
           font-size: 9px; font-weight: 900; text-transform: uppercase;
-          letter-spacing: 0.1em; color: #C9A800;
+          letter-spacing: 0.08em; color: #C9A800; margin-top: 2px;
         }
-        .kb-fin-row { display: flex; gap: 8px; }
-        .kb-fin {
-          width: 34px; height: 26px; display: flex; align-items: center; justify-content: center;
-          background: #FFFFFF; border: 1px solid rgba(201,168,0,0.4); border-radius: 8px;
+        .kb-finbox {
+          width: 24px; height: 22px; flex-shrink: 0;
+          background: #FFFFFF; border: 1px solid rgba(201,168,0,0.45); border-radius: 7px;
+          display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
         }
-        .kb-fin .kb-flag { font-size: 22px; }
-        .kb-champ { display: flex; flex-direction: column; align-items: center; }
-        .kb-crown { font-size: 18px; line-height: 1; }
+        .kb-finbox-sm { width: 22px; height: 18px; border-style: dashed; }
+
+        .kb-bronze {
+          position: absolute; bottom: 4px; left: 0; right: 0;
+          display: flex; flex-direction: column; align-items: center; gap: 3px;
+        }
+        .kb-bronze-label { font-size: 7px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #9CA3AF; }
+        .kb-bronze-row { display: flex; gap: 4px; }
 
         .kb-stage-row {
-          display: flex; align-items: center; margin-top: 8px;
+          display: flex; align-items: center; margin-top: 12px;
           font-size: 8px; font-weight: 800; text-transform: uppercase;
           letter-spacing: 0.05em; color: #9CA3AF;
         }
         .kb-stage-row > span { flex: 1 1 0; text-align: center; }
-        .kb-stage-cup { color: #C9A800 !important; flex: 0 0 auto !important; width: 92px; }
+        .kb-stage-cup { color: #C9A800 !important; flex: 0 0 auto !important; width: 96px; }
       `}</style>
     </section>
   )
