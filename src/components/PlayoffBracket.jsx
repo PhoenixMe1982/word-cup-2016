@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { TEAMS, KNOCKOUT_LAYOUT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
@@ -7,7 +6,7 @@ import { useLiveData } from '../LiveDataContext.jsx'
 // которые по мере резолва просто подставляется флаг прошедшей команды (без сдвига
 // вёрстки). Сплошные дорожки-коннекторы; колонки раундов фиксированы, колонки-
 // коннекторы тянутся flex'ом → схема заполняет ширину экрана. Финальная пара — под
-// кубком, матч за 3-е место — сразу под ней. Тап открывает сетку на весь экран.
+// кубком, матч за 3-е место — сразу под ней.
 //
 // Интерактивность: ячейка следующего раунда = winnerCode(матч предыдущего). Как
 // только бэкенд фиксирует результат (finished + реальный счёт), победитель пары
@@ -95,54 +94,15 @@ function Half({ side, byId }) {
   )
 }
 
-// Тело сетки — переиспользуется в карточке и в полноэкранном режиме.
-function BracketGrid({ byId }) {
+export default function PlayoffBracket({ onOpen }) {
+  const { matches } = useLiveData()
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
+
   const leftFinalist = winnerCode(byId[L.left.sf[0]])
   const rightFinalist = winnerCode(byId[L.right.sf[0]])
   const champion = winnerCode(byId[L.final])
   const bronze = byId[L.bronze] || {}
-
-  return (
-    <>
-      <div className="kb-root">
-        <Half side="left" byId={byId} />
-
-        <div className="kb-center">
-          <div className="kb-cup-col">
-            {champion && <span className="kb-crown">👑</span>}
-            <img src={CUP} alt="Кубок мира" className="kb-cup" />
-          </div>
-          {/* Финальная пара — прямо под кубком */}
-          <span className="kb-mini-label">Финал</span>
-          <div className="kb-pair">
-            <Cell code={leftFinalist} />
-            <Cell code={rightFinalist} />
-          </div>
-          {/* Матч за 3-е место — сразу под финалом, близко к кубку */}
-          <span className="kb-mini-label kb-bronze-label">За 3-е место</span>
-          <div className="kb-pair">
-            <Cell code={bronze.home} />
-            <Cell code={bronze.away} />
-          </div>
-        </div>
-
-        <Half side="right" byId={byId} />
-      </div>
-
-      <div className="kb-stage-row">
-        <span>1/16</span><span>1/8</span><span>1/4</span><span>1/2</span>
-        <span className="kb-stage-cup">Финал</span>
-        <span>1/2</span><span>1/4</span><span>1/8</span><span>1/16</span>
-      </div>
-    </>
-  )
-}
-
-export default function PlayoffBracket({ onOpen }) {
-  const { matches } = useLiveData()
-  const [fs, setFs] = useState(false)
-  const byId = {}
-  for (const m of matches) byId[m.id] = m
 
   return (
     <section className="mb-5">
@@ -158,56 +118,48 @@ export default function PlayoffBracket({ onOpen }) {
       </div>
 
       <div
-        onClick={() => setFs(true)}
-        className="cursor-pointer relative"
         style={{
           background: 'linear-gradient(180deg,#FFFFFF 0%,#FFFDF5 100%)',
           borderTop: '1px solid rgba(201,168,0,0.25)',
           borderBottom: '1px solid rgba(201,168,0,0.25)',
           boxShadow: '0 2px 14px rgba(0,0,0,0.07)',
-          padding: '18px 4px 12px',
+          padding: '14px 4px 12px',
           overflow: 'hidden',
           marginLeft: -16,   // full-bleed: выходим за padding страницы (px-4)
           marginRight: -16,
         }}
       >
-        <BracketGrid byId={byId} />
-        <div
-          className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-0.5 rounded-full pointer-events-none"
-          style={{ background: 'rgba(201,168,0,0.14)', color: '#C9A800' }}
-        >
-          <span className="text-[9px] font-black uppercase tracking-wide whitespace-nowrap">⤢ Нажми — на весь экран</span>
-        </div>
-      </div>
+        <div className="kb-root">
+          <Half side="left" byId={byId} />
 
-      {/* Полноэкранный просмотр сетки */}
-      {fs && (
-        <div
-          className="fixed inset-0 z-[200] flex flex-col"
-          style={{ background: 'rgba(17,24,39,0.96)', backdropFilter: 'blur(2px)' }}
-          onClick={() => setFs(false)}
-        >
-          <div className="flex items-center justify-between px-4" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)', paddingBottom: 8 }}>
-            <span className="text-sm font-black uppercase tracking-wider" style={{ color: '#FFFFFF' }}>🏆 Сетка плей-офф</span>
-            <button
-              onClick={() => setFs(false)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
-              style={{ background: 'rgba(255,255,255,0.12)', color: '#FFFFFF' }}
-              aria-label="Закрыть"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="flex-1 overflow-auto px-2 pb-4" onClick={(e) => e.stopPropagation()}>
-            <div
-              className="kb-fs"
-              style={{ background: '#FFFFFF', borderRadius: 16, padding: '14px 4px 10px', minHeight: '100%' }}
-            >
-              <BracketGrid byId={byId} />
+          <div className="kb-center">
+            <div className="kb-cup-col">
+              {champion && <span className="kb-crown">👑</span>}
+              <img src={CUP} alt="Кубок мира" className="kb-cup" />
+            </div>
+            {/* Финальная пара — прямо под кубком */}
+            <span className="kb-mini-label">Финал</span>
+            <div className="kb-pair">
+              <Cell code={leftFinalist} />
+              <Cell code={rightFinalist} />
+            </div>
+            {/* Матч за 3-е место — сразу под финалом, близко к кубку */}
+            <span className="kb-mini-label kb-bronze-label">За 3-е место</span>
+            <div className="kb-pair">
+              <Cell code={bronze.home} />
+              <Cell code={bronze.away} />
             </div>
           </div>
+
+          <Half side="right" byId={byId} />
         </div>
-      )}
+
+        <div className="kb-stage-row">
+          <span>1/16</span><span>1/8</span><span>1/4</span><span>1/2</span>
+          <span className="kb-stage-cup">Финал</span>
+          <span>1/2</span><span>1/4</span><span>1/8</span><span>1/16</span>
+        </div>
+      </div>
 
       <style>{`
         .kb-root {
@@ -260,17 +212,6 @@ export default function PlayoffBracket({ onOpen }) {
         }
         .kb-stage-row > span { flex: 1 1 0; text-align: center; }
         .kb-stage-cup { color: #C9A800 !important; flex: 0 0 auto !important; width: calc(var(--kb-cell-w) * 2 + 14px); }
-
-        /* ── Полноэкранный режим: всё крупнее ─────────────────────────────── */
-        .kb-fs .kb-root { height: calc(100vh - 150px); min-height: 540px; --kb-line: rgba(201,168,0,0.7); --kb-cell-w: 46px; }
-        .kb-fs .kb-box { height: 36px; }
-        .kb-fs .kb-flag { font-size: 32px; }
-        .kb-fs .e-t, .kb-fs .e-b, .kb-fs .e-o { height: 3px; }
-        .kb-fs .e-v { width: 3px; }
-        .kb-fs .kb-cup { width: 66px; }
-        .kb-fs .kb-crown { font-size: 22px; top: -20px; }
-        .kb-fs .kb-mini-label { font-size: 11px; }
-        .kb-fs .kb-stage-row { font-size: 11px; margin-top: 14px; }
       `}</style>
     </section>
   )

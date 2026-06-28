@@ -220,17 +220,6 @@ async function main() {
     await sleep(1800)
   }
 
-  // Полноэкранный просмотр сетки: кликаем по карточке сетки на главной.
-  if (tab === 'fs') {
-    file = 'fs.png'
-    const r = await cli.send('Runtime.evaluate', {
-      expression: `(function(){ var e=document.querySelector('.kb-root'); if(e){ e.dispatchEvent(new MouseEvent('click',{bubbles:true})); return 'ok'; } return 'kb-root-not-found'; })()`,
-      returnByValue: true,
-    })
-    console.log('fs-open:', r.result?.value)
-    await sleep(900)
-  }
-
   // Нокаут-режим на странице прогнозов: жмём фильтр «Плей-офф», чтобы показать
   // только матчи плей-офф (каскад + разбивка).
   if (ko && tab === 'play') {
