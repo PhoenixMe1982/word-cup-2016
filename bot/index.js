@@ -622,12 +622,17 @@ app.post('/api/predict', withAuth, async (req, res) => {
     // 120′ (et) → если снова ничья, победитель серии (penWinner). Поля вне
     // каскада игнорируются. Принимаем и частичный каскад — фронт требует полноту.
     const pred = { home, away }
-    if (knockout && home === away && et != null) {
-      if (!validScore(et.home, et.away)) return res.status(400).json({ error: 'Invalid extra-time score' })
+    if (knockout && home === away) {
+      // Ничья в 90′ → каскад ОБЯЗАТЕЛЕН. Не принимаем неполный прогноз: иначе
+      // частичное сохранение (напр. из инлайна на главной) перетёрло бы уже
+      // сделанный полный прогноз. Фронт «Играть» всегда шлёт полный каскад.
+      if (et == null || !validScore(et.home, et.away))
+        return res.status(400).json({ error: 'Ничья в основное время — укажи счёт доп. времени (120′)' })
       pred.et = { home: et.home, away: et.away }
-      if (et.home === et.away && penWinner != null) {
+      if (et.home === et.away) {
+        // Ничья в 120′ → обязателен победитель серии пенальти
         if (penWinner !== 'HOME' && penWinner !== 'AWAY')
-          return res.status(400).json({ error: 'Invalid penWinner' })
+          return res.status(400).json({ error: 'Ничья в доп. время — укажи победителя серии пенальти' })
         pred.penWinner = penWinner
       }
     }

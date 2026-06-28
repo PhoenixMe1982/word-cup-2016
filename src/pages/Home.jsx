@@ -172,7 +172,7 @@ function FinishedMatchCard({ match }) {
   )
 }
 
-function InlinePredPanel({ match, pred, onSave, saving }) {
+function InlinePredPanel({ match, pred, onSave, onFull, saving }) {
   const [homeVal, setHomeVal] = useState(pred?.home ?? '')
   const [awayVal, setAwayVal] = useState(pred?.away ?? '')
   const [saved, setSaved] = useState(!!pred)
@@ -183,11 +183,18 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
 
   const kickoffUTC = matchUTCDate(match.date, match.time)
   const isLocked = kickoffUTC ? new Date() >= kickoffUTC : false
-  const canSubmit = !isLocked && homeVal !== '' && awayVal !== '' && saving !== match.id
+  // Нокаут + ничья в 90′ → нужен каскад (доп. время/пенальти), которого в инлайне
+  // нет. Ведём игрока в «Играть» на полный прогноз, частичный счёт НЕ сохраняем
+  // (иначе перетёрли бы уже сделанный полный прогноз неполным).
+  const isKnockout = !!match.stage
+  const isDraw = homeVal !== '' && awayVal !== '' && Number(homeVal) === Number(awayVal)
+  const needsFull = isKnockout && isDraw
+  const canSubmit = !isLocked && homeVal !== '' && awayVal !== '' && saving !== match.id && !needsFull
   const hasChanged = saved && (homeVal !== pred?.home || awayVal !== pred?.away)
   const inTg = !!window.Telegram?.WebApp?.initData
 
   async function handleSave() {
+    if (needsFull) { onFull?.(); return }
     if (!canSubmit) return
     const ok = await onSave(match.id, Number(homeVal), Number(awayVal))
     if (ok) setSaved(true)
@@ -243,40 +250,47 @@ function InlinePredPanel({ match, pred, onSave, saving }) {
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 justify-center">
-          <input
-            type="number" min="0" max="20"
-            value={homeVal}
-            onChange={e => { const v = e.target.value; setHomeVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
-            className="w-12 h-12 text-center text-xl font-black rounded-2xl outline-none"
-            style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
-          />
-          <span className="text-lg font-bold" style={{ color: '#9CA3AF' }}>:</span>
-          <input
-            type="number" min="0" max="20"
-            value={awayVal}
-            onChange={e => { const v = e.target.value; setAwayVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
-            className="w-12 h-12 text-center text-xl font-black rounded-2xl outline-none"
-            style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
-          />
-          <button
-            onClick={handleSave}
-            disabled={!canSubmit}
-            className="flex-1 py-3 rounded-2xl text-sm font-black ml-1"
-            style={{
-              background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)',
-              color: canSubmit ? '#fff' : '#9CA3AF',
-            }}
-          >
-            {saving === match.id ? '…' : saved && hasChanged ? 'Обновить' : 'Сохранить'}
-          </button>
-        </div>
+        <>
+          <div className="flex items-center gap-2 justify-center">
+            <input
+              type="number" min="0" max="20"
+              value={homeVal}
+              onChange={e => { const v = e.target.value; setHomeVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
+              className="w-12 h-12 text-center text-xl font-black rounded-2xl outline-none"
+              style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+            />
+            <span className="text-lg font-bold" style={{ color: '#9CA3AF' }}>:</span>
+            <input
+              type="number" min="0" max="20"
+              value={awayVal}
+              onChange={e => { const v = e.target.value; setAwayVal(v === '' ? '' : Math.min(20, parseInt(v) || 0)) }}
+              className="w-12 h-12 text-center text-xl font-black rounded-2xl outline-none"
+              style={{ background: '#F5F6FA', border: '1.5px solid rgba(201,168,0,0.4)', color: '#111827', WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+            />
+            <button
+              onClick={handleSave}
+              disabled={!canSubmit && !needsFull}
+              className="flex-1 py-3 rounded-2xl text-sm font-black ml-1"
+              style={{
+                background: (canSubmit || needsFull) ? '#C9A800' : 'rgba(0,0,0,0.06)',
+                color: (canSubmit || needsFull) ? '#fff' : '#9CA3AF',
+              }}
+            >
+              {saving === match.id ? '…' : needsFull ? 'Доп. время →' : saved && hasChanged ? 'Обновить' : 'Сохранить'}
+            </button>
+          </div>
+          {needsFull && (
+            <div className="text-[10px] text-center mt-2 leading-snug" style={{ color: '#C9A800' }}>
+              Ничья в плей-офф — продолжи в разделе «Играть»:<br />там доп. время и пенальти
+            </div>
+          )}
+        </>
       )}
     </div>
   )
 }
 
-function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving }) {
+function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, onTab, saving }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
   const hasPred = !!pred
@@ -331,6 +345,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
               match={match}
               pred={pred}
               onSave={onSave}
+              onFull={() => onTab?.('play')}
               saving={saving}
             />
           </div>
@@ -603,6 +618,7 @@ export default function Home({ onTab }) {
                       onToggle={() => setExpandedUpcoming(expandedUpcoming === m.id ? null : m.id)}
                       pred={upcomingPreds[m.id]}
                       onSave={handleSavePred}
+                      onTab={onTab}
                       saving={savingPred}
                     />
                   ))}
