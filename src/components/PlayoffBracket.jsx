@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { TEAMS, KNOCKOUT_LAYOUT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
@@ -5,6 +6,7 @@ import { useLiveData } from '../LiveDataContext.jsx'
 // флаги; будущие раунды показаны пустыми ячейками-плейсхолдерами, заполняются
 // победителями по мере резолва. Сплошные дорожки-коннекторы; растягивается по
 // ширине экрана (колонки раундов фиксированы, колонки-коннекторы тянутся flex'ом).
+// Тап по сетке открывает её на весь экран (увеличенный режим .kb-fs).
 
 const CUP = `${import.meta.env.BASE_URL}cup-pic.png`
 const L = KNOCKOUT_LAYOUT
@@ -24,11 +26,11 @@ function winnerCode(m) {
 
 const flagOf = (code) => (code ? (TEAMS[code]?.flag || '') : '')
 
-// Колонка раунда: фикс. ширина, ячейки flex:1 (центры выстраиваются для пар).
+// Колонка раунда: фикс. ширина (из CSS), ячейки flex:1 — центры выстраиваются для пар.
 function RoundCol({ cells, kind }) {
   const team = kind === 'team'
   return (
-    <div className="kb-rcol" style={{ width: team ? 40 : 24 }}>
+    <div className={team ? 'kb-rcol kb-rcol-team' : 'kb-rcol kb-rcol-slot'}>
       {cells.map((c, i) => {
         const code = team ? c.code : c
         return (
@@ -95,15 +97,56 @@ function FinBox({ code, sm }) {
   )
 }
 
-export default function PlayoffBracket({ onOpen }) {
-  const { matches } = useLiveData()
-  const byId = {}
-  for (const m of matches) byId[m.id] = m
-
+// Тело сетки (обе половины + центр + подписи стадий) — переиспользуется в карточке
+// и в полноэкранном режиме.
+function BracketGrid({ byId }) {
   const leftFinalist = winnerCode(byId[L.left.sf[0]])
   const rightFinalist = winnerCode(byId[L.right.sf[0]])
   const champion = winnerCode(byId[L.final])
   const bronze = byId[L.bronze] || {}
+
+  return (
+    <>
+      <div className="kb-root">
+        <Half side="left" byId={byId} />
+
+        <div className="kb-center">
+          <div className="kb-fin-wrap">
+            <FinBox code={leftFinalist} />
+            <div className="kb-cup-col">
+              {champion && <span className="kb-crown">👑</span>}
+              <img src={CUP} alt="Кубок мира" className="kb-cup" />
+              <span className="kb-final-label">Финал</span>
+            </div>
+            <FinBox code={rightFinalist} />
+          </div>
+
+          <div className="kb-bronze">
+            <span className="kb-bronze-label">За 3-е место</span>
+            <div className="kb-bronze-row">
+              <FinBox code={bronze.home} sm />
+              <FinBox code={bronze.away} sm />
+            </div>
+          </div>
+        </div>
+
+        <Half side="right" byId={byId} />
+      </div>
+
+      <div className="kb-stage-row">
+        <span>1/16</span><span>1/8</span><span>1/4</span><span>1/2</span>
+        <span className="kb-stage-cup">Кубок</span>
+        <span>1/2</span><span>1/4</span><span>1/8</span><span>1/16</span>
+      </div>
+    </>
+  )
+}
+
+export default function PlayoffBracket({ onOpen }) {
+  const { matches } = useLiveData()
+  const [fs, setFs] = useState(false)
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
 
   return (
     <section className="mb-5">
@@ -119,6 +162,8 @@ export default function PlayoffBracket({ onOpen }) {
       </div>
 
       <div
+        onClick={() => setFs(true)}
+        className="cursor-pointer relative"
         style={{
           background: 'linear-gradient(180deg,#FFFFFF 0%,#FFFDF5 100%)',
           borderTop: '1px solid rgba(201,168,0,0.25)',
@@ -130,38 +175,44 @@ export default function PlayoffBracket({ onOpen }) {
           marginRight: -16,
         }}
       >
-        <div className="kb-root">
-          <Half side="left" byId={byId} />
-
-          <div className="kb-center">
-            <div className="kb-fin-wrap">
-              <FinBox code={leftFinalist} />
-              <div className="kb-cup-col">
-                {champion && <span className="kb-crown">👑</span>}
-                <img src={CUP} alt="Кубок мира" className="kb-cup" />
-                <span className="kb-final-label">Финал</span>
-              </div>
-              <FinBox code={rightFinalist} />
-            </div>
-
-            <div className="kb-bronze">
-              <span className="kb-bronze-label">За 3-е место</span>
-              <div className="kb-bronze-row">
-                <FinBox code={bronze.home} sm />
-                <FinBox code={bronze.away} sm />
-              </div>
-            </div>
-          </div>
-
-          <Half side="right" byId={byId} />
-        </div>
-
-        <div className="kb-stage-row">
-          <span>1/16</span><span>1/8</span><span>1/4</span><span>1/2</span>
-          <span className="kb-stage-cup">Кубок</span>
-          <span>1/2</span><span>1/4</span><span>1/8</span><span>1/16</span>
+        <BracketGrid byId={byId} />
+        {/* Подсказка про полноэкранный просмотр */}
+        <div
+          className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-0.5 rounded-full pointer-events-none"
+          style={{ background: 'rgba(201,168,0,0.14)', color: '#C9A800' }}
+        >
+          <span className="text-[9px] font-black uppercase tracking-wide whitespace-nowrap">⤢ Нажми — на весь экран</span>
         </div>
       </div>
+
+      {/* Полноэкранный просмотр сетки */}
+      {fs && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col"
+          style={{ background: 'rgba(17,24,39,0.96)', backdropFilter: 'blur(2px)' }}
+          onClick={() => setFs(false)}
+        >
+          <div className="flex items-center justify-between px-4" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)', paddingBottom: 8 }}>
+            <span className="text-sm font-black uppercase tracking-wider" style={{ color: '#FFFFFF' }}>🏆 Сетка плей-офф</span>
+            <button
+              onClick={() => setFs(false)}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
+              style={{ background: 'rgba(255,255,255,0.12)', color: '#FFFFFF' }}
+              aria-label="Закрыть"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto px-2 pb-4" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="kb-fs"
+              style={{ background: '#FFFFFF', borderRadius: 16, padding: '14px 4px 10px', minHeight: '100%' }}
+            >
+              <BracketGrid byId={byId} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .kb-root {
@@ -173,6 +224,8 @@ export default function PlayoffBracket({ onOpen }) {
         .kb-mirror .kb-flag { display: inline-block; transform: scaleX(-1); }
 
         .kb-rcol { flex: 0 0 auto; display: flex; flex-direction: column; }
+        .kb-rcol-team { width: 40px; }
+        .kb-rcol-slot { width: 24px; }
         .kb-rcell { flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-height: 0; }
         .kb-box {
           width: 100%; background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12);
@@ -226,6 +279,26 @@ export default function PlayoffBracket({ onOpen }) {
         }
         .kb-stage-row > span { flex: 1 1 0; text-align: center; }
         .kb-stage-cup { color: #C9A800 !important; flex: 0 0 auto !important; width: 96px; }
+
+        /* ── Полноэкранный режим: всё крупнее ─────────────────────────────── */
+        .kb-fs .kb-root { height: calc(100vh - 150px); min-height: 540px; --kb-line: rgba(201,168,0,0.7); }
+        .kb-fs .kb-rcol-team { width: 56px; }
+        .kb-fs .kb-rcol-slot { width: 34px; }
+        .kb-fs .kb-box-team { height: 40px; }
+        .kb-fs .kb-box-slot { height: 30px; }
+        .kb-fs .kb-flag { font-size: 38px; }
+        .kb-fs .kb-flag-sm { font-size: 20px; }
+        .kb-fs .kb-elbow i { background: var(--kb-line); }
+        .kb-fs .e-t, .kb-fs .e-b, .kb-fs .e-o { height: 3px; }
+        .kb-fs .e-v { width: 3px; }
+        .kb-fs .kb-center { width: 130px; }
+        .kb-fs .kb-cup { width: 60px; }
+        .kb-fs .kb-finbox { width: 34px; height: 30px; }
+        .kb-fs .kb-finbox-sm { width: 30px; height: 24px; }
+        .kb-fs .kb-final-label { font-size: 12px; }
+        .kb-fs .kb-bronze-label { font-size: 10px; }
+        .kb-fs .kb-stage-row { font-size: 11px; margin-top: 14px; }
+        .kb-fs .kb-stage-cup { width: 130px; }
       `}</style>
     </section>
   )
