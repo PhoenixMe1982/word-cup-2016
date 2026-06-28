@@ -111,6 +111,7 @@ function fakeSdk() {
     localStorage.setItem('wc2026_lastVisit', JSON.stringify({rank:5, pts:30, settledIds:['m1']}));
     localStorage.removeItem('wc2026_celebrated');
   }catch(e){} }
+  else { try{ localStorage.removeItem('wc2026_lastVisit'); }catch(e){} } // иначе stale-снимок из прошлого прогона вызывает попап «итоги визита»
   window.Telegram={ WebApp:{
     initData:'mock_init_data', platform:'web', version:'7.2', colorScheme:'light', themeParams:{},
     initDataUnsafe:{ user:{ id:777, first_name:'Алексей', last_name:'', username:'alex', language_code:'ru', photo_url:'${PHOTO}' } },
@@ -137,9 +138,18 @@ function fakeSdk() {
   var ME = STATE==='visit'
     ? {userId:'777', pts:42, rank:2, rankDelta:3, predictions:12, exact:3, outcome:2}
     : {userId:'777', pts:PTS, rank:RANK, predictions:12};
+  // Богатый набор засчитанных прогнозов для проверки карточек лидерборда
+  // (раскрытие): группа (точный/исход/мимо) + плей-офф с каскадом и разбивкой.
+  var RICH_SETTLED = [
+    {matchId:'m01', pred:{home:2,away:1}, result:{home:2,away:1}, pts:3},
+    {matchId:'m02', pred:{home:1,away:2}, result:{home:0,away:2}, pts:1},
+    {matchId:'m03', pred:{home:0,away:0}, result:{home:1,away:0}, pts:0},
+    {matchId:'m73', pred:{home:2,away:0}, result:{home:2,away:0,knockout:true,reg:{home:2,away:0},winner:'HOME_TEAM'}, pts:4},
+    {matchId:'m75', pred:{home:1,away:1,et:{home:2,away:2},penWinner:'HOME'}, result:{home:2,away:2,knockout:true,reg:{home:1,away:1},et:{home:2,away:2},penHome:4,penAway:3,winner:'HOME_TEAM'}, pts:7}
+  ];
   var SETTLED = STATE==='visit'
     ? [{matchId:'m1',pts:3},{matchId:'m2',pts:3},{matchId:'m3',pts:1},{matchId:'m4',pts:0}]
-    : [];
+    : (STATE==='leaderboard' ? RICH_SETTLED : []);
   // Нокаут-моки: m75 — завершённый матч по пенальти (показывает разбивку и очки),
   // m73 — открытый матч с прогнозом на чистую победу 90′.
   var KO_PREDS = {m75:{home:1,away:1,et:{home:2,away:2},penWinner:'HOME'}, m73:{home:2,away:0}, m74:{home:1,away:1,et:{home:1,away:1},penWinner:'AWAY'}};
@@ -208,7 +218,7 @@ async function main() {
   }
   // Навигация по нижним вкладкам: home остаётся стартовым, для остальных
   // кликаем кнопку в nav по тексту (cm → ЧМ).
-  const NAV_LABEL = { leaderboard: 'Лидерборд', cm: 'ЧМ', play: 'Играть', history: 'История' }
+  const NAV_LABEL = { leaderboard: 'Лидерборд', cm: 'ЧМ', play: 'Играть', history: 'История', playoff: 'ЧМ' }
   if (NAV_LABEL[tab]) {
     file = `${tab}.png`
     const label = NAV_LABEL[tab]
@@ -218,6 +228,26 @@ async function main() {
     })
     console.log('nav:', r.result?.value)
     await sleep(1800)
+  }
+
+  // Лидерборд: раскрываем первую карточку, чтобы показать прогнозы игрока.
+  if (tab === 'leaderboard') {
+    const r = await cli.send('Runtime.evaluate', {
+      expression: `(function(){ var b=document.querySelector('.select-none.cursor-pointer'); if(b){b.click(); return 'ok';} return 'card-not-found'; })()`,
+      returnByValue: true,
+    })
+    console.log('expand:', r.result?.value)
+    await sleep(900)
+  }
+
+  // ЧМ → подвкладка «Плей-офф»: раздел стадий на вылет.
+  if (tab === 'playoff') {
+    const r = await cli.send('Runtime.evaluate', {
+      expression: `(function(){ var b=[].slice.call(document.querySelectorAll('button')).find(function(x){return /Плей-офф/.test(x.textContent);}); if(b){b.click(); return 'ok';} return 'subtab-not-found'; })()`,
+      returnByValue: true,
+    })
+    console.log('playoff-subtab:', r.result?.value)
+    await sleep(1200)
   }
 
   // Нокаут-режим на странице прогнозов: жмём фильтр «Плей-офф», чтобы показать

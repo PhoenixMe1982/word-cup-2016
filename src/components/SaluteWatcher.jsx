@@ -8,9 +8,11 @@ const CELEBRATED_KEY = 'wc2026_celebrated' // matchId -> true для уже от
 // Единый детектор «угаданных» прогнозов. Смонтирован на уровне App, поэтому
 // срабатывает и при заходе на любой экран (догоняющий салют), и при live-зачёте
 // очков, пока приложение открыто (LiveDataContext обновляется раз в минуту).
-export default function SaluteWatcher() {
+export default function SaluteWatcher({ onFreshPoints }) {
   const live = useLiveData()
   const checking = useRef(false)
+  const onFreshRef = useRef(onFreshPoints)
+  onFreshRef.current = onFreshPoints
   // Первый проход этого маунта — только baseline (без салюта): уже засчитанные
   // на момент входа исходы празднует попап «итоги визита», а watcher отвечает
   // лишь за зачёты, происходящие пока приложение открыто.
@@ -54,8 +56,15 @@ export default function SaluteWatcher() {
       if (fresh.length === 0) return
 
       // Один салют на пачку новых исходов; уровень — по лучшему результату.
-      const level = fresh.some(p => p.pts === 3) ? 'exact' : 'outcome'
+      const level = fresh.some(p => p.pts >= 3) ? 'exact' : 'outcome'
       fireSalute(level)
+
+      // ...и попап с количеством очков (живой зачёт, пока приложение открыто).
+      onFreshRef.current?.({
+        count: fresh.length,
+        ptsGained: fresh.reduce((s, p) => s + (p.pts || 0), 0),
+        exactCount: fresh.filter(p => p.pts >= 3).length,
+      })
 
       const next = { ...celebrated }
       for (const p of fresh) next[p.matchId] = true

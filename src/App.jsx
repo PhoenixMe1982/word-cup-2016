@@ -10,6 +10,7 @@ import Splash from './components/Splash.jsx'
 import VisitSummary from './components/VisitSummary.jsx'
 import AnnouncementModal from './components/AnnouncementModal.jsx'
 import ScoringModal from './components/ScoringModal.jsx'
+import PointsPopup from './components/PointsPopup.jsx'
 import { knockoutEnabled } from './data.js'
 import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 
@@ -108,6 +109,9 @@ function AppShell() {
   const [hidingSplash, setHidingSplash] = useState(false)
   const [entered, setEntered] = useState(false)
   const [visit, setVisit] = useState(null)
+  // Очки за зачёт, случившийся ПОКА приложение открыто (живой попап). Раньше в
+  // этот момент был только салют — попап показывался лишь при следующем заходе.
+  const [livePoints, setLivePoints] = useState(null)
   const [showAnnounce, setShowAnnounce] = useState(() => {
     try { return !localStorage.getItem(ANNOUNCE_KEY) } catch { return false }
   })
@@ -210,7 +214,7 @@ function AppShell() {
 
   return (
     <>
-      <SaluteWatcher />
+      <SaluteWatcher onFreshPoints={setLivePoints} />
       <div className="relative min-h-screen" style={{ background: '#F5F6FA' }}>
         <div className="tab-transition">
           {pages[tab] ?? pages.home}
@@ -225,6 +229,9 @@ function AppShell() {
 
         {/* Схема начисления очков (после закрытия итогов визита) */}
         {showScoringModal && <ScoringModal onClose={handleCloseScoring} />}
+
+        {/* Живой зачёт очков, пока приложение открыто (попап + салют от SaluteWatcher) */}
+        {entered && livePoints && <PointsPopup summary={livePoints} onClose={() => setLivePoints(null)} />}
 
         {/* Мягкая плашка обновления — когда задеплоена новая сборка */}
         {entered && live.updateAvailable && <UpdateToast />}

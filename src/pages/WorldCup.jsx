@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
-import { HEADER_BANNER_STYLE } from '../data.js'
+import { HEADER_BANNER_STYLE, knockoutEnabled } from '../data.js'
 import Groups from './Groups.jsx'
+import KnockoutStages from './KnockoutStages.jsx'
 import Scorers from './Scorers.jsx'
 import Goalkeepers from './Goalkeepers.jsx'
 import Teams from './Teams.jsx'
 import AllTimeScorers from './AllTimeScorers.jsx'
 import Schedule from './Schedule.jsx'
 
+// Плей-офф — отдельный подраздел, появляется только с запуском стадий на вылет.
 const SUB_TABS = [
   { id: 'groups',      label: 'Группы'     },
+  ...(knockoutEnabled() ? [{ id: 'playoff', label: 'Плей-офф' }] : []),
   { id: 'scorers',     label: 'Бомбардиры' },
   { id: 'goalkeepers', label: 'Вратари'    },
   { id: 'teams',       label: 'Сборные'    },
@@ -30,6 +33,7 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
 
   const content = {
     groups:      <Groups />,
+    playoff:     <KnockoutStages />,
     scorers:     <Scorers />,
     goalkeepers: <Goalkeepers />,
     teams:       <Teams />,

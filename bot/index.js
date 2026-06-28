@@ -751,12 +751,26 @@ app.get('/api/predictions/:userId', async (req, res) => {
     const allResults = results || {}
     const settled = Object.entries(allPreds)
       .filter(([, p]) => p.pts !== undefined)
-      .map(([matchId, p]) => ({
-        matchId,
-        pred: { home: p.home, away: p.away },
-        result: allResults[matchId] ? { home: allResults[matchId].home, away: allResults[matchId].away } : null,
-        pts: p.pts,
-      }))
+      .map(([matchId, p]) => {
+        // Прогноз: базовый счёт + каскад плей-офф (et/penWinner), если был.
+        const pred = { home: p.home, away: p.away }
+        if (p.et) pred.et = { home: p.et.home, away: p.et.away }
+        if (p.penWinner) pred.penWinner = p.penWinner
+
+        // Итог: счёт + доп. поля нокаута (reg/et/пенальти/победитель) для
+        // богатой карточки в лидерборде (как на странице «Играть»).
+        const r = allResults[matchId]
+        let result = null
+        if (r) {
+          result = { home: r.home, away: r.away }
+          if (r.reg) result.reg = { home: r.reg.home, away: r.reg.away }
+          if (r.et) result.et = { home: r.et.home, away: r.et.away }
+          if (r.penHome != null) { result.penHome = r.penHome; result.penAway = r.penAway }
+          if (r.winner) result.winner = r.winner
+          if (r.knockout) result.knockout = true
+        }
+        return { matchId, pred, result, pts: p.pts }
+      })
     res.json(settled)
   } catch (e) { res.status(500).json({ error: e.message }) }
 })

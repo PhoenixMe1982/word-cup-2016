@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react'
-import { HEADER_BANNER_STYLE, MATCHES, TEAMS } from '../data.js'
+import { HEADER_BANNER_STYLE, MATCHES, KNOCKOUT_MATCHES, TEAMS, KNOCKOUT_STAGE_LABELS, isKnockoutMatch } from '../data.js'
+import { calcKnockoutBreakdown } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
-const MATCH_MAP = Object.fromEntries(MATCHES.map(m => [m.id, m]))
+// Группа + плей-офф: матч-карточкам в лидерборде нужны команды/стадия и для нокаута.
+const MATCH_MAP = Object.fromEntries([...MATCHES, ...KNOCKOUT_MATCHES].map(m => [m.id, m]))
+
+const STAGE_RANK = { r32: 0, r16: 1, qf: 2, sf: 3, bronze: 4, final: 5 }
+
+// Подкраска плашки прогноза (едина с экраном «Играть»): зелёная — точный счёт
+// (pts ≥ 3), синяя — частично угадано (исход/стадии), красная — мимо.
+function ptsScheme(pts) {
+  if (pts >= 3) return { col: '#16a34a', bg: 'rgba(34,197,94,0.12)', bdr: 'rgba(34,197,94,0.30)', icon: '✅' }
+  if (pts >= 1) return { col: '#2563eb', bg: 'rgba(37,99,235,0.08)', bdr: 'rgba(37,99,235,0.28)', icon: '☑️' }
+  return { col: '#ef4444', bg: 'rgba(239,68,68,0.07)', bdr: 'rgba(239,68,68,0.20)', icon: '❌' }
+}
 
 function getInitData() {
   return window.Telegram?.WebApp?.initData || ''
@@ -118,32 +130,63 @@ function PredRow({ item }) {
   if (!match) return null
   const homeTeam = TEAMS[match.home] || { name: match.home, flag: '🏳️' }
   const awayTeam = TEAMS[match.away] || { name: match.away, flag: '🏳️' }
-
-  const ptsBg   = item.pts === 3 ? 'rgba(34,197,94,0.12)'  : item.pts === 1 ? 'rgba(234,179,8,0.12)'  : 'rgba(239,68,68,0.08)'
-  const ptsBdr  = item.pts === 3 ? 'rgba(34,197,94,0.3)'   : item.pts === 1 ? 'rgba(234,179,8,0.3)'   : 'rgba(239,68,68,0.2)'
-  const ptsCol  = item.pts === 3 ? '#16a34a'               : item.pts === 1 ? '#ca8a04'               : '#ef4444'
-  const icon    = item.pts === 3 ? '✅' : item.pts === 1 ? '☑️' : '❌'
+  const ko = isKnockoutMatch(match)
+  const s = ptsScheme(item.pts)
+  const pred = item.pred || {}
+  const result = item.result
+  // Разбивка очков по стадиям (как на «Играть») — только для плей-офф с итогом.
+  const koBreak = ko && result ? calcKnockoutBreakdown(pred, result) : null
 
   return (
     <div
-      className="flex items-center gap-2 px-3 py-2 rounded-2xl mb-1.5"
-      style={{ background: ptsBg, border: `1px solid ${ptsBdr}` }}
+      className="flex items-start gap-2 px-3 py-2 rounded-2xl mb-1.5"
+      style={{ background: s.bg, border: `1px solid ${s.bdr}` }}
     >
-      <span className="text-sm flex-shrink-0">{icon}</span>
+      <span className="text-sm flex-shrink-0 mt-0.5">{s.icon}</span>
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-bold truncate" style={{ color: '#111827' }}>
-          {homeTeam.flag} {homeTeam.name} — {awayTeam.flag} {awayTeam.name}
-        </div>
-        <div className="text-[10px] mt-0.5" style={{ color: '#6B7280' }}>
-          Прогноз: <b>{item.pred.home}:{item.pred.away}</b>
-          {item.result && (
-            <> · Итог: <b>{item.result.home}:{item.result.away}</b></>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {ko && (
+            <span
+              className="text-[8px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full flex-shrink-0"
+              style={{ background: 'rgba(201,168,0,0.15)', color: '#C9A800' }}
+            >
+              {KNOCKOUT_STAGE_LABELS[match.stage] || 'плей-офф'}
+            </span>
           )}
+          <div className="text-xs font-bold truncate" style={{ color: '#111827' }}>
+            {homeTeam.flag} {homeTeam.name} — {awayTeam.flag} {awayTeam.name}
+          </div>
         </div>
+
+        {/* Прогноз — с каскадом плей-офф (90′ / 120′ / пенальти), если он был */}
+        <div className="text-[10px] mt-0.5" style={{ color: '#6B7280' }}>
+          Прогноз: <b>{ko ? '90′ ' : ''}{pred.home}:{pred.away}</b>
+          {pred.et && <> · 120′ <b>{pred.et.home}:{pred.et.away}</b></>}
+          {pred.penWinner && <> · пен <b>{pred.penWinner === 'HOME' ? homeTeam.flag : awayTeam.flag}</b></>}
+        </div>
+
+        {/* Итог матча */}
+        {result && (
+          <div className="text-[10px]" style={{ color: '#9CA3AF' }}>
+            Итог: <b>{ko ? '90′ ' : ''}{result.reg ? `${result.reg.home}:${result.reg.away}` : `${result.home}:${result.away}`}</b>
+            {result.et && <> · 120′ <b>{result.et.home}:{result.et.away}</b></>}
+            {result.penHome != null && <> · пен <b>{result.penHome}:{result.penAway}</b></>}
+          </div>
+        )}
+
+        {/* Разбивка очков по стадиям нокаута (показываем, если набрано сверх 90′) */}
+        {koBreak && (koBreak.p120 > 0 || koBreak.pPen > 0 || koBreak.pAdv > 0) && (
+          <div className="flex flex-wrap items-center gap-x-1.5 mt-0.5 text-[9px]" style={{ color: '#9CA3AF' }}>
+            {koBreak.p90 > 0 && <span>90′ +{koBreak.p90}</span>}
+            {koBreak.p120 > 0 && <span>· 120′ +{koBreak.p120}</span>}
+            {koBreak.pPen > 0 && <span>· пен +{koBreak.pPen}</span>}
+            {koBreak.pAdv > 0 && <span>· проход +{koBreak.pAdv}</span>}
+          </div>
+        )}
       </div>
       <div
-        className="text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0"
-        style={{ color: ptsCol, background: ptsBg, border: `1px solid ${ptsBdr}` }}
+        className="text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0 self-center"
+        style={{ color: s.col, background: s.bg, border: `1px solid ${s.bdr}` }}
       >
         +{item.pts}
       </div>
@@ -152,6 +195,10 @@ function PredRow({ item }) {
 }
 
 function PredictionsList({ preds, loading }) {
+  // Групповой этап схлопнут по умолчанию — у активных игроков это десятки
+  // прогнозов; плей-офф (актуальная стадия) показываем сразу.
+  const [groupOpen, setGroupOpen] = useState(false)
+
   if (loading) {
     return (
       <div className="px-3 py-3 text-center text-xs" style={{ color: '#9CA3AF' }}>
@@ -167,35 +214,70 @@ function PredictionsList({ preds, loading }) {
     )
   }
 
-  const exact   = preds.filter(p => p.pts === 3)
-  const outcome = preds.filter(p => p.pts === 1)
-  const miss    = preds.filter(p => p.pts === 0)
+  const koPreds = preds.filter(p => isKnockoutMatch(MATCH_MAP[p.matchId]))
+  const groupPreds = preds.filter(p => MATCH_MAP[p.matchId] && !isKnockoutMatch(MATCH_MAP[p.matchId]))
+  koPreds.sort((a, b) =>
+    (STAGE_RANK[MATCH_MAP[a.matchId].stage] - STAGE_RANK[MATCH_MAP[b.matchId].stage]) || (b.pts - a.pts))
+
+  const gExact = groupPreds.filter(p => p.pts >= 3)
+  const gOut   = groupPreds.filter(p => p.pts >= 1 && p.pts < 3)
+  const gMiss  = groupPreds.filter(p => p.pts === 0)
+  const groupTotal = groupPreds.reduce((sum, p) => sum + (p.pts || 0), 0)
 
   return (
     <div className="px-3 pt-2 pb-3">
-      {exact.length > 0 && (
+      {/* Плей-офф — развёрнуто, по стадиям */}
+      {koPreds.length > 0 && (
         <>
-          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#16a34a' }}>
-            Точный счёт · {exact.length}
+          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#C9A800' }}>
+            🏆 Плей-офф · {koPreds.length}
           </div>
-          {exact.map(p => <PredRow key={p.matchId} item={p} />)}
+          {koPreds.map(p => <PredRow key={p.matchId} item={p} />)}
         </>
       )}
-      {outcome.length > 0 && (
-        <>
-          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#ca8a04' }}>
-            Угадан исход · {outcome.length}
-          </div>
-          {outcome.map(p => <PredRow key={p.matchId} item={p} />)}
-        </>
-      )}
-      {miss.length > 0 && (
-        <>
-          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#9CA3AF' }}>
-            Мимо · {miss.length}
-          </div>
-          {miss.map(p => <PredRow key={p.matchId} item={p} />)}
-        </>
+
+      {/* Групповой этап — схлопнутая группа */}
+      {groupPreds.length > 0 && (
+        <div className={koPreds.length > 0 ? 'mt-2' : ''}>
+          <button
+            onClick={() => setGroupOpen(o => !o)}
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-2xl select-none"
+            style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
+          >
+            <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: '#374151' }}>Групповой этап</span>
+            <span className="text-[10px] font-bold" style={{ color: '#9CA3AF' }}>· {groupPreds.length} прогн. · +{groupTotal}</span>
+            <span className="ml-auto text-xs transition-transform duration-200" style={{ color: '#9CA3AF', transform: groupOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+          </button>
+
+          {groupOpen && (
+            <div className="mt-2">
+              {gExact.length > 0 && (
+                <>
+                  <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#16a34a' }}>
+                    Точный счёт · {gExact.length}
+                  </div>
+                  {gExact.map(p => <PredRow key={p.matchId} item={p} />)}
+                </>
+              )}
+              {gOut.length > 0 && (
+                <>
+                  <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#2563eb' }}>
+                    Угадан исход · {gOut.length}
+                  </div>
+                  {gOut.map(p => <PredRow key={p.matchId} item={p} />)}
+                </>
+              )}
+              {gMiss.length > 0 && (
+                <>
+                  <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#9CA3AF' }}>
+                    Мимо · {gMiss.length}
+                  </div>
+                  {gMiss.map(p => <PredRow key={p.matchId} item={p} />)}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
