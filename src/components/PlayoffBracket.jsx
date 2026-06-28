@@ -101,11 +101,13 @@ export default function PlayoffBracket({ onOpen }) {
       <div
         style={{
           background: 'linear-gradient(180deg,#FFFFFF 0%,#FFFDF5 100%)',
-          border: '1px solid rgba(201,168,0,0.25)',
-          borderRadius: 18,
+          borderTop: '1px solid rgba(201,168,0,0.25)',
+          borderBottom: '1px solid rgba(201,168,0,0.25)',
           boxShadow: '0 2px 14px rgba(0,0,0,0.07)',
-          padding: '14px 6px 10px',
+          padding: '16px 4px 10px',
           overflow: 'hidden',
+          marginLeft: -16,   // full-bleed: выходим за padding страницы (px-4)
+          marginRight: -16,
         }}
       >
         <div className="kb-root">
@@ -115,7 +117,7 @@ export default function PlayoffBracket({ onOpen }) {
             {champion ? (
               <div className="kb-champ">
                 <span className="kb-crown">👑</span>
-                <span className="kb-flag" style={{ fontSize: 24 }}>{flagOf(champion)}</span>
+                <span className="kb-flag" style={{ fontSize: 34 }}>{flagOf(champion)}</span>
               </div>
             ) : (
               <div className="kb-fin-row">
@@ -140,7 +142,7 @@ export default function PlayoffBracket({ onOpen }) {
       <style>{`
         .kb-root {
           display: flex; align-items: stretch; justify-content: center;
-          height: 420px; --kb-line: rgba(201,168,0,0.5); --kb-gap: 9px;
+          height: 520px; --kb-line: rgba(201,168,0,0.5); --kb-gap: 6px;
         }
         .kb-side { display: flex; flex: 0 0 auto; }
         .kb-mirror { transform: scaleX(-1); }
@@ -169,37 +171,37 @@ export default function PlayoffBracket({ onOpen }) {
 
         .kb-pill {
           display: flex; align-items: center; justify-content: center;
-          width: 28px; height: 20px; flex-shrink: 0;
+          width: 42px; height: 32px; flex-shrink: 0;
           background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12);
-          border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+          border-radius: 9px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         .kb-win {
           display: flex; align-items: center; justify-content: center;
-          width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
+          width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
           background: #FFFFFF; border: 1.5px solid #C9A800; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
-        .kb-win .kb-flag { font-size: 10px; }
-        .kb-flag { font-size: 14px; line-height: 1; }
-        .kb-tbd { width: 11px; height: 3px; border-radius: 2px; background: rgba(0,0,0,0.12); }
-        .kb-dot { width: 7px; height: 7px; border-radius: 50%; border: 2px dashed rgba(0,0,0,0.16); flex-shrink: 0; }
+        .kb-win .kb-flag { font-size: 13px; }
+        .kb-flag { font-size: 28px; line-height: 1; }
+        .kb-tbd { width: 16px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.12); }
+        .kb-dot { width: 9px; height: 9px; border-radius: 50%; border: 2px dashed rgba(0,0,0,0.16); flex-shrink: 0; }
 
         .kb-center {
-          flex: 0 0 auto; width: 84px; display: flex; flex-direction: column;
-          align-items: center; justify-content: center; gap: 5px; padding: 0 2px;
+          flex: 0 0 auto; width: 92px; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 6px; padding: 0 2px;
         }
-        .kb-cup { width: 50px; height: auto; filter: drop-shadow(0 3px 6px rgba(201,168,0,0.45)); }
+        .kb-cup { width: 60px; height: auto; filter: drop-shadow(0 3px 6px rgba(201,168,0,0.45)); }
         .kb-final-label {
           font-size: 9px; font-weight: 900; text-transform: uppercase;
           letter-spacing: 0.1em; color: #C9A800;
         }
         .kb-fin-row { display: flex; gap: 8px; }
         .kb-fin {
-          width: 26px; height: 21px; display: flex; align-items: center; justify-content: center;
-          background: #FFFFFF; border: 1px solid rgba(201,168,0,0.4); border-radius: 7px;
+          width: 34px; height: 26px; display: flex; align-items: center; justify-content: center;
+          background: #FFFFFF; border: 1px solid rgba(201,168,0,0.4); border-radius: 8px;
         }
-        .kb-fin .kb-flag { font-size: 14px; }
+        .kb-fin .kb-flag { font-size: 22px; }
         .kb-champ { display: flex; flex-direction: column; align-items: center; }
-        .kb-crown { font-size: 16px; line-height: 1; }
+        .kb-crown { font-size: 18px; line-height: 1; }
 
         .kb-stage-row {
           display: flex; align-items: center; margin-top: 8px;
@@ -207,7 +209,7 @@ export default function PlayoffBracket({ onOpen }) {
           letter-spacing: 0.05em; color: #9CA3AF;
         }
         .kb-stage-row > span { flex: 1 1 0; text-align: center; }
-        .kb-stage-cup { color: #C9A800 !important; flex: 0 0 auto !important; width: 84px; }
+        .kb-stage-cup { color: #C9A800 !important; flex: 0 0 auto !important; width: 92px; }
       `}</style>
     </section>
   )
