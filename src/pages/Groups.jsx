@@ -1,6 +1,65 @@
 import { useState } from 'react'
-import { TEAMS } from '../data.js'
+import { TEAMS, MATCHES } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { toLocalDateTime, matchUTCDate } from '../utils.js'
+
+// Все матчи группы (хронологически). Завершённые — со счётом, остальные — со временем.
+function GroupMatches({ groupKey, matches }) {
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
+  const list = MATCHES
+    .filter((m) => m.group === groupKey)
+    .map((m) => byId[m.id] || m)
+    .sort((a, b) => (matchUTCDate(a.date, a.time)?.getTime() ?? 0) - (matchUTCDate(b.date, b.time)?.getTime() ?? 0))
+
+  return (
+    <div className="mb-4">
+      <h3 className="text-xs font-black uppercase tracking-wider mb-2 px-1" style={{ color: '#111827' }}>
+        Матчи группы {groupKey}
+      </h3>
+      <div className="space-y-2">
+        {list.map((m) => {
+          const home = TEAMS[m.home]
+          const away = TEAMS[m.away]
+          const finished = m.status === 'finished' && m.scoreHome != null
+          const live = m.status === 'live'
+          const { time: localTime, date: localDate } = toLocalDateTime(m.date, m.time)
+          return (
+            <div
+              key={m.id}
+              className="flex items-center gap-2 px-3 py-2.5"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div className="text-[9px] w-12 text-center flex-shrink-0 leading-tight" style={{ color: '#9CA3AF' }}>
+                {localDate}<br />{localTime}
+              </div>
+              <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
+                <span className="text-[11px] font-bold uppercase truncate text-right" style={{ color: '#111827' }}>{home?.name}</span>
+                <span className="text-lg flex-shrink-0">{home?.flag}</span>
+              </div>
+              <div className="flex-shrink-0 text-center" style={{ minWidth: 46 }}>
+                {finished || (live && m.scoreHome != null) ? (
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-sm font-black score-number" style={{ color: '#111827' }}>{m.scoreHome}</span>
+                    <span className="text-xs" style={{ color: '#9CA3AF' }}>:</span>
+                    <span className="text-sm font-black score-number" style={{ color: '#111827' }}>{m.scoreAway}</span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] font-bold" style={{ color: '#C9A800' }}>vs</span>
+                )}
+                {live && <div className="text-[8px] font-black uppercase" style={{ color: '#16A34A' }}>live</div>}
+              </div>
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <span className="text-lg flex-shrink-0">{away?.flag}</span>
+                <span className="text-[11px] font-bold uppercase truncate" style={{ color: '#111827' }}>{away?.name}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function GroupTable({ groupKey, groups }) {
   const group = groups[groupKey]
@@ -87,7 +146,7 @@ function GroupTable({ groupKey, groups }) {
 const GROUP_KEYS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 
 export default function Groups() {
-  const { groups } = useLiveData()
+  const { groups, matches } = useLiveData()
   const [selected, setSelected] = useState(null)
 
   const toShow = selected ? [selected] : GROUP_KEYS
@@ -144,10 +203,13 @@ export default function Groups() {
         </div>
       </div>
 
-      {/* Tables */}
+      {/* Tables (+ матчи группы при выборе конкретной группы) */}
       <div className="px-4 mt-3">
         {toShow.map((key) => (
-          <GroupTable key={key} groupKey={key} groups={groups} />
+          <div key={key}>
+            <GroupTable groupKey={key} groups={groups} />
+            {selected === key && <GroupMatches groupKey={key} matches={matches} />}
+          </div>
         ))}
       </div>
     </div>

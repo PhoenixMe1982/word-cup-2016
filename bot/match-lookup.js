@@ -24,6 +24,14 @@ const MATCH_LOOKUP = {
   'NOR_FRA': 'm61', 'SEN_IRQ': 'm62', 'CPV_KSA': 'm63', 'URU_ESP': 'm64',
   'EGY_IRN': 'm65', 'NZL_BEL': 'm66', 'PAN_ENG': 'm67', 'CRO_GHA': 'm68',
   'COL_POR': 'm69', 'COD_UZB': 'm70', 'ALG_AUT': 'm71', 'JOR_ARG': 'm72',
+  // ── 1/16 финала (R32) — реальные пары по официальной сетке ЧМ-2026.
+  // Порядок home_away совпадает с FD (домашняя команда по позиции в сетке) и с
+  // src/data.js KNOCKOUT_MATCHES — иначе счёт записался бы зеркально. Команды
+  // глубже R32 (m89+) станут известны по мере резолва и добавляются тогда же.
+  'RSA_CAN': 'm73', 'GER_PAR': 'm74', 'NED_MAR': 'm75', 'BRA_JPN': 'm76',
+  'FRA_SWE': 'm77', 'CIV_NOR': 'm78', 'MEX_ECU': 'm79', 'ENG_COD': 'm80',
+  'USA_BIH': 'm81', 'BEL_SEN': 'm82', 'POR_CRO': 'm83', 'ESP_AUT': 'm84',
+  'SUI_ALG': 'm85', 'ARG_CPV': 'm86', 'COL_GHA': 'm87', 'AUS_EGY': 'm88',
 }
 
 // football-data.org TLA → our code (handles any code mismatches)

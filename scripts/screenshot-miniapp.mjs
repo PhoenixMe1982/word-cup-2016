@@ -91,6 +91,13 @@ function fakeSdk() {
   const pts = rank === 1 ? 42 : rank === 2 ? 38 : rank === 3 ? 35 : 4
   return `(function(){
   try{ localStorage.setItem('wc2026_predictionSeen','1'); }catch(e){}
+  // Гасим разовые попапы, чтобы не перекрывали экран. Попап схемы очков
+  // показываем только в состоянии 'scoring'.
+  try{
+    localStorage.setItem('wc2026_announce_m65_score_fix','1');
+    if(${JSON.stringify(tab === 'scoring')}) localStorage.removeItem('wc2026_scoring_scheme_v1');
+    else localStorage.setItem('wc2026_scoring_scheme_v1','1');
+  }catch(e){}
   var noop=function(){}, RANK=${rank}, PTS=${pts}, STATE=${JSON.stringify(tab)}, KO=${ko};
   // Плей-офф: включаем тест-флаг фичи. Туториал показываем только в режиме kotut,
   // иначе помечаем как закрытый, чтобы попап не перекрывал страницу прогнозов.
@@ -217,7 +224,7 @@ async function main() {
   // только матчи плей-офф (каскад + разбивка).
   if (ko && tab === 'play') {
     const r = await cli.send('Runtime.evaluate', {
-      expression: `(function(){ var b=[].slice.call(document.querySelectorAll('button')).find(function(x){return /Плей-офф/.test(x.textContent);}); if(b){b.click(); return 'ok';} return 'ko-filter-not-found'; })()`,
+      expression: `(function(){ var b=[].slice.call(document.querySelectorAll('button')).find(function(x){return /^1\\/16$/.test(x.textContent.trim());}); if(b){b.click(); return 'ok';} return 'ko-filter-not-found'; })()`,
       returnByValue: true,
     })
     console.log('ko-filter:', r.result?.value)

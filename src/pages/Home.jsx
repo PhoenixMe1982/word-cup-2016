@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { TEAMS, TOURNAMENT, MATCHES, HEADER_BANNER_STYLE } from '../data.js'
-import { useLiveData, computeGroups } from '../LiveDataContext.jsx'
+import { TEAMS, TOURNAMENT, MATCHES, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS } from '../data.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 import { toLocalDateTime, matchUTCDate } from '../utils.js'
 import CountdownTimer from '../components/CountdownTimer.jsx'
 import TournamentProgressBar from '../components/TournamentProgressBar.jsx'
+import PlayoffBracket from '../components/PlayoffBracket.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -11,6 +12,9 @@ const KICKOFF = matchUTCDate(MATCHES[0].date, MATCHES[0].time)
 const KICKOFF_LOCAL = toLocalDateTime(MATCHES[0].date, MATCHES[0].time)
 
 const PAGE_SIZE = 3
+
+// Подпись матча: групповой — «Гр. X»; плей-офф — стадия (1/16, 1/8, …).
+const matchTag = (m) => (m.stage ? (KNOCKOUT_STAGE_LABELS[m.stage] || 'Плей-офф') : `Гр. ${m.group}`)
 
 function UserAvatar({ onTab }) {
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
@@ -163,50 +167,7 @@ function FinishedMatchCard({ match }) {
         <span className="text-xs truncate text-right font-semibold uppercase" style={{ color: '#111827' }}>{away.name}</span>
         <span className="text-lg">{away.flag}</span>
       </div>
-      <div className="text-[10px] w-8 text-right flex-shrink-0" style={{ color: '#9CA3AF' }}>Гр.{match.group}</div>
-    </div>
-  )
-}
-
-// Компактная таблица группы для главной (по одной в ряд). Только: место,
-// команда, голы забито-пропущено, очки. Стилизация (первые 2 места — жирным,
-// последнее — полупрозрачным) применяется ТОЛЬКО к доигранным группам — это
-// решает родитель через проп `complete`. Живая (провизорная) карточка и группы
-// в процессе показываются без выделения.
-function GroupMiniTile({ groupKey, group, complete = false }) {
-  const sorted = [...group.teams].sort((a, b) => {
-    if (b.pts !== a.pts) return b.pts - a.pts
-    if (b.gd !== a.gd) return b.gd - a.gd
-    return b.gf - a.gf
-  })
-
-  return (
-    <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-      <div className="px-2.5 py-1.5 flex items-center justify-between" style={{ background: 'rgba(201,168,0,0.08)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-        <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: '#C9A800' }}>Гр. {groupKey}</span>
-        <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
-          <span className="w-8 text-center">З-П</span>
-          <span className="w-3.5 text-center" style={{ color: '#111827' }}>О</span>
-        </div>
-      </div>
-      {sorted.map((row, idx) => {
-        const team = TEAMS[row.code]
-        const dim = complete && idx === sorted.length - 1
-        const bold = complete && idx < 2
-        return (
-          <div
-            key={row.code}
-            className="px-2.5 py-1.5 flex items-center gap-1.5"
-            style={{ borderBottom: idx < sorted.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none', opacity: dim ? 0.4 : 1 }}
-          >
-            <span className="text-[9px] w-3 text-center flex-shrink-0" style={{ color: bold ? '#C9A800' : '#9CA3AF', fontWeight: bold ? 900 : 600 }}>{idx + 1}</span>
-            <span className="text-sm flex-shrink-0">{team?.flag}</span>
-            <span className="text-[10px] truncate flex-1 min-w-0 uppercase" style={{ color: '#111827', fontWeight: bold ? 800 : 500 }}>{team?.name}</span>
-            <span className="text-[9px] w-8 text-center flex-shrink-0 tabular-nums" style={{ color: '#6B7280' }}>{row.gf}-{row.ga}</span>
-            <span className="text-[11px] w-3.5 text-center flex-shrink-0 tabular-nums" style={{ color: '#111827', fontWeight: bold ? 900 : 700 }}>{row.pts}</span>
-          </div>
-        )
-      })}
+      <div className="text-[10px] w-10 text-right flex-shrink-0" style={{ color: '#9CA3AF' }}>{matchTag(match)}</div>
     </div>
   )
 }
@@ -356,7 +317,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
           </div>
         </div>
         <div className="px-3 pb-2 text-[9px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>
-          {localDate} · Гр. {match.group}
+          {localDate} · {matchTag(match)}
         </div>
 
         {/* Prediction panel — inline inside card */}
@@ -380,7 +341,7 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, saving })
 }
 
 export default function Home({ onTab }) {
-  const { matches, scorers, groups } = useLiveData()
+  const { matches, scorers } = useLiveData()
 
   // Если статус из API запаздывает, матч считается live по расписанию —
   // он сразу попадает в «Идут сейчас», а не висит в «Ближайших»
@@ -392,17 +353,12 @@ export default function Home({ onTab }) {
     return kick && now >= kick.getTime() && now < kick.getTime() + MATCH_DURATION_MS
   }
 
-  const liveMatches = matches.filter((m) => m.status === 'live' || isTimeLive(m))
+  // Матч с определёнными командами (нокаут-слоты TBD ещё без пар — в списках не показываем)
+  const hasTeams = (m) => !!(m.home && m.away)
 
-  // Группы с идущими сейчас матчами (только групповой этап). Их таблицу показываем
-  // живой провизорной карточкой под лайв-блоком, а из общей сетки внизу временно
-  // убираем (после фиксации результата группа вернётся туда с финальными цифрами).
-  const liveGroupKeys = [...new Set(liveMatches.filter((m) => !m.stage && m.group).map((m) => m.group))]
-  // Провизорные таблицы: идущие матчи засчитаны по текущему счёту «как будто
-  // матч закончился сейчас». Пересчитывается на каждом рефреше /api/live.
-  const provGroups = liveGroupKeys.length > 0 ? computeGroups(matches, { includeLive: true }) : {}
+  const liveMatches = matches.filter((m) => hasTeams(m) && (m.status === 'live' || isTimeLive(m)))
 
-  const allFinished = matches.filter(m => m.status === 'finished')
+  const allFinished = matches.filter(m => m.status === 'finished' && hasTeams(m))
   // Самые свежие результаты сверху: сортируем по дате матча по убыванию
   const finishedMatches = [...allFinished]
     .sort((a, b) => {
@@ -411,10 +367,10 @@ export default function Home({ onTab }) {
       return db - da
     })
     .slice(0, 4)
-  const upcomingMatches = matches.filter((m) => m.status === 'upcoming' && !isTimeLive(m))
+  const upcomingMatches = matches.filter((m) => m.status === 'upcoming' && hasTeams(m) && !isTimeLive(m))
 
   const timeBasedFinished = matches.filter(m => {
-    if (m.status !== 'upcoming') return false
+    if (m.status !== 'upcoming' || !hasTeams(m)) return false
     const kick = matchUTCDate(m.date, m.time)
     return kick && now >= kick.getTime() + MATCH_DURATION_MS
   })
@@ -552,6 +508,9 @@ export default function Home({ onTab }) {
         <CountdownTimer target={KICKOFF} title="До старта ЧМ-2026" subtitle={`${KICKOFF_LOCAL.date} · ${KICKOFF_LOCAL.time}`} />
       )}
 
+      {/* Сетка плей-офф — главный визуал, в самом верху */}
+      <PlayoffBracket onOpen={() => onTab('play')} />
+
       {/* Tournament progress — group stage rounds → playoff rounds → final */}
       <TournamentProgressBar />
 
@@ -572,20 +531,6 @@ export default function Home({ onTab }) {
               <LiveMatchCard key={m.id} match={m} />
             ))}
           </div>
-
-          {/* Живые провизорные таблицы групп идущих матчей — очки/голы «в моменте» */}
-          {liveGroupKeys.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {liveGroupKeys.filter((k) => provGroups[k]).sort().map((k) => (
-                <div key={k}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-0.5" style={{ color: '#9CA3AF' }}>
-                    Таблица группы · в моменте
-                  </div>
-                  <GroupMiniTile groupKey={k} group={provGroups[k]} complete={false} />
-                </div>
-              ))}
-            </div>
-          )}
         </section>
       )}
 
@@ -685,28 +630,32 @@ export default function Home({ onTab }) {
         </section>
       )}
 
-      {/* Group standings — по одной таблице в ряд (длинные названия влезают).
-          Группы с идущими матчами здесь скрыты — они показаны живой карточкой выше. */}
-      {(() => {
-        const GK = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-        const visible = GK.filter((k) => groups[k] && !liveGroupKeys.includes(k) && groups[k].teams.some((t) => t.p > 0))
-        if (visible.length === 0) return null
-        return (
-          <section className="mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Таблицы групп</h2>
-              <button onClick={() => onTab('worldcup.groups')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
-                Все →
-              </button>
-            </div>
-            <div className="space-y-2">
-              {visible.map((k) => (
-                <GroupMiniTile key={k} groupKey={k} group={groups[k]} complete={groups[k].teams.every((t) => t.p >= 3)} />
-              ))}
-            </div>
-          </section>
-        )
-      })()}
+      {/* Групповой этап — компактная карточка-вход (сами таблицы живут в разделе ЧМ) */}
+      <section className="mb-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: '#111827' }}>Групповой этап</h2>
+          <button onClick={() => onTab('worldcup.groups')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+            Подробнее →
+          </button>
+        </div>
+        <button
+          onClick={() => onTab('worldcup.groups')}
+          className="w-full flex items-center gap-3 p-4 text-left"
+          style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+        >
+          <div
+            className="w-11 h-11 flex items-center justify-center text-xl flex-shrink-0"
+            style={{ borderRadius: 14, background: 'rgba(201,168,0,0.1)' }}
+          >
+            📊
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-black uppercase tracking-wide" style={{ color: '#111827' }}>12 групп · 48 команд</div>
+            <div className="text-[11px]" style={{ color: '#6B7280' }}>Итоговые таблицы и все матчи групп</div>
+          </div>
+          <span className="text-lg flex-shrink-0" style={{ color: '#C9A800' }}>→</span>
+        </button>
+      </section>
 
       {/* Recent Results */}
       {finishedMatches.length > 0 && (

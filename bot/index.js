@@ -12,9 +12,10 @@ const TOKEN    = (process.env.BOT_TOKEN || '').trim()
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const ADMIN_ID = parseInt(process.env.ADMIN_ID, 10)
 const APP_URL  = (process.env.APP_URL || 'https://phoenixme1982.github.io/word-cup-2016/').trim()
-// Гейт фичи плей-офф (этап 2). По умолчанию ВЫКЛ — код деплоится дормантным,
-// приём нокаут-прогнозов закрыт до выставления KNOCKOUT_ENABLED=1 (отмашка Чеслава).
-const KNOCKOUT_ENABLED = ['1', 'true', 'yes'].includes((process.env.KNOCKOUT_ENABLED || '').trim().toLowerCase())
+// Гейт фичи плей-офф. Фича выкачена (отмашка дана) — по умолчанию ВКЛ: unset
+// трактуется как включено, явное KNOCKOUT_ENABLED=0/false/no выключает приём
+// нокаут-прогнозов. Согласовано с фронтом KNOCKOUT_LIVE=true в src/data.js.
+const KNOCKOUT_ENABLED = !['0', 'false', 'no'].includes((process.env.KNOCKOUT_ENABLED || '').trim().toLowerCase())
 const USERS_FILE = path.join(__dirname, 'users.json')
 
 const REDIS_URL   = (process.env.UPSTASH_REDIS_REST_URL || '').trim()

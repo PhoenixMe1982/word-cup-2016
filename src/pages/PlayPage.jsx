@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { TEAMS, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS, isKnockoutMatch, knockoutEnabled } from '../data.js'
+import { TEAMS, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS, KNOCKOUT_STAGE_ORDER, isKnockoutMatch, knockoutEnabled } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 import { toLocalDateTime, matchUTCDate, calcKnockoutBreakdown, calcKnockoutPoints } from '../utils.js'
 import { KnockoutLegend } from '../components/KnockoutScoring.jsx'
@@ -118,6 +118,17 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
   const draw120 = etFilled && Number(etHome) === Number(etAway)
   const showEt = knockout && draw90
   const showPen = knockout && draw90 && draw120
+
+  // Счёт за 120′ — это ИТОГ всего матча (90′ + овертайм), а не голы только в ОТ.
+  // При раскрытии этапа предзаполняем счётом 90′: если в овертайме не забьют, итог
+  // не меняется (напр. 1:1 на 90′ → остаётся 1:1). Дальше игрок правит при желании.
+  useEffect(() => {
+    if (knockout && draw90 && !saved && etHome === '' && etAway === '') {
+      setEtHome(homeVal)
+      setEtAway(awayVal)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draw90])
 
   function buildPayload() {
     const p = { home: Number(homeVal), away: Number(awayVal) }
@@ -318,14 +329,23 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
       {/* Каскадная панель плей-офф (только редактируемый нокаут-матч) */}
       {knockout && !isLocked && (
         <div className="mt-2.5 pt-2.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }} onClick={(e) => e.stopPropagation()}>
-          {/* Шаг 2 — счёт в доп. время, раскрывается при ничьей 90′ */}
+          {/* Пояснение: счёт всегда ИТОГОВЫЙ за период, а не голы отдельного отрезка */}
+          <div className="text-[9px] leading-snug mb-2" style={{ color: '#9CA3AF' }}>
+            Счёт указывай <b style={{ color: '#6B7280' }}>итоговый</b> за период: вверху — к концу 90′; ниже (при ничьей) — общий к концу 120′.
+          </div>
+          {/* Шаг 2 — итоговый счёт за 120′, раскрывается при ничьей 90′ */}
           {showEt && (
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>Ничья? Счёт в доп. время (120′)</span>
-              <div className="flex items-center gap-1.5">
-                <ScoreInput value={etHome} onChange={setEtHome} disabled={false} />
-                <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>:</span>
-                <ScoreInput value={etAway} onChange={setEtAway} disabled={false} />
+            <div className="mb-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>Ничья! Итог за 120′ (90′ + ОТ)</span>
+                <div className="flex items-center gap-1.5">
+                  <ScoreInput value={etHome} onChange={setEtHome} disabled={false} />
+                  <span className="text-sm font-bold" style={{ color: '#9CA3AF' }}>:</span>
+                  <ScoreInput value={etAway} onChange={setEtAway} disabled={false} />
+                </div>
+              </div>
+              <div className="text-[9px] mt-1" style={{ color: '#9CA3AF' }}>
+                Общий счёт за весь матч к концу овертайма (если в ОТ не забьют — оставь как на 90′).
               </div>
             </div>
           )}
@@ -366,7 +386,7 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
                 className="flex-1 h-9 rounded-2xl text-xs font-black uppercase tracking-wide flex items-center justify-center"
                 style={{ background: canSubmit ? '#C9A800' : 'rgba(0,0,0,0.06)', color: canSubmit ? '#fff' : '#9CA3AF' }}
               >
-                {saving === match.id ? 'Сохраняю…' : canSubmit ? '⚽ Сохранить прогноз' : draw90 && !etFilled ? 'Введи счёт доп. времени' : showPen && !penWinner ? 'Выбери победителя серии' : 'Заполни счёт 90′'}
+                {saving === match.id ? 'Сохраняю…' : canSubmit ? '⚽ Сохранить прогноз' : draw90 && !etFilled ? 'Введи итог за 120′' : showPen && !penWinner ? 'Выбери победителя серии' : 'Заполни счёт 90′'}
               </button>
             )}
           </div>
@@ -387,19 +407,19 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1" style={{ color: '#6B7280' }}>
             <span style={{ color: '#9CA3AF' }}>Итог:</span>
             <span className="font-black">90′ {result.reg ? `${result.reg.home}:${result.reg.away}` : `${result.home}:${result.away}`}</span>
-            {result.et && <span className="font-black">· доп. {result.et.home}:{result.et.away}</span>}
+            {result.et && <span className="font-black">· 120′ {result.et.home}:{result.et.away}</span>}
             {result.penHome != null && <span className="font-black">· пен. {result.penHome}:{result.penAway}</span>}
           </div>
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <span style={{ color: '#9CA3AF' }}>Твой прогноз:</span>
             <span className="font-black" style={{ color: '#6B7280' }}>{myPred.home}:{myPred.away}</span>
-            {myPred.et && <span className="font-black" style={{ color: '#6B7280' }}>· доп. {myPred.et.home}:{myPred.et.away}</span>}
+            {myPred.et && <span className="font-black" style={{ color: '#6B7280' }}>· 120′ {myPred.et.home}:{myPred.et.away}</span>}
             {myPred.penWinner && <span className="font-black" style={{ color: '#6B7280' }}>· пен. {(myPred.penWinner === 'HOME' ? home : away).flag}</span>}
           </div>
           {koBreak && (
             <div className="flex flex-wrap items-center gap-x-1.5 mt-1 pt-1 text-[9px]" style={{ borderTop: '1px dashed rgba(0,0,0,0.06)', color: '#9CA3AF' }}>
               {koBreak.p90 > 0 && <span>90′ +{koBreak.p90}</span>}
-              {koBreak.p120 > 0 && <span>· доп. +{koBreak.p120}</span>}
+              {koBreak.p120 > 0 && <span>· 120′ +{koBreak.p120}</span>}
               {koBreak.pPen > 0 && <span>· пен. +{koBreak.pPen}</span>}
               {koBreak.pAdv > 0 && <span>· проход +{koBreak.pAdv}</span>}
               <span className="font-black ml-auto" style={{ color: koBreak.total > 0 ? '#16A34A' : '#9CA3AF' }}>= +{koBreak.total} очк.</span>
@@ -421,6 +441,8 @@ export default function PlayPage() {
   const [saving, setSaving] = useState(null)
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [groupsExpanded, setGroupsExpanded] = useState(false) // показ подпунктов A…L в субпанели
+  const [groupSectionOpen, setGroupSectionOpen] = useState(false) // развёрнут ли блок групповых прогнозов в режиме «Все»
   const [stats, setStats] = useState(null)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -472,17 +494,76 @@ export default function PlayPage() {
     }
   }
 
-  const filteredMatches = filter === 'all'
-    ? matches
-    : filter === 'ko'
-    ? matches.filter((m) => isKnockoutMatch(m))
-    : matches.filter((m) => m.group === filter)
-  const hasKnockout = KO_ENABLED && matches.some((m) => isKnockoutMatch(m))
+  // Разделяем матчи: групповые и плей-офф (по стадиям).
+  const groupMatches = matches.filter((m) => !isKnockoutMatch(m))
+  const koMatches = matches.filter((m) => isKnockoutMatch(m))
+  const hasKnockout = KO_ENABLED && koMatches.length > 0
+  // Стадии, в которых есть хотя бы один матч (для чипов субпанели).
+  const koStages = KNOCKOUT_STAGE_ORDER.filter((s) => koMatches.some((m) => m.stage === s))
+  const hasTeams = (m) => !!(m.home && m.away)
 
   const predCount = myPreds ? Object.keys(myPreds).length : 0
   const settledWithPred = myPreds
     ? Object.entries(myPreds).filter(([id]) => results[id]).length
     : 0
+
+  // Рендер одной карточки матча (или заглушки TBD для нерезолвленного нокаута).
+  function renderMatch(match) {
+    if (isKnockoutMatch(match) && !hasTeams(match)) {
+      return (
+        <div
+          key={match.id}
+          className="flex items-center gap-2 p-3 mb-2"
+          style={{ background: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(201,168,0,0.35)', borderRadius: 16 }}
+        >
+          <span className="text-base">🏆</span>
+          <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: '#C9A800' }}>
+            {KNOCKOUT_STAGE_LABELS[match.stage] || 'Плей-офф'}
+          </span>
+          <span className="text-[10px] uppercase tracking-wide ml-auto" style={{ color: '#9CA3AF' }}>
+            Команды определятся позже
+          </span>
+        </div>
+      )
+    }
+    const result = results[match.id] || null
+    const pred = myPreds?.[match.id]
+    const kn = isKnockoutMatch(match)
+    const predWithPts = result && pred
+      ? { ...pred, pts: pred.pts ?? (kn ? calcKnockoutPoints(pred, result) : calcPointsLocal(pred, result)) }
+      : pred
+    const isSelected = selectedMatch === match.id
+    return (
+      <div
+        key={match.id}
+        style={{ opacity: selectedMatch && !isSelected ? 0.55 : 1, transition: 'opacity 0.2s' }}
+      >
+        <MatchCard
+          match={match}
+          result={result}
+          myPred={inTg ? (predWithPts ?? null) : null}
+          onSave={handleSave}
+          saving={saving}
+          isSelected={isSelected}
+          onSelect={() => setSelectedMatch(isSelected ? null : match.id)}
+        />
+      </div>
+    )
+  }
+
+  // Тап по чипу «Групповой этап»: раскрыть/свернуть подпункты A…L. При раскрытии
+  // переключаемся на показ всех групп, при сворачивании — обратно на «Все».
+  function toggleGroups() {
+    if (groupsExpanded) {
+      setGroupsExpanded(false)
+      if (filter === 'group' || GROUPS.includes(filter)) setFilter('all')
+    } else {
+      setGroupsExpanded(true)
+      setFilter('group')
+    }
+  }
+
+  const isGroupFilter = filter === 'group' || GROUPS.includes(filter)
 
   if (loading) return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" style={{ background: '#F5F6FA' }}>
@@ -558,11 +639,11 @@ export default function PlayPage() {
         </div>
       )}
 
-      {/* Group filter */}
+      {/* Фильтр-субпанель: Все · Групповой этап (раскрывает A…L) · стадии плей-офф */}
       <div className="px-4 mb-4">
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           <button
-            onClick={() => setFilter('all')}
+            onClick={() => { setFilter('all'); setGroupsExpanded(false) }}
             className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide"
             style={{
               background: filter === 'all' ? '#C9A800' : 'rgba(0,0,0,0.05)',
@@ -571,69 +652,100 @@ export default function PlayPage() {
           >
             Все
           </button>
-          {hasKnockout && (
+          <button
+            onClick={toggleGroups}
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide flex items-center gap-1"
+            style={{
+              background: isGroupFilter ? '#C9A800' : 'rgba(0,0,0,0.05)',
+              color: isGroupFilter ? '#fff' : '#6B7280',
+            }}
+          >
+            Групповой этап <span style={{ fontSize: 8 }}>{groupsExpanded ? '▲' : '▼'}</span>
+          </button>
+          {hasKnockout && koStages.map((s) => (
             <button
-              onClick={() => setFilter('ko')}
+              key={s}
+              onClick={() => { setFilter(s); setGroupsExpanded(false) }}
               className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide"
               style={{
-                background: filter === 'ko' ? '#C9A800' : 'rgba(201,168,0,0.12)',
-                color: filter === 'ko' ? '#fff' : '#C9A800',
+                background: filter === s ? '#C9A800' : 'rgba(201,168,0,0.12)',
+                color: filter === s ? '#fff' : '#C9A800',
               }}
             >
-              🏆 Плей-офф
-            </button>
-          )}
-          {GROUPS.map((g) => (
-            <button
-              key={g}
-              onClick={() => setFilter(g)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide"
-              style={{
-                background: filter === g ? '#C9A800' : 'rgba(0,0,0,0.05)',
-                color: filter === g ? '#fff' : '#6B7280',
-              }}
-            >
-              Гр.{g}
+              {KNOCKOUT_STAGE_LABELS[s]}
             </button>
           ))}
         </div>
+
+        {/* Подпункты групп — появляются по тапу «Групповой этап» */}
+        {groupsExpanded && (
+          <div className="flex gap-1.5 overflow-x-auto pt-2 scrollbar-hide">
+            <button
+              onClick={() => setFilter('group')}
+              className="flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black uppercase"
+              style={{
+                background: filter === 'group' ? 'rgba(201,168,0,0.2)' : 'rgba(0,0,0,0.04)',
+                color: filter === 'group' ? '#C9A800' : '#6B7280',
+                border: filter === 'group' ? '1px solid rgba(201,168,0,0.4)' : '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              Все группы
+            </button>
+            {GROUPS.map((g) => (
+              <button
+                key={g}
+                onClick={() => setFilter(g)}
+                className="flex-shrink-0 w-8 h-7 rounded-full text-[10px] font-black uppercase"
+                style={{
+                  background: filter === g ? '#C9A800' : 'rgba(0,0,0,0.04)',
+                  color: filter === g ? '#fff' : '#6B7280',
+                  border: filter === g ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Match list */}
       <div className="px-4">
-        {filteredMatches.map((match) => {
-          const result = results[match.id] || null
-          const pred = myPreds?.[match.id]
-          const kn = isKnockoutMatch(match)
-          const predWithPts = result && pred
-            ? { ...pred, pts: pred.pts ?? (kn ? calcKnockoutPoints(pred, result) : calcPointsLocal(pred, result)) }
-            : pred
-          const isSelected = selectedMatch === match.id
-          return (
-            <div
-              key={match.id}
-              style={{
-                opacity: selectedMatch && !isSelected ? 0.55 : 1,
-                transition: 'opacity 0.2s',
-              }}
+        {isGroupFilter ? (
+          (filter === 'group' ? groupMatches : groupMatches.filter((m) => m.group === filter)).map(renderMatch)
+        ) : koStages.includes(filter) ? (
+          koMatches.filter((m) => m.stage === filter).map(renderMatch)
+        ) : (
+          <>
+            {/* Режим «Все»: групповые прогнозы свёрнуты, плей-офф — ниже и раскрыт */}
+            <button
+              onClick={() => setGroupSectionOpen((v) => !v)}
+              className="w-full flex items-center gap-2 px-3 py-3 mb-2"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
             >
-              <MatchCard
-                match={match}
-                result={result}
-                myPred={inTg ? (predWithPts ?? null) : null}
-                onSave={handleSave}
-                saving={saving}
-                isSelected={isSelected}
-                onSelect={() => setSelectedMatch(isSelected ? null : match.id)}
-              />
-            </div>
-          )
-        })}
+              <span className="text-base">📊</span>
+              <span className="text-xs font-black uppercase tracking-wide" style={{ color: '#111827' }}>Групповой этап</span>
+              <span className="text-[10px]" style={{ color: '#9CA3AF' }}>· {groupMatches.length} матчей</span>
+              <span className="ml-auto text-[11px] font-bold" style={{ color: '#C9A800' }}>{groupSectionOpen ? 'Свернуть ▲' : 'Развернуть ▼'}</span>
+            </button>
+            {groupSectionOpen && <div className="mb-3">{groupMatches.map(renderMatch)}</div>}
+
+            {hasKnockout && koStages.map((s) => (
+              <div key={s} className="mb-1">
+                <div className="flex items-center gap-2 mt-3 mb-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#C9A800' }}>🏆 {KNOCKOUT_STAGE_LABELS[s]}</span>
+                  <div className="flex-1 h-px" style={{ background: 'rgba(201,168,0,0.25)' }} />
+                </div>
+                {koMatches.filter((m) => m.stage === s).map(renderMatch)}
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       {/* Scoring legend */}
       <div className="px-4 mt-4 mb-2">
-        {filter === 'ko' ? (
+        {koStages.includes(filter) ? (
           <KnockoutLegend />
         ) : (
           <div

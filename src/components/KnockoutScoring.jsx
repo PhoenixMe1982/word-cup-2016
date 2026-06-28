@@ -5,10 +5,10 @@ import { useState } from 'react'
 const GREEN = '#16A34A', GOLD = '#C9A800', BLUE = '#2563EB'
 
 const KO_ROWS = [
-  { pts: '+3', color: GREEN, label: 'Точный счёт в основное время (90′)' },
+  { pts: '+3', color: GREEN, label: 'Точный счёт к концу 90′' },
   { pts: '+1', color: GOLD,  label: 'Верный исход 90′ (ничья тоже считается)' },
-  { pts: '+2', color: GREEN, label: 'Точный счёт в доп. время (120′)' },
-  { pts: '+1', color: GOLD,  label: 'Верный исход доп. времени' },
+  { pts: '+2', color: GREEN, label: 'Точный итог к концу 120′ (общий счёт)' },
+  { pts: '+1', color: GOLD,  label: 'Верный исход за 120′' },
   { pts: '+1', color: GOLD,  label: 'Угадан победитель серии пенальти' },
   { pts: '+1', color: BLUE,  label: 'Угадан, кто прошёл дальше' },
 ]
@@ -35,7 +35,7 @@ export function KnockoutLegend() {
       <div className="text-[11px] font-black uppercase tracking-wide mb-2" style={{ color: '#C9A800' }}>🏆 Очки в плей-офф</div>
       <ScoringRows />
       <div className="text-[9px] mt-2 leading-snug" style={{ color: '#9CA3AF' }}>
-        Очки за стадии суммируются. На каждой стадии — большее из «точный счёт / исход». Поля доп. времени и пенальти открываются, только если в твоём прогнозе ничья.
+        Счёт указывается <b style={{ color: '#6B7280' }}>итоговый за период</b> (к 90′, затем общий к 120′), а не голы отдельного отрезка. Очки за стадии суммируются; на каждой — большее из «точный счёт / исход». Поля 120′ и пенальти открываются, только если в прогнозе ничья.
       </div>
     </div>
   )

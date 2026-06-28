@@ -238,7 +238,7 @@ export const MATCHES = [
 // теста без раскатки на пользователей: ?knockout=1 в URL (или localStorage
 // 'wc2026_knockoutTest'='1') включает фичу ТОЛЬКО на этом устройстве; ?knockout=0
 // выключает. Реальная раскатка — выставить KNOCKOUT_LIVE=true по сигналу.
-export const KNOCKOUT_LIVE = false;
+export const KNOCKOUT_LIVE = true;
 
 export function knockoutEnabled() {
   if (KNOCKOUT_LIVE) return true;
@@ -259,18 +259,85 @@ export const KNOCKOUT_STAGE_LABELS = {
 
 export const isKnockoutMatch = (m) => !!m && !!m.stage;
 
-// ЗАГЛУШКА-сетка для разработки/теста. Пары вымышленные (реальные станут
-// известны после группового этапа) — заменить настоящей сеткой при жеребьёвке
-// плей-офф. id плей-офф начинаются с m73 (контракт совпадает с бэкендом).
+// Реальная сетка плей-офф ЧМ-2026 (официальные пары после группового этапа).
+// R32 — команды известны; R16…финал — слоты TBD (home/away: null), команды
+// проставятся по мере резолва (см. KNOCKOUT_TREE — кто кого «кормит»). Времена
+// в МСК (UTC+3), даты/стадионы — по официальному календарю. id m73… совпадает
+// с контрактом бэкенда; нумерация матчей — официальная (R16 m89-96, 1/4 m97-100,
+// 1/2 m101-102, за 3-е m103, финал m104).
 export const KNOCKOUT_MATCHES = [
-  { id: 'm73', stage: 'r32',   date: '28 июня', time: '23:00 МСК', status: 'upcoming', home: 'BRA', away: 'SUI', venue: 'SoFi Stadium, Инглвуд',        goals: [] },
-  { id: 'm74', stage: 'r32',   date: '29 июня', time: '23:00 МСК', status: 'upcoming', home: 'ARG', away: 'NOR', venue: 'MetLife Stadium, Нью-Джерси',  goals: [] },
-  { id: 'm75', stage: 'r16',   date: '5 июля',  time: '22:00 МСК', status: 'upcoming', home: 'ESP', away: 'URU', venue: 'Estadio Azteca, Мехико',      goals: [] },
-  { id: 'm76', stage: 'qf',    date: '10 июля', time: '23:00 МСК', status: 'upcoming', home: 'FRA', away: 'ENG', venue: 'AT&T Stadium, Арлингтон',     goals: [] },
-  { id: 'm77', stage: 'sf',    date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: 'GER', away: 'POR', venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
-  { id: 'm78', stage: 'bronze',date: '18 июля', time: '22:00 МСК', status: 'upcoming', home: 'POR', away: 'BRA', venue: 'Hard Rock Stadium, Майами',   goals: [] },
-  { id: 'm79', stage: 'final', date: '19 июля', time: '22:00 МСК', status: 'upcoming', home: 'GER', away: 'FRA', venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
+  // ── 1/16 финала (R32) ──────────────────────────────────────────────────────
+  { id: 'm73', stage: 'r32',   date: '28 июня', time: '22:00 МСК', status: 'upcoming', home: 'RSA', away: 'CAN', venue: 'SoFi Stadium, Инглвуд',                goals: [] },
+  { id: 'm74', stage: 'r32',   date: '29 июня', time: '23:30 МСК', status: 'upcoming', home: 'GER', away: 'PAR', venue: 'Gillette Stadium, Бостон',             goals: [] },
+  { id: 'm75', stage: 'r32',   date: '30 июня', time: '04:00 МСК', status: 'upcoming', home: 'NED', away: 'MAR', venue: 'Estadio BBVA, Монтеррей',              goals: [] },
+  { id: 'm76', stage: 'r32',   date: '29 июня', time: '20:00 МСК', status: 'upcoming', home: 'BRA', away: 'JPN', venue: 'NRG Stadium, Хьюстон',                 goals: [] },
+  { id: 'm77', stage: 'r32',   date: '1 июля',  time: '00:00 МСК', status: 'upcoming', home: 'FRA', away: 'SWE', venue: 'MetLife Stadium, Нью-Джерси',          goals: [] },
+  { id: 'm78', stage: 'r32',   date: '30 июня', time: '20:00 МСК', status: 'upcoming', home: 'CIV', away: 'NOR', venue: 'AT&T Stadium, Арлингтон',              goals: [] },
+  { id: 'm79', stage: 'r32',   date: '1 июля',  time: '04:00 МСК', status: 'upcoming', home: 'MEX', away: 'ECU', venue: 'Estadio Azteca, Мехико',               goals: [] },
+  { id: 'm80', stage: 'r32',   date: '1 июля',  time: '19:00 МСК', status: 'upcoming', home: 'ENG', away: 'COD', venue: 'Mercedes-Benz Stadium, Атланта',       goals: [] },
+  { id: 'm81', stage: 'r32',   date: '2 июля',  time: '03:00 МСК', status: 'upcoming', home: 'USA', away: 'BIH', venue: 'Levi\'s Stadium, Санта-Клара',         goals: [] },
+  { id: 'm82', stage: 'r32',   date: '1 июля',  time: '23:00 МСК', status: 'upcoming', home: 'BEL', away: 'SEN', venue: 'Lumen Field, Сиэтл',                   goals: [] },
+  { id: 'm83', stage: 'r32',   date: '3 июля',  time: '02:00 МСК', status: 'upcoming', home: 'POR', away: 'CRO', venue: 'BMO Field, Торонто',                   goals: [] },
+  { id: 'm84', stage: 'r32',   date: '2 июля',  time: '22:00 МСК', status: 'upcoming', home: 'ESP', away: 'AUT', venue: 'SoFi Stadium, Инглвуд',                goals: [] },
+  { id: 'm85', stage: 'r32',   date: '3 июля',  time: '06:00 МСК', status: 'upcoming', home: 'SUI', away: 'ALG', venue: 'BC Place, Ванкувер',                   goals: [] },
+  { id: 'm86', stage: 'r32',   date: '4 июля',  time: '01:00 МСК', status: 'upcoming', home: 'ARG', away: 'CPV', venue: 'Hard Rock Stadium, Майами',            goals: [] },
+  { id: 'm87', stage: 'r32',   date: '4 июля',  time: '04:30 МСК', status: 'upcoming', home: 'COL', away: 'GHA', venue: 'Arrowhead Stadium, Канзас-Сити',       goals: [] },
+  { id: 'm88', stage: 'r32',   date: '3 июля',  time: '21:00 МСК', status: 'upcoming', home: 'AUS', away: 'EGY', venue: 'AT&T Stadium, Арлингтон',              goals: [] },
+  // ── 1/8 финала (R16) — команды TBD ──────────────────────────────────────────
+  { id: 'm89', stage: 'r16',   date: '4 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm90', stage: 'r16',   date: '5 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm91', stage: 'r16',   date: '6 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm92', stage: 'r16',   date: '6 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm93', stage: 'r16',   date: '7 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm94', stage: 'r16',   date: '5 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm95', stage: 'r16',   date: '7 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm96', stage: 'r16',   date: '6 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  // ── 1/4 финала (QF) — команды TBD ───────────────────────────────────────────
+  { id: 'm97',  stage: 'qf',   date: '9 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm98',  stage: 'qf',   date: '10 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm99',  stage: 'qf',   date: '11 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm100', stage: 'qf',   date: '11 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  // ── 1/2 финала (SF) — команды TBD ───────────────────────────────────────────
+  { id: 'm101', stage: 'sf',   date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm102', stage: 'sf',   date: '15 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  // ── За 3-е место и финал — команды TBD ──────────────────────────────────────
+  { id: 'm103', stage: 'bronze', date: '18 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Hard Rock Stadium, Майами',  goals: [] },
+  { id: 'm104', stage: 'final',  date: '19 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
 ];
+
+// Дерево плей-офф: matchId → [feederA, feederB] — победители этих двух матчей
+// встречаются в данном. Для bronze (m103) встречаются ПРОИГРАВШИЕ полуфиналов.
+// Источник истины для отрисовки сетки и подстановки команд по мере резолва.
+export const KNOCKOUT_TREE = {
+  m89: ['m74', 'm77'], m90: ['m73', 'm75'], m91: ['m76', 'm78'], m92: ['m79', 'm80'],
+  m93: ['m83', 'm84'], m94: ['m81', 'm82'], m95: ['m86', 'm88'], m96: ['m85', 'm87'],
+  m97: ['m89', 'm90'], m98: ['m93', 'm94'], m99: ['m91', 'm92'], m100: ['m95', 'm96'],
+  m101: ['m97', 'm98'], m102: ['m99', 'm100'],
+  m103: ['m101', 'm102'], m104: ['m101', 'm102'],
+};
+
+// Раскладка классической сетки «периферия → центр» (как на афише). Левая и
+// правая половины сходятся к кубку. Каждый массив — колонка сверху вниз.
+// R32: 8 матчей на сторону (16 флагов); далее R16(4)/QF(2)/SF(1) на сторону.
+export const KNOCKOUT_LAYOUT = {
+  left: {
+    r32: ['m74', 'm77', 'm73', 'm75', 'm83', 'm84', 'm81', 'm82'],
+    r16: ['m89', 'm90', 'm93', 'm94'],
+    qf:  ['m97', 'm98'],
+    sf:  ['m101'],
+  },
+  right: {
+    r32: ['m76', 'm78', 'm79', 'm80', 'm86', 'm88', 'm85', 'm87'],
+    r16: ['m91', 'm92', 'm95', 'm96'],
+    qf:  ['m99', 'm100'],
+    sf:  ['m102'],
+  },
+  final: 'm104',
+  bronze: 'm103',
+};
+
+// Порядок стадий плей-офф (для фильтра «Играть» и сортировки).
+export const KNOCKOUT_STAGE_ORDER = ['r32', 'r16', 'qf', 'sf', 'bronze', 'final'];
 
 // Претенденты на Золотую бутсу — турнир не начался, голов нет
 export const TOP_SCORERS = [
