@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { TEAMS } from '../data.js'
+import { TEAMS, KNOCKOUT_STAGE_LABELS, isKnockoutMatch } from '../data.js'
 import { H2H_DATA } from '../data/h2hData.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 import { toLocalDateTime, matchUTCDate, compareKickoff } from '../utils.js'
@@ -231,6 +231,9 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
   const isLive = !isFinished && (match.status === 'live' || timeStarted)
   const isUpcoming = !isFinished && !isLive
   const isLocked = !isUpcoming
+  // Подпись: групповой — «Группа X»; плей-офф — стадия (1/16, 1/8, …)
+  const knockout = isKnockoutMatch(match)
+  const tag = knockout ? (KNOCKOUT_STAGE_LABELS[match.stage] || 'Плей-офф') : `Группа ${match.group}`
 
   return (
     <div
@@ -238,8 +241,8 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
       onClick={isUpcoming ? onToggle : undefined}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: '#9CA3AF' }}>
-          Группа {match.group}
+        <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: knockout ? '#C9A800' : '#9CA3AF' }}>
+          {tag}
         </span>
         <div className="flex items-center gap-2">
           <StatusBadge status={isFinished ? 'finished' : isLive ? 'live' : 'upcoming'} time={match.time} date={match.date} />
@@ -360,6 +363,9 @@ export default function Schedule({ embedded = false }) {
   }
 
   const filtered = matches.filter((m) => {
+    // TBD-слоты плей-офф (команды ещё не определены) в расписании не показываем —
+    // без команд карточку нечем рендерить (их видно в разделе «Плей-офф»)
+    if (!m.home || !m.away) return false
     if (statusFilter !== 'all' && effStatus(m) !== statusFilter) return false
     if (groupFilter !== 'Все' && m.group !== groupFilter) return false
     return true
