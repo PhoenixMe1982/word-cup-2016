@@ -580,7 +580,7 @@ export default function Home({ onTab }) {
                 )}
               </div>
             ) : (
-              <button onClick={() => onTab('worldcup.schedule')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
+              <button onClick={() => onTab('worldcup.schedule.knockout')} className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#C9A800' }}>
                 Расписание →
               </button>
             )}
@@ -641,7 +641,7 @@ export default function Home({ onTab }) {
           </div>
           {totalPages > 1 && (
             <button
-              onClick={() => onTab('worldcup.schedule')}
+              onClick={() => onTab('worldcup.schedule.knockout')}
               className="mt-2 w-full text-[10px] font-bold uppercase tracking-wide py-1.5 text-center rounded-2xl"
               style={{ color: '#9CA3AF', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
             >

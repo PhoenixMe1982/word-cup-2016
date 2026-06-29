@@ -19,7 +19,7 @@ const SUB_TABS = [
   { id: 'schedule',    label: 'Матчи'      },
 ]
 
-export default function WorldCup({ initialSub = 'groups', onSubChange }) {
+export default function WorldCup({ initialSub = 'groups', onSubChange, scheduleFocusNonce = 0 }) {
   const [sub, setSub] = useState(initialSub)
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function WorldCup({ initialSub = 'groups', onSubChange }) {
     goalkeepers: <Goalkeepers />,
     teams:       <Teams />,
     records:     <AllTimeScorers />,
-    schedule:    <Schedule embedded />,
+    schedule:    <Schedule embedded focusKnockoutNonce={scheduleFocusNonce} />,
   }
 
   return (

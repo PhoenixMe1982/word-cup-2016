@@ -102,6 +102,9 @@ function AppShell() {
 
   const [tab, setTab] = useState('home')
   const [worldcupSub, setWorldcupSub] = useState('groups')
+  // Nonce: инкрементится при переходе «Всё расписание → плей-офф», чтобы Schedule
+  // каждый раз заново проматывал список к первому матчу плей-офф.
+  const [scheduleFocusNonce, setScheduleFocusNonce] = useState(0)
 
   // ── Splash / readiness ───────────────────────────────────────────────
   const inTg = !!window.Telegram?.WebApp?.initData
@@ -166,9 +169,13 @@ function AppShell() {
 
   function handleTab(t) {
     if (typeof t === 'string' && t.includes('.')) {
-      const [main, sub] = t.split('.')
+      // Формат: 'worldcup.schedule' либо 'worldcup.schedule.knockout' (фокус на плей-офф)
+      const [main, sub, focus] = t.split('.')
       setTab(main)
-      if (main === 'worldcup') setWorldcupSub(sub)
+      if (main === 'worldcup') {
+        setWorldcupSub(sub)
+        if (focus === 'knockout') setScheduleFocusNonce((n) => n + 1)
+      }
     } else {
       setTab(t)
     }
@@ -190,7 +197,7 @@ function AppShell() {
   const pages = {
     home:        <Home onTab={handleTab} />,
     play:        <PlayPage />,
-    worldcup:    <WorldCup initialSub={worldcupSub} onSubChange={setWorldcupSub} />,
+    worldcup:    <WorldCup initialSub={worldcupSub} onSubChange={setWorldcupSub} scheduleFocusNonce={scheduleFocusNonce} />,
     history:     <History />,
     leaderboard: <Leaderboard />,
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { TEAMS, KNOCKOUT_STAGE_LABELS, isKnockoutMatch } from '../data.js'
 import { H2H_DATA } from '../data/h2hData.js'
 import { useLiveData } from '../LiveDataContext.jsx'
@@ -320,13 +320,14 @@ const FILTERS = [
 
 const GROUP_KEYS = ['Все', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 
-export default function Schedule({ embedded = false }) {
+export default function Schedule({ embedded = false, focusKnockoutNonce = 0 }) {
   const { matches } = useLiveData()
   const [statusFilter, setStatusFilter] = useState('all')
   const [groupFilter, setGroupFilter] = useState('Все')
   const [expandedId, setExpandedId] = useState(null)
   const [myPreds, setMyPreds] = useState({})
   const [savingPred, setSavingPred] = useState(null)
+  const knockoutAnchorRef = useRef(null)
 
   const initData = getInitData()
   const inTg = !!initData
@@ -353,6 +354,19 @@ export default function Schedule({ embedded = false }) {
     finally { setSavingPred(null) }
   }, [initData])
 
+  // Переход «Всё расписание → плей-офф»: сбрасываем фильтры (чтобы матчи плей-офф
+  // точно были в списке) и проматываем к первому из них — групповой этап листать
+  // вручную не нужно.
+  useEffect(() => {
+    if (!focusKnockoutNonce) return
+    setStatusFilter('all')
+    setGroupFilter('Все')
+    const t = setTimeout(() => {
+      knockoutAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 180)
+    return () => clearTimeout(t)
+  }, [focusKnockoutNonce])
+
   // Эффективный статус: матч, начавшийся по расписанию, считается live,
   // даже если API ещё не переключил статус
   const effStatus = (m) => {
@@ -370,6 +384,9 @@ export default function Schedule({ embedded = false }) {
     if (groupFilter !== 'Все' && m.group !== groupFilter) return false
     return true
   }).sort(compareKickoff)
+
+  // Первый матч плей-офф в хронологии — якорь для автоскролла из «Всё расписание»
+  const firstKnockoutId = filtered.find(isKnockoutMatch)?.id
 
   const byDate = filtered.reduce((acc, m) => {
     const key = effStatus(m) === 'live' ? '🔴 Идёт сейчас' : toLocalDateTime(m.date, m.time).date
@@ -439,16 +456,21 @@ export default function Schedule({ embedded = false }) {
             </div>
             <div className="space-y-2">
               {dateMatches.map((m) => (
-                <MatchRow
+                <div
                   key={m.id}
-                  match={m}
-                  isExpanded={expandedId === m.id}
-                  onToggle={() => toggleExpand(m.id)}
-                  myPred={myPreds[m.id]}
-                  onSavePred={savePred}
-                  savingPred={savingPred}
-                  inTg={inTg}
-                />
+                  ref={m.id === firstKnockoutId ? knockoutAnchorRef : undefined}
+                  style={m.id === firstKnockoutId ? { scrollMarginTop: 150 } : undefined}
+                >
+                  <MatchRow
+                    match={m}
+                    isExpanded={expandedId === m.id}
+                    onToggle={() => toggleExpand(m.id)}
+                    myPred={myPreds[m.id]}
+                    onSavePred={savePred}
+                    savingPred={savingPred}
+                    inTg={inTg}
+                  />
+                </div>
               ))}
             </div>
           </div>
