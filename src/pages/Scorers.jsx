@@ -63,7 +63,6 @@ function ScorerRow({ scorer, maxVal, view }) {
           </div>
           <div className="flex items-center gap-2 text-[10px]" style={{ color: '#6B7280' }}>
             <span>{team?.flag} {team?.name}</span>
-            {scorer.club && <><span>·</span><span>{scorer.club}</span></>}
           </div>
           <div className="mt-2 stat-bar">
             <div
@@ -143,7 +142,7 @@ export default function Scorers() {
                 <div key={`${c.team}-${c.name}`} className="flex items-center gap-2 min-w-0">
                   <span className="text-base flex-shrink-0">{TEAMS[c.team]?.flag}</span>
                   <span className="text-base font-black uppercase truncate" style={{ color: '#111827' }}>{c.name}</span>
-                  <span className="text-[11px] truncate" style={{ color: '#6B7280' }}>{c.club || TEAMS[c.team]?.name}</span>
+                  <span className="text-[11px] truncate" style={{ color: '#6B7280' }}>{TEAMS[c.team]?.name}</span>
                 </div>
               ))}
             </div>

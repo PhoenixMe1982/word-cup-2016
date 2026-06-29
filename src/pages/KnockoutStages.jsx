@@ -1,7 +1,7 @@
 import { TEAMS, KNOCKOUT_STAGE_ORDER, KNOCKOUT_STAGE_LABELS, isKnockoutMatch } from '../data.js'
 import { resolveTeams } from '../knockout.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime, matchUTCDate } from '../utils.js'
+import { toLocalDateTime, matchUTCDate, compareKickoff } from '../utils.js'
 
 // Эффективный статус: матч, начавшийся по расписанию, считаем идущим, даже если
 // статус из API ещё не переключился (лаг поллера до 5 минут).
@@ -82,6 +82,8 @@ export default function KnockoutStages() {
   const koMatches = matches.filter(isKnockoutMatch)
   const byStage = {}
   for (const m of koMatches) (byStage[m.stage] ||= []).push(m)
+  // Внутри каждой стадии — строго по времени начала
+  for (const stage of Object.keys(byStage)) byStage[stage].sort(compareKickoff)
 
   return (
     <div className="page-content">

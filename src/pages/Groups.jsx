@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TEAMS, MATCHES } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime, matchUTCDate } from '../utils.js'
+import { toLocalDateTime, compareKickoff } from '../utils.js'
 
 // Все матчи группы (хронологически). Завершённые — со счётом, остальные — со временем.
 function GroupMatches({ groupKey, matches }) {
@@ -10,7 +10,7 @@ function GroupMatches({ groupKey, matches }) {
   const list = MATCHES
     .filter((m) => m.group === groupKey)
     .map((m) => byId[m.id] || m)
-    .sort((a, b) => (matchUTCDate(a.date, a.time)?.getTime() ?? 0) - (matchUTCDate(b.date, b.time)?.getTime() ?? 0))
+    .sort(compareKickoff)
 
   return (
     <div className="mb-4">

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TEAMS, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS, KNOCKOUT_STAGE_ORDER, isKnockoutMatch, knockoutEnabled } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime, matchUTCDate, calcKnockoutBreakdown, calcKnockoutPoints } from '../utils.js'
+import { toLocalDateTime, matchUTCDate, calcKnockoutBreakdown, calcKnockoutPoints, compareKickoff } from '../utils.js'
 import { KnockoutLegend } from '../components/KnockoutScoring.jsx'
 
 const KO_ENABLED = knockoutEnabled()
@@ -495,8 +495,8 @@ export default function PlayPage() {
   }
 
   // Разделяем матчи: групповые и плей-офф (по стадиям).
-  const groupMatches = matches.filter((m) => !isKnockoutMatch(m))
-  const koMatches = matches.filter((m) => isKnockoutMatch(m))
+  const groupMatches = matches.filter((m) => !isKnockoutMatch(m)).sort(compareKickoff)
+  const koMatches = matches.filter((m) => isKnockoutMatch(m)).sort(compareKickoff)
   const hasKnockout = KO_ENABLED && koMatches.length > 0
   // Стадии, в которых есть хотя бы один матч (для чипов субпанели).
   const koStages = KNOCKOUT_STAGE_ORDER.filter((s) => koMatches.some((m) => m.stage === s))

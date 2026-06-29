@@ -18,6 +18,14 @@ export function matchUTCDate(dateStr, timeStr) {
   return new Date(Date.UTC(2026, monthIdx, day, h - 3, m))
 }
 
+// Компаратор для строгой хронологической сортировки матчей по времени начала
+// (раньше → выше). Матчи без распознанной даты/времени уезжают в конец.
+export function compareKickoff(a, b) {
+  const ta = matchUTCDate(a.date, a.time)?.getTime() ?? Infinity
+  const tb = matchUTCDate(b.date, b.time)?.getTime() ?? Infinity
+  return ta - tb
+}
+
 // ── Скоринг плей-офф (зеркало bot/scoring.js) ───────────────────────────────
 // ВАЖНО: держать идентичным calcPointsKnockout на бэкенде. Используется только
 // для отображения очков в карточке; источник истины — бэкенд (myPred.pts).

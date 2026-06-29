@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { TEAMS } from '../data.js'
 import { H2H_DATA } from '../data/h2hData.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime, matchUTCDate } from '../utils.js'
+import { toLocalDateTime, matchUTCDate, compareKickoff } from '../utils.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -363,7 +363,7 @@ export default function Schedule({ embedded = false }) {
     if (statusFilter !== 'all' && effStatus(m) !== statusFilter) return false
     if (groupFilter !== 'Все' && m.group !== groupFilter) return false
     return true
-  })
+  }).sort(compareKickoff)
 
   const byDate = filtered.reduce((acc, m) => {
     const key = effStatus(m) === 'live' ? '🔴 Идёт сейчас' : toLocalDateTime(m.date, m.time).date

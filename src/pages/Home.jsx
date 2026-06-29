@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { TEAMS, TOURNAMENT, MATCHES, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
-import { toLocalDateTime, matchUTCDate } from '../utils.js'
+import { toLocalDateTime, matchUTCDate, compareKickoff } from '../utils.js'
 import CountdownTimer from '../components/CountdownTimer.jsx'
 import TournamentProgressBar from '../components/TournamentProgressBar.jsx'
 import PlayoffBracket from '../components/PlayoffBracket.jsx'
@@ -371,7 +371,9 @@ export default function Home({ onTab }) {
   // Матч с определёнными командами (нокаут-слоты TBD ещё без пар — в списках не показываем)
   const hasTeams = (m) => !!(m.home && m.away)
 
-  const liveMatches = matches.filter((m) => hasTeams(m) && (m.status === 'live' || isTimeLive(m)))
+  const liveMatches = matches
+    .filter((m) => hasTeams(m) && (m.status === 'live' || isTimeLive(m)))
+    .sort(compareKickoff)
 
   const allFinished = matches.filter(m => m.status === 'finished' && hasTeams(m))
   // Самые свежие результаты сверху: сортируем по дате матча по убыванию
@@ -382,7 +384,10 @@ export default function Home({ onTab }) {
       return db - da
     })
     .slice(0, 4)
-  const upcomingMatches = matches.filter((m) => m.status === 'upcoming' && hasTeams(m) && !isTimeLive(m))
+  const upcomingMatches = matches
+    .filter((m) => m.status === 'upcoming' && hasTeams(m) && !isTimeLive(m))
+    // Хронологический порядок по времени начала: ближайший — первым
+    .sort(compareKickoff)
 
   const timeBasedFinished = matches.filter(m => {
     if (m.status !== 'upcoming' || !hasTeams(m)) return false
@@ -725,7 +730,7 @@ export default function Home({ onTab }) {
                     <span className="text-xl flex-shrink-0">{TEAMS[s.team]?.flag}</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold truncate uppercase" style={{ color: '#111827' }}>{s.name}</div>
-                      <div className="text-[10px]" style={{ color: '#6B7280' }}>{TEAMS[s.team]?.name}{s.club ? ` · ${s.club}` : ''}</div>
+                      <div className="text-[10px]" style={{ color: '#6B7280' }}>{TEAMS[s.team]?.name}</div>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-xl font-black" style={{ color: '#C9A800' }}>{s.goals}</span>
