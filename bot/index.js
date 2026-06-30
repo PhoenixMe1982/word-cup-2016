@@ -258,6 +258,37 @@ async function settleMatch(matchId, homeScore, awayScore, meta = {}) {
   return Object.keys(matchPreds).length
 }
 
+// ── Разовая миграция: проставить winner застрявшим сериям пенальти ──────────
+// m74 (GER-PAR) и m75 (NED-MAR) зафиксировались от FD без winner (серия пришла
+// ничьей) → балл за серию и страховка за проход не начислились никому. Здесь
+// проставляем реального прошедшего (оба раза — AWAY); settleMatch на том же
+// счёте делает delta-переначисление. Идемпотентно: гард-флаг в Redis + пропуск
+// матчей, у которых winner уже есть. После одного успешного прогона можно убрать.
+const KO_PENS_WINNER_FIXES = [
+  { id: 'm75', winner: 'AWAY_TEAM' }, // Нидерланды—Марокко → прошло Марокко
+  { id: 'm74', winner: 'AWAY_TEAM' }, // Германия—Парагвай → прошёл Парагвай
+]
+async function migrateKnockoutPensWinner() {
+  if (!REDIS_URL || !REDIS_TOKEN) return
+  const FLAG = `${KEY_PREFIX}wc2026_migration:ko-pens-winner-v1`
+  try {
+    if (await rget(FLAG)) return
+    const results = (await rget(K.results)) || {}
+    for (const f of KO_PENS_WINNER_FIXES) {
+      const r = results[f.id]
+      if (!r) { console.log(`[migrate] ${f.id} нет в results — пропуск`); continue }
+      if (r.winner) { console.log(`[migrate] ${f.id} уже winner=${r.winner} — пропуск`); continue }
+      const meta = { knockout: true, winner: f.winner, duration: 'PENALTY_SHOOTOUT' }
+      const n = await settleMatch(f.id, r.home, r.away, meta)
+      console.log(`[migrate] ${f.id} winner=${f.winner} → переначислено прогнозов: ${n}`)
+    }
+    await rset(FLAG, { done: true, at: new Date().toISOString() })
+    console.log('[migrate] ko-pens-winner-v1 завершена')
+  } catch (e) {
+    console.error('[migrate] ko-pens-winner-v1 ошибка:', e.message)
+  }
+}
+
 // ── Ранжирование лидерборда с тай-брейками ────────────────────────────────
 // Очки в Redis (sorted set) задают основной порядок, но при равенстве очков
 // Redis сортирует лексикографически по userId (фактически случайно). Поэтому
@@ -1210,6 +1241,10 @@ startBot()
 
 const PORT = process.env.PORT || 10000
 app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
+
+// Разовое доначисление застрявших серий пенальти (m74/m75). Гард-флаг в Redis —
+// на повторных деплоях не сработает. Поллер m74/m75 не трогает (они в results).
+migrateKnockoutPensWinner()
 
 if (FDORG_TOKEN) {
   pollFootballData()
