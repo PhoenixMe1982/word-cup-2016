@@ -147,10 +147,26 @@ function LiveMatchCard({ match }) {
   )
 }
 
+// Нокаут-суффикс к итоговому счёту: серия пенальти → «(пен. X:Y)» (цифры, если
+// они достоверны, т.е. не ничья), иначе «(пен.)»; решено в доп. время → «(д.в.)».
+// Группа — без суффикса. Данные (duration/penHome/winner) подмешаны из /api/live.
+function knockoutResultSuffix(match) {
+  if (!match.stage) return null
+  const pensHappened = match.duration === 'PENALTY_SHOOTOUT' || match.penHome != null
+  if (pensHappened) {
+    return (match.penHome != null && match.penAway != null && match.penHome !== match.penAway)
+      ? `пен. ${match.penHome}:${match.penAway}`
+      : 'пен.'
+  }
+  if (match.duration === 'EXTRA_TIME') return 'д.в.'
+  return null
+}
+
 function FinishedMatchCard({ match }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
   const { date: localDate } = toLocalDateTime(match.date, match.time)
+  const koSuffix = knockoutResultSuffix(match)
   return (
     <div className="match-finished-card p-3 flex items-center gap-3">
       <div className="text-[10px] w-12 text-center flex-shrink-0" style={{ color: '#9CA3AF' }}>{localDate}</div>
@@ -158,10 +174,15 @@ function FinishedMatchCard({ match }) {
         <span className="text-lg">{home.flag}</span>
         <span className="text-xs truncate font-semibold uppercase" style={{ color: '#111827' }}>{home.name}</span>
       </div>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <span className="text-sm font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
-        <span className="text-xs" style={{ color: '#9CA3AF' }}>:</span>
-        <span className="text-sm font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
+      <div className="flex flex-col items-center flex-shrink-0">
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-black score-number" style={{ color: '#111827' }}>{match.scoreHome}</span>
+          <span className="text-xs" style={{ color: '#9CA3AF' }}>:</span>
+          <span className="text-sm font-black score-number" style={{ color: '#111827' }}>{match.scoreAway}</span>
+        </div>
+        {koSuffix && (
+          <span className="text-[8px] leading-tight whitespace-nowrap" style={{ color: '#9CA3AF' }}>({koSuffix})</span>
+        )}
       </div>
       <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
         <span className="text-xs truncate text-right font-semibold uppercase" style={{ color: '#111827' }}>{away.name}</span>

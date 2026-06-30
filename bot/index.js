@@ -935,6 +935,41 @@ bot.command('score', async (ctx) => {
   }
 })
 
+// /pen m75 4:5 — вручную задать ВЕРНЫЙ счёт серии пенальти (хозяева:гости).
+// Нужна, потому что football-data на сериях отдаёт недостоверный счёт (ничья).
+// Счёт серии — источник истины: победитель = у кого больше (прошёл ⇒ выиграл),
+// поэтому команда заодно проставляет winner и пересверяет очки. Матч должен быть
+// уже зафиксирован (/score). Идемпотентно/delta-безопасно.
+bot.command('pen', async (ctx) => {
+  if (ctx.from.id !== ADMIN_ID) return
+  const raw = ctx.message.text.replace(/^\/pen\s*/, '').trim()
+  const m = raw.match(/^(\w+)\s+(\d+):(\d+)$/)
+  if (!m) return ctx.reply('Формат: /pen m75 4:5  (счёт серии пенальти — хозяева:гости)')
+  const [, matchId, phs, pas] = m
+  const ph = parseInt(phs), pa = parseInt(pas)
+  if (ph === pa) return ctx.reply('Счёт серии не может быть ничейным — у кого-то больше (напр. 5:4)')
+  try {
+    const results = (await rget(K.results)) || {}
+    const r = results[matchId]
+    if (!r) return ctx.reply(`Матч ${matchId} ещё не зафиксирован — сначала /score ${matchId} H:A`)
+    const winner = ph > pa ? 'HOME_TEAM' : 'AWAY_TEAM'
+    const meta = { knockout: true, duration: 'PENALTY_SHOOTOUT', penHome: ph, penAway: pa, winner }
+    const count = await settleMatch(matchId, r.home, r.away, meta)
+    // Сразу отражаем в аппке (полный набор полей, чтобы /api/live не потерял пен/winner).
+    liveState.matchResults[matchId] = {
+      status: 'finished', scoreHome: r.home, scoreAway: r.away,
+      penHome: ph, penAway: pa, winner, duration: 'PENALTY_SHOOTOUT',
+    }
+    return ctx.reply(
+      `✅ ${matchId}: серия пенальти ${ph}:${pa} → прошёл ${winner === 'HOME_TEAM' ? 'хозяин' : 'гость'}\n` +
+      `• Счёт серии показан на главной как «(пен. ${ph}:${pa})».\n` +
+      `• Прогнозов пересверено: ${count} (очки delta-безопасны).`
+    )
+  } catch (e) {
+    return ctx.reply(`❌ Ошибка: ${e.message}`)
+  }
+})
+
 bot.command('send', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
   const text = ctx.message.text.replace(/^\/send\s*/, '').trim()
