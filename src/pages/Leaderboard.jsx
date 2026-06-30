@@ -170,11 +170,12 @@ function PredRow({ item }) {
           <div className="text-[10px]" style={{ color: '#9CA3AF' }}>
             Итог: <b>{ko ? '90′ ' : ''}{result.reg ? `${result.reg.home}:${result.reg.away}` : `${result.home}:${result.away}`}</b>
             {result.et && <> · 120′ <b>{result.et.home}:{result.et.away}</b></>}
-            {/* Серия: показываем прошедшего (флаг), а не цифры — счёт серии из FD
-                недостоверен (приходит ничьей). Цифры — фолбэк, если winner нет. */}
-            {(result.winner === 'HOME_TEAM' || result.winner === 'AWAY_TEAM')
-              ? <> · пен <b>{result.winner === 'HOME_TEAM' ? homeTeam.flag : awayTeam.flag}</b></>
-              : result.penHome != null && <> · пен <b>{result.penHome}:{result.penAway}</b></>}
+            {/* «пен» — ТОЛЬКО если реально была серия (duration), не просто при
+                наличии winner: иначе флаг вылезал бы на матчах, решённых в осн./доп.
+                время. Показываем флаг прошедшего (счёт серии из FD недостоверен). */}
+            {result.duration === 'PENALTY_SHOOTOUT' && (result.winner === 'HOME_TEAM' || result.winner === 'AWAY_TEAM') && (
+              <> · пен <b>{result.winner === 'HOME_TEAM' ? homeTeam.flag : awayTeam.flag}</b></>
+            )}
           </div>
         )}
 

@@ -408,10 +408,10 @@ function MatchCard({ match, result, myPred, onSave, saving, isSelected, onSelect
             <span style={{ color: '#9CA3AF' }}>Итог:</span>
             <span className="font-black">90′ {result.reg ? `${result.reg.home}:${result.reg.away}` : `${result.home}:${result.away}`}</span>
             {result.et && <span className="font-black">· 120′ {result.et.home}:{result.et.away}</span>}
-            {/* Серия: прошедший (флаг), а не цифры — счёт серии из FD недостоверен. */}
-            {(result.winner === 'HOME_TEAM' || result.winner === 'AWAY_TEAM')
-              ? <span className="font-black">· пен. {(result.winner === 'HOME_TEAM' ? home : away).flag}</span>
-              : result.penHome != null && <span className="font-black">· пен. {result.penHome}:{result.penAway}</span>}
+            {/* «пен» — только при реальной серии (duration), не просто при winner. */}
+            {result.duration === 'PENALTY_SHOOTOUT' && (result.winner === 'HOME_TEAM' || result.winner === 'AWAY_TEAM') && (
+              <span className="font-black">· пен. {(result.winner === 'HOME_TEAM' ? home : away).flag}</span>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <span style={{ color: '#9CA3AF' }}>Твой прогноз:</span>
