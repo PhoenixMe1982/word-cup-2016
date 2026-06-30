@@ -93,4 +93,20 @@ eq(calcPointsKnockout(
   { reg: { home: 1, away: 0 }, winner: 'HOME_TEAM' },
 ), 0, 'L: прогноз-ничья без et, страховка null')
 
+// ── M. Серия пенальти БЕЗ достоверных цифр (баг FD m74/m75) ─────────────────
+// FD прислал ничью/пусто по пенальти, но duration=PENALTY_SHOOTOUT + winner.
+// «Была серия» определяется по duration → пен и страховка начисляются по winner.
+// Идеальный прогноз (как у Czeslaw): 90′ +3, 120′ +2, пен +1, страховка +1 = 7.
+eq(calcPointsKnockout(
+  { home: 1, away: 1, et: { home: 1, away: 1 }, penWinner: 'AWAY' },
+  { reg: { home: 1, away: 1 }, et: { home: 1, away: 1 }, winner: 'AWAY_TEAM', duration: 'PENALTY_SHOOTOUT' },
+), 7, 'M: серия без цифр пенальти — зачёт по duration+winner')
+
+// ── N. Та же серия, но прогноз пен-победителя мимо ─────────────────────────
+// 90′ +3, 120′ +2, пен 0 (HOME vs AWAY-winner), страховка 0 (predAdv=HOME) = 5
+eq(calcPointsKnockout(
+  { home: 1, away: 1, et: { home: 1, away: 1 }, penWinner: 'HOME' },
+  { reg: { home: 1, away: 1 }, et: { home: 1, away: 1 }, winner: 'AWAY_TEAM', duration: 'PENALTY_SHOOTOUT' },
+), 5, 'N: серия без цифр — пен-победитель мимо')
+
 console.log(`✅ all ${n} assertions passed`)

@@ -170,7 +170,11 @@ function PredRow({ item }) {
           <div className="text-[10px]" style={{ color: '#9CA3AF' }}>
             Итог: <b>{ko ? '90′ ' : ''}{result.reg ? `${result.reg.home}:${result.reg.away}` : `${result.home}:${result.away}`}</b>
             {result.et && <> · 120′ <b>{result.et.home}:{result.et.away}</b></>}
-            {result.penHome != null && <> · пен <b>{result.penHome}:{result.penAway}</b></>}
+            {/* Серия: показываем прошедшего (флаг), а не цифры — счёт серии из FD
+                недостоверен (приходит ничьей). Цифры — фолбэк, если winner нет. */}
+            {(result.winner === 'HOME_TEAM' || result.winner === 'AWAY_TEAM')
+              ? <> · пен <b>{result.winner === 'HOME_TEAM' ? homeTeam.flag : awayTeam.flag}</b></>
+              : result.penHome != null && <> · пен <b>{result.penHome}:{result.penAway}</b></>}
           </div>
         )}
 

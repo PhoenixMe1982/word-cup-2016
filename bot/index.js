@@ -4,7 +4,7 @@ const path = require('path')
 const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
-const { lookupMatchId, normTLA, settleScore, resultMeta, knockoutResultFields, isKnockoutMatchId } = require('./match-lookup.js')
+const { MATCH_LOOKUP, lookupMatchId, normTLA, settleScore, resultMeta, knockoutResultFields, isKnockoutMatchId } = require('./match-lookup.js')
 const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
@@ -184,6 +184,21 @@ function calcPoints(pred, result) {
   return predOutcome === realOutcome ? 1 : 0
 }
 
+// Резолв победителя пары для ручного зачёта (/score). Принимает HOME/AWAY/H/A
+// либо TLA одной из команд (резолвится через обратный MATCH_LOOKUP). Возвращает
+// FD-формат 'HOME_TEAM'|'AWAY_TEAM' или null, если токен не распознан.
+function resolveWinnerSide(matchId, tok) {
+  const t = String(tok).toUpperCase()
+  if (t === 'HOME' || t === 'H') return 'HOME_TEAM'
+  if (t === 'AWAY' || t === 'A') return 'AWAY_TEAM'
+  const pair = Object.keys(MATCH_LOOKUP).find((k) => MATCH_LOOKUP[k] === matchId)
+  if (!pair) return null
+  const [homeTLA, awayTLA] = pair.split('_')
+  if (normTLA(t) === homeTLA) return 'HOME_TEAM'
+  if (normTLA(t) === awayTLA) return 'AWAY_TEAM'
+  return null
+}
+
 async function settleMatch(matchId, homeScore, awayScore, meta = {}) {
   const results = (await rget(K.results)) || {}
 
@@ -194,12 +209,31 @@ async function settleMatch(matchId, homeScore, awayScore, meta = {}) {
   const existing = results[matchId]
   if (existing && existing.home === homeScore && existing.away === awayScore) {
     const merged = { ...existing, ...meta }
-    if (JSON.stringify(merged) !== JSON.stringify(existing)) {
-      results[matchId] = merged
-      await rset(K.results, results)
+    if (JSON.stringify(merged) === JSON.stringify(existing)) {
+      console.log(`[settle] ${matchId} already settled ${homeScore}:${awayScore}, no change`)
+      return 0
     }
-    console.log(`[settle] ${matchId} already settled ${homeScore}:${awayScore}, skip (meta refreshed)`)
-    return 0
+    results[matchId] = merged
+    await rset(K.results, results)
+    // На группе мета (penHome/winner/duration) — только отображение, очки не
+    // зависят. На нокауте winner/reg/et ВЛИЯЮТ на очки (балл за серию + проход),
+    // поэтому при их правке переначисляем delta-безопасно (как при коррекции
+    // счёта). Иначе доустановка winner не доехала бы до лидерборда.
+    if (!merged.knockout) {
+      console.log(`[settle] ${matchId} meta refreshed (group), no rescore`)
+      return 0
+    }
+    const koPreds = (await rget(K.preds(matchId))) || {}
+    let rescored = 0
+    for (const [userId, pred] of Object.entries(koPreds)) {
+      const pts = calcPoints(pred, merged)
+      const delta = pts - calcPoints(pred, existing)
+      if (delta !== 0) { await redisExec('ZINCRBY', K.leaderboard, delta, userId); rescored++ }
+      const upreds = (await rget(K.upreds(userId))) || {}
+      if (upreds[matchId]) { upreds[matchId].pts = pts; await rset(K.upreds(userId), upreds) }
+    }
+    console.log(`[settle] ${matchId} knockout meta changed → rescored ${rescored}/${Object.keys(koPreds).length}`)
+    return rescored
   }
 
   const result = { home: homeScore, away: awayScore, settledAt: new Date().toISOString(), ...meta }
@@ -351,7 +385,14 @@ function extractFinalResult(m) {
   if (!score) return null
   // knockoutResultFields добавляет {knockout, reg, et} только на плей-офф —
   // на группе пусто, поведение не меняется.
-  return { ...score, ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
+  const meta = { ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
+  // Нокаут по пенальти без достоверного победителя НЕ фиксируем: football-data
+  // иногда отдаёт FINISHED с duration PENALTY_SHOOTOUT, но winner ещё null (и
+  // penalties кумулятивом/ничьей). Без winner нельзя начислить балл за серию и
+  // за проход — ждём следующий поллинг. Иначе матч «застрял бы» с пен 1:1 и
+  // недозачётом (как было с m75 NED—MAR). Касается 1/8…финала.
+  if (meta.knockout && m.score?.duration === 'PENALTY_SHOOTOUT' && !meta.winner) return null
+  return { ...score, ...meta }
 }
 
 // Поля карточки завершённого матча из записанного/полученного результата.
@@ -767,6 +808,7 @@ app.get('/api/predictions/:userId', async (req, res) => {
           if (r.et) result.et = { home: r.et.home, away: r.et.away }
           if (r.penHome != null) { result.penHome = r.penHome; result.penAway = r.penAway }
           if (r.winner) result.winner = r.winner
+          if (r.duration) result.duration = r.duration
           if (r.knockout) result.knockout = true
         }
         return { matchId, pred, result, pts: p.pts }
@@ -832,12 +874,23 @@ bot.command('stats', async (ctx) => {
 bot.command('score', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
   const raw = ctx.message.text.replace(/^\/score\s*/, '').trim()
-  const match = raw.match(/^(\w+)\s+(\d+):(\d+)$/)
-  if (!match) return ctx.reply('Формат: /score m01 2:1')
-  const [, matchId, hs, as] = match
+  // Нокаут с серией: 4-й токен — кто ПРОШЁЛ (HOME/AWAY или TLA сборной). По нашему
+  // правилу «прошёл ⇒ выиграл серию», поэтому цифры пенальти знать не нужно —
+  // достаточно победителя. Он же чинит застрявшие FD-серии без winner (m74/m75).
+  const match = raw.match(/^(\w+)\s+(\d+):(\d+)(?:\s+(\S+))?$/)
+  if (!match) return ctx.reply('Формат: /score m01 2:1  ·  серия пенальти: /score m75 1:1 MAR (или AWAY)')
+  const [, matchId, hs, as, winTok] = match
   const h = parseInt(hs), a = parseInt(as)
+  let meta = {}
+  if (winTok) {
+    const side = resolveWinnerSide(matchId, winTok)
+    if (!side) return ctx.reply('Победитель серии: HOME/AWAY или TLA одной из команд пары (напр. MAR)')
+    // duration помечает, что была серия → балл за серию начисляется по winner,
+    // НЕ по цифрам пенальти (их из FD считаем недостоверными).
+    meta = { knockout: true, winner: side, duration: 'PENALTY_SHOOTOUT' }
+  }
   try {
-    const count = await settleMatch(matchId, h, a)
+    const count = await settleMatch(matchId, h, a, meta)
     // Мгновенно отражаем счёт в аппке, не дожидаясь следующего поллинга (≤5 мин).
     // На последующих циклах поллер подтвердит это из results (источник истины).
     liveState.matchResults[matchId] = { status: 'finished', scoreHome: h, scoreAway: a }

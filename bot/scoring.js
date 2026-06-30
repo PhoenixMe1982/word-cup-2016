@@ -54,9 +54,12 @@ function calcPointsKnockout(pred, result) {
     pts += stagePoints(pred.et.home, pred.et.away, result.et.home, result.et.away, 2, 1)
   }
 
-  // 3) Пенальти — только если прогноз дошёл (ничья 120′ + penWinner) И была серия
+  // 3) Пенальти — только если прогноз дошёл (ничья 120′ + penWinner) И была серия.
+  // «Была серия» определяем по duration/winner, НЕ по цифрам пенальти: FD на
+  // сериях отдаёт недостоверный счёт (ничья 5:5/1:1). Правило «прошёл ⇒ выиграл
+  // серию» — победитель серии = result.winner (кто прошёл дальше).
   const predReachedPens = predReached120 && pred.et.home === pred.et.away && !!pred.penWinner
-  const realWentToPens = result.penHome != null
+  const realWentToPens = result.duration === 'PENALTY_SHOOTOUT' || result.penHome != null
   if (predReachedPens && realWentToPens) {
     if (normWinner(pred.penWinner) === normWinner(result.winner)) pts += 1
   }

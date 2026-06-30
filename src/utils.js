@@ -57,7 +57,9 @@ export function calcKnockoutBreakdown(pred, result) {
   if (reached120 && result.et) p120 = knStage(pred.et.home, pred.et.away, result.et.home, result.et.away, 2, 1)
   let pPen = 0
   const reachedPens = reached120 && pred.et.home === pred.et.away && !!pred.penWinner
-  if (reachedPens && result.penHome != null && knNormWinner(pred.penWinner) === knNormWinner(result.winner)) pPen = 1
+  // «Была серия» — по duration/winner, не по цифрам пенальти (FD недостоверен).
+  const realWentToPens = result.duration === 'PENALTY_SHOOTOUT' || result.penHome != null
+  if (reachedPens && realWentToPens && knNormWinner(pred.penWinner) === knNormWinner(result.winner)) pPen = 1
   let pAdv = 0
   const realAdv = knNormWinner(result.winner)
   const pAdvSide = predAdvancer(pred)
