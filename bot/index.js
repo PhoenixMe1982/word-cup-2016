@@ -289,6 +289,34 @@ async function migrateKnockoutPensWinner() {
   }
 }
 
+// ── Разовая миграция: починить разбивку 90′/120′ у m82 (BEL-SEN) ────────────
+// FD прислал мусорную разбивку (reg 3:2, et 4:2 при итоге 3:2, без duration).
+// Реально: 90′ 2:2 → доп. время 3:2 (Бельгия прошла). Неверный reg искажал зачёт
+// за 90′. Проставляем верные reg/et/duration; settleMatch delta-переначисляет.
+async function migrateM82ExtraTime() {
+  if (!REDIS_URL || !REDIS_TOKEN) return
+  const FLAG = `${KEY_PREFIX}wc2026_migration:m82-et-v1`
+  try {
+    if (await rget(FLAG)) return
+    const results = (await rget(K.results)) || {}
+    const r = results.m82
+    if (r) {
+      const meta = {
+        knockout: true, duration: 'EXTRA_TIME',
+        reg: { home: 2, away: 2 }, et: { home: 3, away: 2 }, winner: 'HOME_TEAM',
+      }
+      const n = await settleMatch('m82', 3, 2, meta) // итог за 120′ = 3:2
+      console.log(`[migrate] m82 доп.время 2:2→3:2 → переначислено прогнозов: ${n}`)
+    } else {
+      console.log('[migrate] m82 нет в results — пропуск')
+    }
+    await rset(FLAG, { done: true, at: new Date().toISOString() })
+    console.log('[migrate] m82-et-v1 завершена')
+  } catch (e) {
+    console.error('[migrate] m82-et-v1 ошибка:', e.message)
+  }
+}
+
 // ── Ранжирование лидерборда с тай-брейками ────────────────────────────────
 // Очки в Redis (sorted set) задают основной порядок, но при равенстве очков
 // Redis сортирует лексикографически по userId (фактически случайно). Поэтому
@@ -905,15 +933,39 @@ bot.command('stats', async (ctx) => {
 bot.command('score', async (ctx) => {
   if (ctx.from.id !== ADMIN_ID) return
   const raw = ctx.message.text.replace(/^\/score\s*/, '').trim()
-  // Нокаут с серией: 4-й токен — кто ПРОШЁЛ (HOME/AWAY или TLA сборной). По нашему
-  // правилу «прошёл ⇒ выиграл серию», поэтому цифры пенальти знать не нужно —
-  // достаточно победителя. Он же чинит застрявшие FD-серии без winner (m74/m75).
-  const match = raw.match(/^(\w+)\s+(\d+):(\d+)(?:\s+(\S+))?$/)
-  if (!match) return ctx.reply('Формат: /score m01 2:1  ·  серия пенальти: /score m75 1:1 MAR (или AWAY)')
-  const [, matchId, hs, as, winTok] = match
+  // Формы:
+  //   /score m01 2:1              — обычный/финальный счёт
+  //   /score m75 1:1 MAR          — серия пенальти: последний токен = кто ПРОШЁЛ
+  //                                 (HOME/AWAY/TLA); «прошёл ⇒ выиграл серию»
+  //   /score m82 2:2 дв 3:2       — доп. время: 90′=2:2, 120′(итог)=3:2, победитель
+  //                                 по 120′; при ничьей 120′ добавь прошедшего:
+  //   /score m82 1:1 дв 1:1 MAR   — 120′ ничья → серия, MAR прошёл
+  const match = raw.match(/^(\w+)\s+(\d+):(\d+)(?:\s+(?:дв|д\.в\.|et|ет)\s+(\d+):(\d+))?(?:\s+(\S+))?$/i)
+  if (!match) return ctx.reply(
+    'Формат:\n' +
+    '• /score m01 2:1\n' +
+    '• серия пенальти: /score m75 1:1 MAR\n' +
+    '• доп. время: /score m82 2:2 дв 3:2'
+  )
+  const [, matchId, hs, as, ehs, eas, winTok] = match
   const h = parseInt(hs), a = parseInt(as)
   let meta = {}
-  if (winTok) {
+  let finalH = h, finalA = a
+  if (ehs != null) {
+    // Доп. время: 90′ = h:a, 120′ (=итог) = eh:ea.
+    const eh = parseInt(ehs), ea = parseInt(eas)
+    finalH = eh; finalA = ea
+    meta = { knockout: true, duration: 'EXTRA_TIME', reg: { home: h, away: a }, et: { home: eh, away: ea } }
+    if (eh > ea) meta.winner = 'HOME_TEAM'
+    else if (eh < ea) meta.winner = 'AWAY_TEAM'
+    else {
+      // Ничья и в 120′ → это серия пенальти, нужен прошедший.
+      const side = winTok && resolveWinnerSide(matchId, winTok)
+      if (!side) return ctx.reply('120′ ничья — добавь прошедшего (серия): /score m82 1:1 дв 1:1 MAR')
+      meta.winner = side
+      meta.duration = 'PENALTY_SHOOTOUT'
+    }
+  } else if (winTok) {
     const side = resolveWinnerSide(matchId, winTok)
     if (!side) return ctx.reply('Победитель серии: HOME/AWAY или TLA одной из команд пары (напр. MAR)')
     // duration помечает, что была серия → балл за серию начисляется по winner,
@@ -921,12 +973,18 @@ bot.command('score', async (ctx) => {
     meta = { knockout: true, winner: side, duration: 'PENALTY_SHOOTOUT' }
   }
   try {
-    const count = await settleMatch(matchId, h, a, meta)
+    const count = await settleMatch(matchId, finalH, finalA, meta)
     // Мгновенно отражаем счёт в аппке, не дожидаясь следующего поллинга (≤5 мин).
     // На последующих циклах поллер подтвердит это из results (источник истины).
-    liveState.matchResults[matchId] = { status: 'finished', scoreHome: h, scoreAway: a }
+    liveState.matchResults[matchId] = {
+      status: 'finished', scoreHome: finalH, scoreAway: finalA,
+      ...(meta.winner ? { winner: meta.winner } : {}),
+      ...(meta.duration ? { duration: meta.duration } : {}),
+    }
+    const note = meta.duration === 'EXTRA_TIME' ? ` (д.в., 90′ ${h}:${a})`
+      : meta.duration === 'PENALTY_SHOOTOUT' ? ` (пен., прошёл ${meta.winner === 'HOME_TEAM' ? 'хозяин' : 'гость'})` : ''
     return ctx.reply(
-      `✅ Матч ${matchId}: ${h}:${a}\n` +
+      `✅ Матч ${matchId}: ${finalH}:${finalA}${note}\n` +
       `• Счёт показан в «оконченных» в аппке (сразу; в Telegram перезайди в мини-апп, если кэш).\n` +
       `• Прогнозов сверено: ${count}. Очки delta-безопасны — задвоения нет.`
     )
@@ -1277,9 +1335,11 @@ startBot()
 const PORT = process.env.PORT || 10000
 app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
 
-// Разовое доначисление застрявших серий пенальти (m74/m75). Гард-флаг в Redis —
-// на повторных деплоях не сработает. Поллер m74/m75 не трогает (они в results).
+// Разовые миграции (гард-флаг в Redis — на повторных деплоях не срабатывают).
+// Поллер эти матчи не трогает (они уже в results). m74/m75 — winner серий;
+// m82 — верная разбивка 90′/120′ + duration.
 migrateKnockoutPensWinner()
+migrateM82ExtraTime()
 
 if (FDORG_TOKEN) {
   pollFootballData()
