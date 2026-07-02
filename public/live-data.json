@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-07-02T05:39:02.149Z",
+  "_updated": "2026-07-02T11:18:01.201Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
@@ -428,6 +428,21 @@
       "status": "upcoming"
     },
     "m87": {
+      "status": "upcoming"
+    },
+    "m90": {
+      "status": "upcoming"
+    },
+    "m89": {
+      "status": "upcoming"
+    },
+    "m91": {
+      "status": "upcoming"
+    },
+    "m92": {
+      "status": "upcoming"
+    },
+    "m94": {
       "status": "upcoming"
     }
   }
