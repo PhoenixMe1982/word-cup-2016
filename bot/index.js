@@ -686,6 +686,23 @@ function withAuth(req, res, next) {
 // GET /api/health
 app.get('/api/health', (_, res) => res.json({ ok: true }))
 
+// GET /api/_debug/bot — состояние long-polling. Если бот «молчит» на команды:
+// webhook_url != null → выставлен вебхук (getUpdates даёт 409); pending большой
+// и растёт → polling завис (обычно дубль/зомби-инстанс держит getUpdates).
+app.get('/api/_debug/bot', async (_, res) => {
+  try {
+    const [info, me] = await Promise.all([bot.api.getWebhookInfo(), bot.api.getMe()])
+    res.json({
+      bot: me.username,
+      polling_started: botPollingStarted,
+      webhook_url: info.url || null,
+      pending_update_count: info.pending_update_count,
+      last_error_date: info.last_error_date || null,
+      last_error_message: info.last_error_message || null,
+    })
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
 // GET /api/live — live match state polled from football-data.org every 5 min
 app.get('/api/live', (_, res) => res.json(liveState))
 
@@ -1308,6 +1325,7 @@ bot.catch((err) => {
 // стартом и стартуем с drop_pending_updates, чтобы не разгребать накопленную
 // очередь. Если причина — второй потребитель getUpdates (дубль-инстанс), это
 // видно в логе onStart-ошибки и в /api/_debug/bot (last_error_message).
+let botPollingStarted = false
 async function startBot() {
   try {
     const info = await bot.api.getWebhookInfo()
@@ -1320,11 +1338,18 @@ async function startBot() {
   }
   bot.start({
     drop_pending_updates: true,
-    onStart: () => console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`),
+    onStart: () => { botPollingStarted = true; console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`) },
   }).catch((err) => {
-    console.error('Bot crashed:', err.message)
+    botPollingStarted = false
+    console.error('Bot polling error:', err.message)
     if (err.message?.includes('409')) {
-      console.error('409 Conflict — webhook или дубль-инстанс держит getUpdates. API stays up.')
+      // Другой потребитель getUpdates (чаще всего зомби-инстанс, оставшийся после
+      // деплоя) держит long-poll → наш getUpdates падает с 409. РАНЬШЕ мы просто
+      // логировали и НЕ повторяли — бот «молчал» навсегда, пока не рестартнёшь.
+      // Теперь повторяем через 15с: как только конфликтующий инстанс отвалится,
+      // мы перехватываем getUpdates и бот оживает без ручного вмешательства.
+      console.error('409 Conflict — повторю запуск polling через 15с')
+      setTimeout(startBot, 15000)
     } else {
       process.exit(1)
     }
