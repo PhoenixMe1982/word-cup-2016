@@ -1306,8 +1306,16 @@ bot.on('message', async (ctx) => {
     return ctx.reply('⚠️ Поддерживаются текст, фото и видео')
   }
 
-  const { sent, failed, total } = await broadcast(broadcastFn)
-  return ctx.reply(`✅ Готово: ${sent}/${total} отправлено, ${failed} ошибок`)
+  // Отчёт присылаем ВСЕГДА — даже если broadcast упал (например, хиккап Redis в
+  // loadUsers). Раньше исключение здесь глушило отчёт целиком, и при серии фото
+  // репорт приходил не по каждой рассылке. Теперь по каждой — успех или ошибка.
+  try {
+    const { sent, failed, total } = await broadcast(broadcastFn)
+    return ctx.reply(`✅ Готово: ${sent}/${total} отправлено, ${failed} ошибок`)
+  } catch (e) {
+    console.error('[broadcast] failed:', e.message)
+    return ctx.reply(`⚠️ Рассылка не завершилась: ${e.message}. Попробуй отправить ещё раз.`)
+  }
 })
 
 // Глобальная страховка: если обработчик команды бросит исключение (например,

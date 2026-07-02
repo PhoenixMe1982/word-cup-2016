@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TEAMS, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS, KNOCKOUT_STAGE_ORDER, isKnockoutMatch, knockoutEnabled } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { resolveTeams } from '../knockout.js'
 import { toLocalDateTime, matchUTCDate, calcKnockoutBreakdown, calcKnockoutPoints, compareKickoff } from '../utils.js'
 import { KnockoutLegend } from '../components/KnockoutScoring.jsx'
 
@@ -497,6 +498,10 @@ export default function PlayPage() {
     }
   }
 
+  // Карта id→матч для резолва пар плей-офф по сетке (как в разделе ЧМ).
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
+
   // Разделяем матчи: групповые и плей-офф (по стадиям).
   const groupMatches = matches.filter((m) => !isKnockoutMatch(m)).sort(compareKickoff)
   const koMatches = matches.filter((m) => isKnockoutMatch(m)).sort(compareKickoff)
@@ -511,7 +516,12 @@ export default function PlayPage() {
     : 0
 
   // Рендер одной карточки матча (или заглушки TBD для нерезолвленного нокаута).
-  function renderMatch(match) {
+  function renderMatch(rawMatch) {
+    // Плей-офф: подставляем команды по сетке (как в разделе ЧМ). Прогноз доступен
+    // ТОЛЬКО когда ОБЕ команды известны; иначе ниже — заглушка TBD (ставить нельзя).
+    const match = isKnockoutMatch(rawMatch)
+      ? { ...rawMatch, ...resolveTeams(rawMatch, byId) }
+      : rawMatch
     if (isKnockoutMatch(match) && !hasTeams(match)) {
       return (
         <div

@@ -32,6 +32,17 @@ const MATCH_LOOKUP = {
   'FRA_SWE': 'm77', 'CIV_NOR': 'm78', 'MEX_ECU': 'm79', 'ENG_COD': 'm80',
   'USA_BIH': 'm81', 'BEL_SEN': 'm82', 'POR_CRO': 'm83', 'ESP_AUT': 'm84',
   'SUI_ALG': 'm85', 'ARG_CPV': 'm86', 'COL_GHA': 'm87', 'AUS_EGY': 'm88',
+  // ── 1/8 финала (R16) — добавляются ПО МЕРЕ РЕЗОЛВА пар (KNOCKOUT_TREE).
+  // Порядок home_away = порядок в сетке (winner feeders[0] _ winner feeders[1]),
+  // тот же, что показывает resolveTeams в «Играть»/ЧМ — прогноз и зачёт совпадают.
+  // ВНИМАНИЕ: если football-data отдаст матч в ЗЕРКАЛЬНОМ порядке, ключ не совпадёт
+  // и матч не зачтётся автоматически → добавить обратный ключ и/или зачесть /score.
+  'PAR_FRA': 'm89',  // W(m74 GER-PAR)=PAR vs W(m77 FRA-SWE)=FRA
+  'CAN_MAR': 'm90',  // W(m73 RSA-CAN)=CAN vs W(m75 NED-MAR)=MAR
+  'BRA_NOR': 'm91',  // W(m76 BRA-JPN)=BRA vs W(m78 CIV-NOR)=NOR
+  'MEX_ENG': 'm92',  // W(m79 MEX-ECU)=MEX vs W(m80 ENG-COD)=ENG
+  'USA_BEL': 'm94',  // W(m81 USA-BIH)=USA vs W(m82 BEL-SEN)=BEL
+  // m93 [m83,m84], m95 [m86,m88], m96 [m85,m87] — пары ещё не сформированы.
 }
 
 // football-data.org TLA → our code (handles any code mismatches)
