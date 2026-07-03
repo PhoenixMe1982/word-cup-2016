@@ -1,431 +1,523 @@
 {
-  "_updated": "2026-07-03T03:20:24.285Z",
+  "_updated": "2026-07-03T06:46:08.161Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m02": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m03": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m04": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m05": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m06": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m07": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
     },
     "m08": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m09": {
       "status": "finished",
       "scoreHome": 7,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m10": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "DRAW"
     },
     "m11": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m12": {
       "status": "finished",
       "scoreHome": 5,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m13": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m14": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m16": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "DRAW"
     },
     "m17": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m18": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 4
+      "scoreAway": 4,
+      "winner": "AWAY_TEAM"
     },
     "m19": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m20": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m21": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m22": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "HOME_TEAM"
     },
     "m23": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m24": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "AWAY_TEAM"
     },
     "m25": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m26": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m27": {
       "status": "finished",
       "scoreHome": 6,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m28": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m29": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m30": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
     },
     "m31": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m32": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
     },
     "m33": {
       "status": "finished",
       "scoreHome": 5,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m34": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m35": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m36": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 4
+      "scoreAway": 4,
+      "winner": "AWAY_TEAM"
     },
     "m37": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m38": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m40": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "AWAY_TEAM"
     },
     "m41": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m42": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m43": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "HOME_TEAM"
     },
     "m44": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "AWAY_TEAM"
     },
     "m45": {
       "status": "finished",
       "scoreHome": 5,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m46": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m47": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
     },
     "m48": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m49": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m50": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m52": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "HOME_TEAM"
     },
     "m51": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "AWAY_TEAM"
     },
     "m53": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "AWAY_TEAM"
     },
     "m54": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m55": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m56": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "AWAY_TEAM"
     },
     "m58": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "AWAY_TEAM"
     },
     "m57": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m59": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "HOME_TEAM"
     },
     "m60": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m61": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 4
+      "scoreAway": 4,
+      "winner": "AWAY_TEAM"
     },
     "m62": {
       "status": "finished",
       "scoreHome": 5,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m63": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m66": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 5
+      "scoreAway": 5,
+      "winner": "AWAY_TEAM"
     },
     "m65": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m67": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "AWAY_TEAM"
     },
     "m68": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m69": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "DRAW"
     },
     "m70": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m72": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "AWAY_TEAM"
     },
     "m71": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 3
+      "scoreAway": 3,
+      "winner": "DRAW"
     },
     "m15": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "DRAW"
     },
     "m39": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "DRAW"
     },
     "m64": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
     },
     "m73": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
     },
     "m76": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m74": {
       "status": "finished",
-      "scoreHome": 4,
-      "scoreAway": 5
+      "scoreHome": 1,
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM",
+      "duration": "PENALTY_SHOOTOUT",
+      "penHome": 3,
+      "penAway": 4
     },
     "m75": {
       "status": "finished",
-      "scoreHome": 3,
-      "scoreAway": 4
+      "scoreHome": 1,
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM",
+      "duration": "PENALTY_SHOOTOUT",
+      "penHome": 2,
+      "penAway": 3
     },
     "m78": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "AWAY_TEAM"
     },
     "m77": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m79": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m80": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m82": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 2
+      "scoreAway": 2,
+      "winner": "HOME_TEAM",
+      "duration": "EXTRA_TIME"
     },
     "m81": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m84": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m83": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "winner": "HOME_TEAM"
     },
     "m85": {
-      "status": "live",
-      "scoreHome": 1,
-      "scoreAway": 0
+      "status": "finished",
+      "scoreHome": 2,
+      "scoreAway": 0,
+      "winner": "HOME_TEAM"
     },
     "m88": {
       "status": "upcoming"
