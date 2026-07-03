@@ -316,6 +316,39 @@ async function migrateM83Correction() {
   }
 }
 
+// ── Разовая миграция: зачесть m88 (AUS-EGY) — серия пенальти ────────────────
+// FD отдал fullTime кумулятивом 3:5 (1+2 : 1+4) без достоверного regularTime →
+// гейт корректно удержал матч (не зафиксировал кривой счёт), но авто-зачёта не
+// будет, пока FD не починит поля. Реально (подтверждено админом): 90′ 1:1,
+// 120′ 1:1, серия 2:4 — прошёл ЕГИПЕТ. Фиксируем вручную с полной метой.
+async function migrateM88Pens() {
+  if (!REDIS_URL || !REDIS_TOKEN) return
+  const FLAG = `${KEY_PREFIX}wc2026_migration:m88-pens-v1`
+  try {
+    if (await rget(FLAG)) return
+    const results = (await rget(K.results)) || {}
+    if (!results.m88) {
+      const meta = {
+        knockout: true, duration: 'PENALTY_SHOOTOUT',
+        reg: { home: 1, away: 1 }, et: { home: 1, away: 1 },
+        penHome: 2, penAway: 4, winner: 'AWAY_TEAM',
+      }
+      const n = await settleMatch('m88', 1, 1, meta)
+      liveState.matchResults.m88 = {
+        status: 'finished', scoreHome: 1, scoreAway: 1,
+        penHome: 2, penAway: 4, winner: 'AWAY_TEAM', duration: 'PENALTY_SHOOTOUT',
+      }
+      console.log(`[migrate] m88 1:1 пен 2:4 (EGY прошёл) → зачтено прогнозов: ${n}`)
+    } else {
+      console.log('[migrate] m88 уже в results — пропуск')
+    }
+    await rset(FLAG, { done: true, at: new Date().toISOString() })
+    console.log('[migrate] m88-pens-v1 завершена')
+  } catch (e) {
+    console.error('[migrate] m88-pens-v1 ошибка:', e.message)
+  }
+}
+
 // ── Разовая миграция: починить разбивку 90′/120′ у m82 (BEL-SEN) ────────────
 // FD прислал мусорную разбивку (reg 3:2, et 4:2 при итоге 3:2, без duration).
 // Реально: 90′ 2:2 → доп. время 3:2 (Бельгия прошла). Неверный reg искажал зачёт
@@ -1412,6 +1445,7 @@ app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
 migrateKnockoutPensWinner()
 migrateM82ExtraTime()
 migrateM83Correction()
+migrateM88Pens()
 
 if (FDORG_TOKEN) {
   pollFootballData()
