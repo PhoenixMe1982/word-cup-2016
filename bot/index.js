@@ -289,6 +289,33 @@ async function migrateKnockoutPensWinner() {
   }
 }
 
+// ── Разовая миграция: исправить счёт m83 (POR-CRO) 2:2 → 2:1 ────────────────
+// football-data зачёл поздний гол Хорватии, ОТМЕНЁННЫЙ судьёй (третий случай
+// после m37/m65) → в results попало 2:2 c winner=DRAW, невозможным для нокаута:
+// никому не начислилась страховка за проход, сетка не продвигала Португалию.
+// Реально: 2:1 в основное время (победный гол Рамоша в компенсированное).
+// settleMatch на новом счёте delta-переначисляет от прежнего 2:2.
+async function migrateM83Correction() {
+  if (!REDIS_URL || !REDIS_TOKEN) return
+  const FLAG = `${KEY_PREFIX}wc2026_migration:m83-score-v1`
+  try {
+    if (await rget(FLAG)) return
+    const results = (await rget(K.results)) || {}
+    if (results.m83) {
+      const meta = { knockout: true, reg: { home: 2, away: 1 }, winner: 'HOME_TEAM' }
+      const n = await settleMatch('m83', 2, 1, meta)
+      liveState.matchResults.m83 = { status: 'finished', scoreHome: 2, scoreAway: 1, winner: 'HOME_TEAM' }
+      console.log(`[migrate] m83 счёт 2:2→2:1 (POR прошла) → переначислено прогнозов: ${n}`)
+    } else {
+      console.log('[migrate] m83 нет в results — пропуск')
+    }
+    await rset(FLAG, { done: true, at: new Date().toISOString() })
+    console.log('[migrate] m83-score-v1 завершена')
+  } catch (e) {
+    console.error('[migrate] m83-score-v1 ошибка:', e.message)
+  }
+}
+
 // ── Разовая миграция: починить разбивку 90′/120′ у m82 (BEL-SEN) ────────────
 // FD прислал мусорную разбивку (reg 3:2, et 4:2 при итоге 3:2, без duration).
 // Реально: 90′ 2:2 → доп. время 3:2 (Бельгия прошла). Неверный reg искажал зачёт
@@ -988,6 +1015,14 @@ bot.command('score', async (ctx) => {
     // duration помечает, что была серия → балл за серию начисляется по winner,
     // НЕ по цифрам пенальти (их из FD считаем недостоверными).
     meta = { knockout: true, winner: side, duration: 'PENALTY_SHOOTOUT' }
+  } else if (isKnockoutMatchId(matchId)) {
+    // Обычная форма на нокауте (победа в 90′): без knockout-меты результат
+    // записался бы «групповым» и очки за проход/стек не начислились бы.
+    if (h === a) return ctx.reply(
+      `Нокаут не заканчивается ничьёй. Формы: /score ${matchId} 2:1 (в осн. время), ` +
+      `«дв» для доп. времени, либо прошедший для серии (/score ${matchId} 1:1 POR)`
+    )
+    meta = { knockout: true, reg: { home: h, away: a }, winner: h > a ? 'HOME_TEAM' : 'AWAY_TEAM' }
   }
   try {
     const count = await settleMatch(matchId, finalH, finalA, meta)
@@ -1370,9 +1405,10 @@ app.listen(PORT, () => console.log(`🌐 API server on port ${PORT}`))
 
 // Разовые миграции (гард-флаг в Redis — на повторных деплоях не срабатывают).
 // Поллер эти матчи не трогает (они уже в results). m74/m75 — winner серий;
-// m82 — верная разбивка 90′/120′ + duration.
+// m82 — верная разбивка 90′/120′ + duration; m83 — счёт 2:2→2:1 (отменённый гол).
 migrateKnockoutPensWinner()
 migrateM82ExtraTime()
+migrateM83Correction()
 
 if (FDORG_TOKEN) {
   pollFootballData()

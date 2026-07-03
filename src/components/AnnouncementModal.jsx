@@ -1,6 +1,7 @@
 // Разовый информационный попап: разъяснение ситуации с ошибочным счётом
-// матча Египет—Иран (m65) и его исправлением 1:2 → 1:1 (поздний гол Ирана
-// отменён по VAR — офсайд; football-data.org успел его авто-зачесть).
+// матча Португалия—Хорватия (m83, 1/16 финала) и его исправлением 2:2 → 2:1
+// (поздний гол Хорватии отменён судьёй, но football-data.org успел его
+// авто-зачесть — третий случай после m37 и m65).
 // Показывается один раз (флаг в localStorage ставит App при закрытии).
 // Слои совпадают с VisitSummary: затемнение → карточка (без салюта — это
 // не празднование, а извинение).
@@ -38,10 +39,10 @@ export default function AnnouncementModal({ onClose }) {
               style={{ background: '#F5F6FA', border: '1px solid rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-center justify-between">
-                {/* Египет */}
+                {/* Португалия */}
                 <div className="flex flex-col items-center flex-1 gap-1">
-                  <span className="text-3xl leading-none">🇪🇬</span>
-                  <span className="text-[11px] font-bold" style={{ color: '#374151' }}>Египет</span>
+                  <span className="text-3xl leading-none">🇵🇹</span>
+                  <span className="text-[11px] font-bold" style={{ color: '#374151' }}>Португалия</span>
                 </div>
 
                 {/* Счёт: было → стало */}
@@ -50,20 +51,20 @@ export default function AnnouncementModal({ onClose }) {
                     className="text-sm font-bold leading-none mb-1"
                     style={{ color: '#9CA3AF', textDecoration: 'line-through' }}
                   >
-                    1 : 2
+                    2 : 2
                   </span>
                   <span className="text-3xl font-black leading-none" style={{ color: '#16A34A' }}>
-                    1 : 1
+                    2 : 1
                   </span>
                   <span className="text-[10px] uppercase tracking-wide mt-1" style={{ color: '#16A34A' }}>
                     верный счёт
                   </span>
                 </div>
 
-                {/* Иран */}
+                {/* Хорватия */}
                 <div className="flex flex-col items-center flex-1 gap-1">
-                  <span className="text-3xl leading-none">🇮🇷</span>
-                  <span className="text-[11px] font-bold" style={{ color: '#374151' }}>Иран</span>
+                  <span className="text-3xl leading-none">🇭🇷</span>
+                  <span className="text-[11px] font-bold" style={{ color: '#374151' }}>Хорватия</span>
                 </div>
               </div>
             </div>
@@ -73,11 +74,12 @@ export default function AnnouncementModal({ onClose }) {
           <div className="px-5 py-5">
             <p className="text-[13px] leading-relaxed" style={{ color: '#374151' }}>
               Уважаемые болельщики! В приложении <b>FanApp</b> был зафиксирован
-              ошибочный результат матча <b>Египет — Иран</b>: поздний гол Ирана
-              отменили по VAR (офсайд), но он успел попасть в авто-подсчёт.
-              Результат исправлен на корректный — <b>с 1:2 на 1:1</b>.
+              ошибочный результат матча 1/16 финала <b>Португалия — Хорватия</b>:
+              поздний гол Хорватии отменили, но он успел попасть в авто-подсчёт.
+              Результат исправлен на корректный — <b>с 2:2 на 2:1</b>.
+              В 1/8 финала проходит <b>Португалия</b>, соперник — Испания.
               Распределение очков в Лидерборде пересчитано с учётом верного
-              результата матча (ничья).
+              результата матча.
               <br /><br />
               Приносим свои извинения. Спасибо за понимание! 🤝
             </p>

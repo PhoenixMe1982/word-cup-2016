@@ -42,7 +42,8 @@ const MATCH_LOOKUP = {
   'BRA_NOR': 'm91',  // W(m76 BRA-JPN)=BRA vs W(m78 CIV-NOR)=NOR
   'MEX_ENG': 'm92',  // W(m79 MEX-ECU)=MEX vs W(m80 ENG-COD)=ENG
   'USA_BEL': 'm94',  // W(m81 USA-BIH)=USA vs W(m82 BEL-SEN)=BEL
-  // m93 [m83,m84], m95 [m86,m88], m96 [m85,m87] — пары ещё не сформированы.
+  'POR_ESP': 'm93',  // W(m83 POR-CRO)=POR vs W(m84 ESP-AUT)=ESP
+  // m95 [m86,m88], m96 [m85,m87] — пары ещё не сформированы.
 }
 
 // football-data.org TLA → our code (handles any code mismatches)

@@ -17,8 +17,8 @@ import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
 const LAST_VISIT_KEY = 'wc2026_lastVisit' // снимок {rank, pts, settledIds} прошлого визита
-// Разовый попап-разъяснение про исправление счёта матча m65 (Египет—Иран, 1:2→1:1)
-const ANNOUNCE_KEY = 'wc2026_announce_m65_score_fix'
+// Разовый попап-разъяснение про исправление счёта матча m83 (Португалия—Хорватия, 2:2→2:1)
+const ANNOUNCE_KEY = 'wc2026_announce_m83_score_fix'
 // Разовый попап со схемой начисления очков (показывается с запуском плей-офф)
 const SCORING_KEY = 'wc2026_scoring_scheme_v1'
 
@@ -208,7 +208,7 @@ function AppShell() {
   }
 
   // Приоритет попапов после входа (строго по одному, не внахлёст):
-  // 1) разъяснение про исправление счёта m65 → 2) итоги визита → 3) схема очков.
+  // 1) разъяснение про исправление счёта m83 → 2) итоги визита → 3) схема очков.
   const showAnnouncement = entered && showAnnounce
   const showVisit = entered && !showAnnouncement && visit
   // Схема очков — разово, с запуском плей-офф. Ждём закрытия предыдущих окон.
@@ -228,7 +228,7 @@ function AppShell() {
         </div>
         <BottomNav active={tab} onTab={handleTab} />
 
-        {/* Разовое уведомление об исправлении счёта матча m65 (Египет—Иран) */}
+        {/* Разовое уведомление об исправлении счёта матча m83 (Португалия—Хорватия) */}
         {showAnnouncement && <AnnouncementModal onClose={handleCloseAnnounce} />}
 
         {/* Итоги визита — что изменилось с прошлого раза */}
