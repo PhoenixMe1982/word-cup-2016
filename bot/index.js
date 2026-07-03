@@ -5,6 +5,7 @@ const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
 const { MATCH_LOOKUP, lookupMatchId, normTLA, isKnockoutMatchId, extractFinalResult, liveDisplayScore } = require('./match-lookup.js')
+const { afEnabled, afGetResult, afAgrees } = require('./af-crosscheck.js')
 const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
@@ -493,23 +494,34 @@ const liveState = { updated: null, matchResults: {} }
 // не бывает; winner=DRAW / противоречие счёту / 120′-ничья без серии ⇒ null) —
 // матч удерживается как «идёт», а админ получает алерт для ручной проверки.
 
-// Счётчик подряд идущих циклов, в которых FD отдаёт нокауту FINISHED, а итог не
-// проходит гейт. Алерт шлём один раз — на ВТОРОМ подряд цикле (разовый «миг»
-// FINISHED без полей — норма стабилизации фида, не спамим).
+// Счётчик подряд идущих циклов, в которых FD отдаёт FINISHED, а итог не
+// зачтён (не прошёл гейт / не подтверждён вторым источником). Алерт шлём один
+// раз — на ВТОРОМ подряд цикле (разовый «миг» FINISHED без полей — норма
+// стабилизации фида, не спамим).
 const holdAlerted = {}
-function alertKnockoutHold(matchId, m) {
+function alertHold(matchId, m, reason) {
   holdAlerted[matchId] = (holdAlerted[matchId] || 0) + 1
   if (holdAlerted[matchId] !== 2 || !ADMIN_ID) return
   const ft = m.score?.fullTime || {}
   const ftStr = ft.home != null ? ` (FD fullTime ${ft.home}:${ft.away}, winner: ${m.score?.winner || '—'})` : ''
+  const why = reason || 'итог не проходит проверку нокаута — нет однозначного прошедшего'
   bot.api.sendMessage(ADMIN_ID,
     `⚠️ *${m.homeTeam?.name} — ${m.awayTeam?.name}* (${matchId})\n` +
-    `FD отдаёт FINISHED, но итог не проходит проверку нокаута — нет однозначного прошедшего${ftStr}.\n` +
+    `FD отдаёт FINISHED, но ${why}${ftStr}.\n` +
     `Матч удержан как «идёт», очки не зачтены. Проверь реальный итог и зачти вручную:\n` +
     `/score ${matchId} H:A — победа в 90′\n` +
     `/score ${matchId} 1:1 дв 2:1 — доп. время\n` +
     `/score ${matchId} 1:1 TLA — серия пенальти (кто прошёл)`,
     { parse_mode: 'Markdown' }).catch(() => {})
+}
+
+// Короткая запись результата для алертов сверки: «1:1 (пен 2:4, прошёл AWAY)».
+function fmtResult(r) {
+  if (!r) return '—'
+  let s = `${r.home}:${r.away}`
+  if (r.penHome != null) s += ` пен ${r.penHome}:${r.penAway}`
+  if (r.winner) s += ` W:${r.winner === 'HOME_TEAM' ? 'дом' : 'гость'}`
+  return s
 }
 
 // Поля карточки завершённого матча из записанного/полученного результата.
@@ -549,34 +561,78 @@ async function pollFootballData() {
       }
 
       // Строгий гейт: «завершён» = только подтверждённый финальный счёт (fullTime).
-      const finalResult = extractFinalResult(m)
+      let finalResult = extractFinalResult(m)
       const rawStatus = FD_STATUS_MAP[m.status] || 'upcoming'
+      const kickDay = (m.utcDate || '').slice(0, 10)
+      let holdReason = null // причина удержания FINISHED-матча (для алерта)
 
       if (finalResult) {
-        // Итог подтверждён → показываем как завершённый и зачитываем очки.
-        delete holdAlerted[matchId]
-        next[matchId] = finishedEntry(finalResult)
-        try {
-          const { home, away, ...meta } = finalResult
-          const count = await settleMatch(matchId, home, away, meta)
-          if (ADMIN_ID) {
-            const pen = finalResult.penHome != null
-              ? ` (пен. ${finalResult.penHome}:${finalResult.penAway})` : ''
-            bot.api.sendMessage(ADMIN_ID,
-              `⚽ *${m.homeTeam.name} ${finalResult.home}:${finalResult.away} ${m.awayTeam.name}*${pen}\nПрогнозов зачтено: ${count}`,
-              { parse_mode: 'Markdown' }).catch(() => {})
-          }
-        } catch (e) {
-          console.error(`[live] settle ${matchId} failed:`, e.message)
+        // Двухисточниковая сверка: при заданном APIFOOTBALL_KEY итог FD
+        // фиксируется только после подтверждения API-Football. Расхождение или
+        // отсутствие данных ⇒ удержание + алерт. Без ключа — прежнее поведение.
+        let afStatus = 'off'
+        let af = null
+        if (afEnabled()) {
+          af = await afGetResult(matchId, kickDay)
+          afStatus = !af ? 'pending' : afAgrees(finalResult, af) ? 'ok' : 'mismatch'
         }
-        continue
+        if (afStatus === 'ok' && af.penHome != null) {
+          // Счёт серии у FD недостоверен — цифры пенальти всегда из API-Football.
+          finalResult.penHome = af.penHome
+          finalResult.penAway = af.penAway
+        }
+        if (afStatus === 'off' || afStatus === 'ok') {
+          // Итог подтверждён → показываем как завершённый и зачитываем очки.
+          delete holdAlerted[matchId]
+          next[matchId] = finishedEntry(finalResult)
+          try {
+            const { home, away, ...meta } = finalResult
+            const count = await settleMatch(matchId, home, away, meta)
+            if (ADMIN_ID) {
+              const pen = finalResult.penHome != null
+                ? ` (пен. ${finalResult.penHome}:${finalResult.penAway})` : ''
+              const src = afStatus === 'ok' ? '\n✅ Подтверждено API-Football' : ''
+              bot.api.sendMessage(ADMIN_ID,
+                `⚽ *${m.homeTeam.name} ${finalResult.home}:${finalResult.away} ${m.awayTeam.name}*${pen}\nПрогнозов зачтено: ${count}${src}`,
+                { parse_mode: 'Markdown' }).catch(() => {})
+            }
+          } catch (e) {
+            console.error(`[live] settle ${matchId} failed:`, e.message)
+          }
+          continue
+        }
+        holdReason = afStatus === 'mismatch'
+          ? `итог расходится со вторым источником: FD ${fmtResult(finalResult)} ≠ API-Football ${fmtResult(af)}`
+          : `итог ещё не подтверждён API-Football (FD ${fmtResult(finalResult)})`
+        finalResult = null // держим матч, вниз по ветке live
+      } else if (rawStatus === 'finished' && afEnabled()) {
+        // FD отдал FINISHED, но его данные не проходят гейт (кейсы m83/m88).
+        // Если у API-Football уже есть ПОЛНЫЙ валидный итог — зачитываем по нему.
+        const af = await afGetResult(matchId, kickDay)
+        if (af) {
+          delete holdAlerted[matchId]
+          next[matchId] = finishedEntry(af)
+          try {
+            const { home, away, ...meta } = af
+            const count = await settleMatch(matchId, home, away, meta)
+            if (ADMIN_ID) {
+              const pen = af.penHome != null ? ` (пен. ${af.penHome}:${af.penAway})` : ''
+              bot.api.sendMessage(ADMIN_ID,
+                `⚽ *${m.homeTeam.name} ${af.home}:${af.away} ${m.awayTeam.name}*${pen}\nПрогнозов зачтено: ${count}\n` +
+                `ℹ️ Зачтено по API-Football: данные football-data не прошли проверку`,
+                { parse_mode: 'Markdown' }).catch(() => {})
+            }
+            continue
+          } catch (e) {
+            console.error(`[live] settle ${matchId} (AF) failed:`, e.message)
+          }
+        }
       }
 
-      // Итог НЕ подтверждён. Если FD уже отдаёт FINISHED, но гейт не пропустил
-      // (нет fullTime / нокаут без однозначного прошедшего) — удерживаем матч
-      // как 'live', чтобы карточка не показала непроверённый итог, и алертим
-      // админа (нокаут, второй цикл подряд) — проверить реальный результат.
-      if (rawStatus === 'finished' && isKnockoutMatchId(matchId)) alertKnockoutHold(matchId, m)
+      // Итог НЕ подтверждён. Если FD уже отдаёт FINISHED, но зачёта нет (гейт /
+      // сверка) — удерживаем матч как 'live', чтобы карточка не показала
+      // непроверённый итог, и алертим админа (второй цикл подряд).
+      if (rawStatus === 'finished' && (holdReason || isKnockoutMatchId(matchId))) alertHold(matchId, m, holdReason)
       else delete holdAlerted[matchId]
       const status = rawStatus === 'finished' ? 'live' : rawStatus
       const entry = { status }
@@ -773,6 +829,7 @@ app.get('/api/_debug/bot', async (_, res) => {
       pending_update_count: info.pending_update_count,
       last_error_date: info.last_error_date || null,
       last_error_message: info.last_error_message || null,
+      af_crosscheck: afEnabled(), // двухисточниковая сверка (APIFOOTBALL_KEY задан)
     })
   } catch (e) { res.status(500).json({ error: e.message }) }
 })

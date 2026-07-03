@@ -3,6 +3,7 @@
 // Runs every 5 min via GitHub Actions cron during the tournament
 
 const { lookupMatchId, normTLA, extractFinalResult } = require('./match-lookup.js')
+const { afEnabled, afGetResult, afAgrees } = require('./af-crosscheck.js')
 
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const BOT_TOKEN   = (process.env.BOT_TOKEN   || '').trim()
@@ -99,6 +100,16 @@ async function main() {
     if (!finalResult) {
       console.warn(`[sync] ${matchId} не проходит гейт фиксации (счёт/победитель недостоверны), skipping`)
       continue
+    }
+    // Двухисточниковая сверка (как в поллере): при заданном APIFOOTBALL_KEY
+    // фиксируем только подтверждённый итог; цифры серии — из API-Football.
+    if (afEnabled()) {
+      const af = await afGetResult(matchId, (m.utcDate || '').slice(0, 10))
+      if (!af || !afAgrees(finalResult, af)) {
+        console.warn(`[sync] ${matchId} ${!af ? 'нет подтверждения' : 'РАСХОЖДЕНИЕ с'} API-Football, skipping`)
+        continue
+      }
+      if (af.penHome != null) { finalResult.penHome = af.penHome; finalResult.penAway = af.penAway }
     }
     const { home: homeScore, away: awayScore, ...meta } = finalResult
 
