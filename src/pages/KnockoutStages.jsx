@@ -66,7 +66,11 @@ function KnockoutMatchRow({ match, byId }) {
         ) : (
           <span className="text-[10px] font-bold" style={{ color: '#C9A800' }}>vs</span>
         )}
-        {live && <div className="text-[8px] font-black uppercase" style={{ color: '#16A34A' }}>live</div>}
+        {live && (
+          <div className="text-[8px] font-black uppercase" style={{ color: '#16A34A' }}>
+            {match.phase === 'pens' ? 'пенальти' : match.phase === 'et' ? 'доп. время' : 'live'}
+          </div>
+        )}
       </div>
 
       <TeamSide code={away} align="left" />

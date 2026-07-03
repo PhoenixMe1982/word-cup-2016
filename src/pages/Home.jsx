@@ -104,6 +104,9 @@ function LiveMinute({ base }) {
 function LiveMatchCard({ match }) {
   const home = TEAMS[match.home]
   const away = TEAMS[match.away]
+  // Фаза нокаута из /api/live: доп. время / серия пенальти. Счёт в scoreHome/
+  // scoreAway — игровой (без голов серии), серия — отдельно в penHome/penAway.
+  const phaseLabel = match.phase === 'pens' ? 'серия пенальти' : match.phase === 'et' ? 'доп. время' : null
   return (
     <div className="match-live-card p-4 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,#16A34A,transparent)' }} />
@@ -112,7 +115,7 @@ function LiveMatchCard({ match }) {
           <span className="w-2 h-2 rounded-full animate-pulse2" style={{ background: '#16A34A' }} />
           <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: '#16A34A' }}>Прямой эфир</span>
         </div>
-        <span className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>Группа {match.group} · {match.venue.split(',')[0]}</span>
+        <span className="text-[10px] uppercase tracking-wide" style={{ color: '#9CA3AF' }}>{matchTag(match)} · {match.venue.split(',')[0]}</span>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex flex-col items-center gap-1 flex-1">
@@ -125,7 +128,12 @@ function LiveMatchCard({ match }) {
             <span className="text-2xl font-light" style={{ color: '#9CA3AF' }}>:</span>
             <span className="text-4xl font-black score-number" style={{ color: '#111827' }}>{match.scoreAway ?? '–'}</span>
           </div>
-          <LiveMinute base={match.time} />
+          {match.penHome != null && (
+            <span className="text-[10px] font-bold" style={{ color: '#6B7280' }}>пен. {match.penHome}:{match.penAway}</span>
+          )}
+          {phaseLabel
+            ? <span className="text-[10px] font-black uppercase tracking-wide text-live">{phaseLabel}</span>
+            : <LiveMinute base={match.time} />}
         </div>
         <div className="flex flex-col items-center gap-1 flex-1">
           <span className="text-3xl">{away.flag}</span>

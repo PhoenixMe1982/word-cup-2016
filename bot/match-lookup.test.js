@@ -1,7 +1,7 @@
 // Проверка settleScore/resultMeta (этап 1: фикс нокаут-зачёта).
 // Запуск: node bot/match-lookup.test.js  (без зависимостей, exit 1 при падении)
 const assert = require('assert')
-const { settleScore, resultMeta, isKnockoutStage, knockoutBreakdown, knockoutResultFields, isKnockoutMatchId, extractFinalResult } = require('./match-lookup.js')
+const { settleScore, resultMeta, isKnockoutStage, knockoutBreakdown, knockoutResultFields, isKnockoutMatchId, extractFinalResult, liveDisplayScore } = require('./match-lookup.js')
 
 let n = 0
 const eq = (got, exp, msg) => { n++; assert.deepStrictEqual(got, exp, msg) }
@@ -54,13 +54,27 @@ eq(settleScore({
   duration: 'PENALTY_SHOOTOUT',
 }, 'FINAL'), { home: 1, away: 1 }, 'pens, no regularTime, draw fullTime → fullTime')
 
-// Невозможно достоверно вычислить (пенальти, нет regularTime, fullTime НЕ ничья)
-// → null, ждём следующего цикла, не фиксируем неверный счёт.
+// Кумулятив без regularTime: вычитаем серию из fullTime — 120′ обязан быть
+// ничьей (самопроверка). 5:4 − 4:3 = 1:1 ✓ (раньше было null; кейс m88).
 eq(settleScore({
   fullTime: { home: 5, away: 4 },
   penalties: { home: 4, away: 3 },
   duration: 'PENALTY_SHOOTOUT',
-}, 'FINAL'), null, 'pens, no regularTime, non-draw fullTime → null (ambiguous)')
+}, 'FINAL'), { home: 1, away: 1 }, 'pens cumulative, no regularTime → ft−pen = 120′')
+
+// Кейс m88 (AUS-EGY): fullTime 3:5 = (1+2):(1+4), пен 2:4 → 120′ = 1:1.
+eq(settleScore({
+  fullTime: { home: 3, away: 5 },
+  penalties: { home: 2, away: 4 },
+  duration: 'PENALTY_SHOOTOUT',
+}, 'LAST_16'), { home: 1, away: 1 }, 'pens cumulative (m88) → 1:1')
+
+// Самопроверка не сошлась (ft−pen не ничья) → фид кривой → null.
+eq(settleScore({
+  fullTime: { home: 5, away: 4 },
+  penalties: { home: 3, away: 1 },
+  duration: 'PENALTY_SHOOTOUT',
+}, 'FINAL'), null, 'pens, ft−pen не ничья → null (кривой фид)')
 
 // ── resultMeta ─────────────────────────────────────────────────────────────
 eq(resultMeta({ fullTime: { home: 2, away: 1 }, duration: 'REGULAR' }), {}, 'group meta empty')
@@ -81,6 +95,15 @@ eq(knockoutBreakdown({ regularTime: { home: 1, away: 1 }, extraTime: { home: 1, 
 // Пенальти без голов ОТ: et == reg (120′ ничья)
 eq(knockoutBreakdown({ regularTime: { home: 0, away: 0 }, penalties: { home: 4, away: 3 }, duration: 'PENALTY_SHOOTOUT' }),
   { reg: { home: 0, away: 0 }, et: { home: 0, away: 0 } }, 'breakdown: пенальти без голов ОТ → et=reg')
+// ОТ/серия БЕЗ regularTime: фолбэк reg=fullTime ЗАПРЕЩЁН (fullTime — это 120′
+// или кумулятив, не 90′) → разбивки нет, гейт такой матч не зафиксирует.
+eq(knockoutBreakdown({ fullTime: { home: 3, away: 5 }, penalties: { home: 2, away: 4 }, duration: 'PENALTY_SHOOTOUT' }),
+  { reg: null, et: null }, 'breakdown: серия без regularTime → разбивки нет')
+eq(knockoutBreakdown({ fullTime: { home: 3, away: 2 }, duration: 'EXTRA_TIME' }),
+  { reg: null, et: null }, 'breakdown: ОТ без regularTime → разбивки нет')
+// Решено в 90′ без regularTime: fullTime и есть 90′ — фолбэк валиден.
+eq(knockoutBreakdown({ fullTime: { home: 2, away: 1 } }),
+  { reg: { home: 2, away: 1 }, et: null }, 'breakdown: 90′ без regularTime → reg=fullTime')
 
 // ── knockoutResultFields ───────────────────────────────────────────────────
 eq(knockoutResultFields({ fullTime: { home: 2, away: 1 } }, 'GROUP_STAGE'), {}, 'fields: группа → пусто')
@@ -139,5 +162,42 @@ eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
   score: { fullTime: { home: 1, away: 1 }, regularTime: { home: 1, away: 1 },
     penalties: { home: 1, away: 1 }, duration: 'PENALTY_SHOOTOUT' } }),
   null, 'gate: серия без winner (m74/m75) → null')
+
+// ГРУППА: только 90′ — мусорные duration/penalties от FD отрезаются.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'GROUP_STAGE',
+  score: { fullTime: { home: 2, away: 1 }, penalties: { home: 1, away: 0 },
+    duration: 'EXTRA_TIME', winner: 'HOME_TEAM' } }),
+  { home: 2, away: 1, winner: 'HOME_TEAM' }, 'gate: группа — дв/пен отрезаны, только 90′')
+
+// Кейс m88: серия с winner, но БЕЗ regularTime — счёт 120′ восстановим (ft−pen),
+// а разбивка 90′ нет → НЕ фиксируем (иначе стек-очки за 90′ шли бы по догадке).
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 3, away: 5 }, penalties: { home: 2, away: 4 },
+    winner: 'AWAY_TEAM', duration: 'PENALTY_SHOOTOUT' } }),
+  null, 'gate: серия без разбивки 90′ (m88) → null, ручной зачёт')
+// Тот же матч с полной разбивкой от FD → фиксируется целиком.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 3, away: 5 }, regularTime: { home: 1, away: 1 },
+    extraTime: { home: 0, away: 0 }, penalties: { home: 2, away: 4 },
+    winner: 'AWAY_TEAM', duration: 'PENALTY_SHOOTOUT' } }),
+  { home: 1, away: 1, penHome: 2, penAway: 4, winner: 'AWAY_TEAM', duration: 'PENALTY_SHOOTOUT',
+    knockout: true, reg: { home: 1, away: 1 }, et: { home: 1, away: 1 } },
+  'gate: серия с полной разбивкой → фиксируется')
+
+// ── liveDisplayScore: фазовый счёт для карточки (дисплей-only) ──────────────
+// Кейс m88 live: кумулятив 3:5 + серия 2:4 → игровой 1:1, серия отдельно.
+eq(liveDisplayScore({ fullTime: { home: 3, away: 5 }, penalties: { home: 2, away: 4 } }),
+  { home: 1, away: 1, phase: 'pens', penHome: 2, penAway: 4 }, 'live: кумулятив → 1:1 + пен 2:4')
+// Обычное основное время.
+eq(liveDisplayScore({ fullTime: { home: 1, away: 0 } }, '55'),
+  { home: 1, away: 0, phase: 'reg' }, 'live: 90′')
+// Минута > 90 → доп. время.
+eq(liveDisplayScore({ fullTime: { home: 1, away: 1 } }, '97'),
+  { home: 1, away: 1, phase: 'et' }, 'live: минута 97 → ОТ')
+// regularTime + голы ОТ.
+eq(liveDisplayScore({ regularTime: { home: 1, away: 1 }, extraTime: { home: 1, away: 0 }, duration: 'EXTRA_TIME' }),
+  { home: 2, away: 1, phase: 'et' }, 'live: reg+ОТ')
+// Счёта ещё нет.
+eq(liveDisplayScore({}), null, 'live: нет счёта → null')
 
 console.log(`✅ all ${n} assertions passed`)

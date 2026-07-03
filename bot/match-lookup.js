@@ -102,8 +102,13 @@ function settleScore(score, stage) {
     }
   }
   // regularTime недоступен: если fullTime уже ничейный, это и есть 120′-счёт
-  // (серия игралась с ничьей) — берём его. Иначе достоверно вычислить нельзя.
+  // (серия игралась с ничьей) — берём его.
   if (ft.home === ft.away) return { home: ft.home, away: ft.away }
+  // fullTime не ничейный при серии ⇒ FD вклеил голы серии в fullTime (кейс m88:
+  // 3:5 = 1+2 : 1+4). Вычитаем серию — 120′ обязан получиться ничьей, это
+  // арифметическая самопроверка. Не сошлось ⇒ фид кривой, достоверного счёта нет.
+  const rh = ft.home - sc.penalties.home, ra = ft.away - sc.penalties.away
+  if (rh >= 0 && ra >= 0 && rh === ra) return { home: rh, away: ra }
   return null
 }
 
@@ -137,11 +142,20 @@ function isKnockoutMatchId(id) {
 // Согласовано с settleScore: на серии пенальти et == 120′-ничья == зачётный счёт.
 function knockoutBreakdown(score) {
   const sc = score || {}
-  const reg = sc.regularTime && sc.regularTime.home != null
-    ? { home: sc.regularTime.home, away: sc.regularTime.away }
-    : (sc.fullTime && sc.fullTime.home != null ? { home: sc.fullTime.home, away: sc.fullTime.away } : null)
+  const hasPens = sc.penalties && sc.penalties.home != null && sc.penalties.away != null
   const playedET = sc.duration === 'EXTRA_TIME' || sc.duration === 'PENALTY_SHOOTOUT'
-    || (sc.extraTime && sc.extraTime.home != null)
+    || (sc.extraTime && sc.extraTime.home != null) || hasPens
+  let reg = sc.regularTime && sc.regularTime.home != null
+    ? { home: sc.regularTime.home, away: sc.regularTime.away }
+    : null
+  // Фолбэк reg = fullTime допустим ТОЛЬКО для матча, решённого в основное время.
+  // Если игрались ОТ/серия, fullTime — это 120′ (или вовсе кумулятив с голами
+  // серии, кейсы m82/m88): подставив его как 90′, мы бы исказили стек-скоринг.
+  // Без достоверного regularTime разбивки нет — reg остаётся null, и гейт
+  // (extractFinalResult) такой матч НЕ зафиксирует.
+  if (!reg && !playedET && sc.fullTime && sc.fullTime.home != null) {
+    reg = { home: sc.fullTime.home, away: sc.fullTime.away }
+  }
   let et = null
   if (playedET && reg) {
     et = {
@@ -182,9 +196,21 @@ function extractFinalResult(m) {
   const score = settleScore(m.score, m.stage)
   if (!score) return null
   const meta = { ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
-  if (!meta.knockout) return { ...score, ...meta }
+  if (!meta.knockout) {
+    // ГРУППА: только основное время. Доп. времени и серий в группе не существует —
+    // всё, что FD прислал сверх (duration/penalties), — мусор фида, отрезаем,
+    // чтобы оно не попало ни в отображение, ни в результат.
+    delete meta.duration
+    delete meta.penHome
+    delete meta.penAway
+    return { ...score, ...meta }
+  }
 
   if (meta.winner === 'DRAW') return null
+  // Стек-скоринг требует достоверной разбивки по фазам: без известного счёта 90′
+  // (regularTime либо матч, решённый в основное время) итог не фиксируем — иначе
+  // очки за 90′ считались бы по неверной цифре (кейсы m82/m88).
+  if (!meta.reg) return null
   if (score.home !== score.away) {
     const bySide = score.home > score.away ? 'HOME_TEAM' : 'AWAY_TEAM'
     if (meta.winner && meta.winner !== bySide) return null
@@ -197,8 +223,41 @@ function extractFinalResult(m) {
   return { ...score, ...meta }
 }
 
+// ── Live-отображение: раздельные фазы вместо кумулятива FD ──────────────────
+// Пока матч идёт (или завершён, но удержан гейтом), карточка должна показывать
+// игровой счёт БЕЗ голов серии + серию отдельно, а не «3:5» одной кучей (кейс
+// m88). Дисплей-only: на зачёт не влияет. Возвращает
+// { home, away, penHome?, penAway?, phase: 'reg'|'et'|'pens' } либо null (счёта нет).
+function liveDisplayScore(score, minute) {
+  const sc = score || {}
+  const pens = sc.penalties && sc.penalties.home != null && sc.penalties.away != null
+    ? { home: sc.penalties.home, away: sc.penalties.away } : null
+  const reg = sc.regularTime && sc.regularTime.home != null ? sc.regularTime : null
+  const et = sc.extraTime && sc.extraTime.home != null ? sc.extraTime : null
+  const ft = sc.fullTime && sc.fullTime.home != null ? sc.fullTime : null
+  const ht = sc.halfTime && sc.halfTime.home != null ? sc.halfTime : null
+
+  let base = null
+  if (reg) base = { home: reg.home + (et ? et.home : 0), away: reg.away + (et ? et.away : 0) }
+  else if (ft && pens) {
+    // fullTime может быть кумулятивом с голами серии — вычитаем; самопроверка:
+    // 120′ при серии обязан быть ничьей, иначе показываем fullTime как есть.
+    const h = ft.home - pens.home, a = ft.away - pens.away
+    base = (h >= 0 && a >= 0 && h === a) ? { home: h, away: a } : { home: ft.home, away: ft.away }
+  } else if (ft) base = { home: ft.home, away: ft.away }
+  else if (ht) base = { home: ht.home, away: ht.away }
+  if (!base) return null
+
+  const phase = (pens || sc.duration === 'PENALTY_SHOOTOUT') ? 'pens'
+    : (sc.duration === 'EXTRA_TIME' || et || (minute != null && Number(minute) > 90)) ? 'et'
+    : 'reg'
+  const out = { home: base.home, away: base.away, phase }
+  if (pens) { out.penHome = pens.home; out.penAway = pens.away }
+  return out
+}
+
 module.exports = {
   MATCH_LOOKUP, TLA_ALIASES, normTLA, lookupMatchId,
   isKnockoutStage, isKnockoutMatchId, settleScore, resultMeta, knockoutBreakdown, knockoutResultFields,
-  extractFinalResult,
+  extractFinalResult, liveDisplayScore,
 }

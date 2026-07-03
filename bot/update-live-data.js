@@ -6,7 +6,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const { lookupMatchId, normTLA, extractFinalResult } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, extractFinalResult, liveDisplayScore, isKnockoutStage } = require('./match-lookup.js')
 
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const OUT_PATH    = path.join(__dirname, '..', 'public', 'live-data.json')
@@ -93,8 +93,18 @@ async function main() {
       if (finalResult.winner) next.winner = finalResult.winner
       if (finalResult.duration) next.duration = finalResult.duration
       if (finalResult.penHome != null) { next.penHome = finalResult.penHome; next.penAway = finalResult.penAway }
+    } else if (isKnockoutStage(m.stage)) {
+      // Live-нокаут: раздельные фазы — игровой счёт без голов серии (кумулятив
+      // «3:5» не показываем), серия и маркер фазы отдельными полями.
+      const d = liveDisplayScore(m.score, m.minute)
+      if (d) {
+        next.scoreHome = d.home
+        next.scoreAway = d.away
+        if (d.penHome != null) { next.penHome = d.penHome; next.penAway = d.penAway }
+        if (d.phase !== 'reg') next.phase = d.phase
+      }
     } else {
-      // Live: fullTime, затем halfTime — что уже есть.
+      // Live-группа: fullTime, затем halfTime — что уже есть.
       const scoreSource = (fullTime.home != null ? fullTime : null) || (halfTime.home != null ? halfTime : null)
       if (scoreSource) {
         next.scoreHome = scoreSource.home

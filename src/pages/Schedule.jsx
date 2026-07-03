@@ -10,10 +10,11 @@ function getInitData() {
   return window.Telegram?.WebApp?.initData || ''
 }
 
-function StatusBadge({ status, time, date }) {
+function StatusBadge({ status, time, date, phase }) {
   if (status === 'live') {
-    // Минута матча есть не всегда (free-тариф API) — тогда показываем LIVE
-    const minute = /^\d+$/.test(String(time)) ? `${time}'` : 'LIVE'
+    // Фаза нокаута приоритетнее минуты; минута есть не всегда (free-тариф API)
+    const minute = phase === 'pens' ? 'ПЕН' : phase === 'et' ? 'ДВ'
+      : /^\d+$/.test(String(time)) ? `${time}'` : 'LIVE'
     return (
       <div className="flex items-center gap-1">
         <span className="w-1.5 h-1.5 rounded-full animate-pulse2" style={{ background: '#16A34A' }} />
@@ -245,7 +246,7 @@ function MatchRow({ match, isExpanded, onToggle, myPred, onSavePred, savingPred,
           {tag}
         </span>
         <div className="flex items-center gap-2">
-          <StatusBadge status={isFinished ? 'finished' : isLive ? 'live' : 'upcoming'} time={match.time} date={match.date} />
+          <StatusBadge status={isFinished ? 'finished' : isLive ? 'live' : 'upcoming'} time={match.time} date={match.date} phase={match.phase} />
           {isUpcoming && (
             <span className="text-[10px]" style={{ color: '#C9A800' }}>
               {isExpanded ? '▲' : '▼'}

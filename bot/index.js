@@ -4,7 +4,7 @@ const path = require('path')
 const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
-const { MATCH_LOOKUP, lookupMatchId, normTLA, isKnockoutMatchId, extractFinalResult } = require('./match-lookup.js')
+const { MATCH_LOOKUP, lookupMatchId, normTLA, isKnockoutMatchId, extractFinalResult, liveDisplayScore } = require('./match-lookup.js')
 const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
@@ -580,9 +580,20 @@ async function pollFootballData() {
       else delete holdAlerted[matchId]
       const status = rawStatus === 'finished' ? 'live' : rawStatus
       const entry = { status }
-      const liveScore = m.score?.fullTime?.home != null ? m.score.fullTime
-        : m.score?.halfTime?.home != null ? m.score.halfTime : null
-      if (liveScore) { entry.scoreHome = liveScore.home; entry.scoreAway = liveScore.away }
+      if (isKnockoutMatchId(matchId)) {
+        // Нокаут: раздельные фазы — игровой счёт без голов серии, серия отдельно,
+        // маркер фазы (reg/et/pens). Кумулятив «3:5» в карточку не попадает.
+        const d = liveDisplayScore(m.score, m.minute)
+        if (d) {
+          entry.scoreHome = d.home; entry.scoreAway = d.away
+          if (d.penHome != null) { entry.penHome = d.penHome; entry.penAway = d.penAway }
+          if (d.phase !== 'reg') entry.phase = d.phase
+        }
+      } else {
+        const liveScore = m.score?.fullTime?.home != null ? m.score.fullTime
+          : m.score?.halfTime?.home != null ? m.score.halfTime : null
+        if (liveScore) { entry.scoreHome = liveScore.home; entry.scoreAway = liveScore.away }
+      }
       if (status === 'live') {
         liveCount++
         if (m.minute != null) entry.time = String(m.minute)
