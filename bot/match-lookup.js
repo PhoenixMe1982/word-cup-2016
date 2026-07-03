@@ -164,7 +164,41 @@ function knockoutResultFields(score, stage) {
   return out
 }
 
+// ── Гейт фиксации итога — ЕДИНАЯ точка для поллера, cron-синка и live-data ──
+// Правило (ужесточено 2026-07-03 после m83, когда FD отдал нокауту 2:2 c
+// winner=DRAW из-за отменённого гола):
+//   • ГРУППА: валиден ЛЮБОЙ исход — фиксируем достоверный счёт за 90′ (fullTime).
+//   • ПЛЕЙ-ОФФ: итог ОБЯЗАН однозначно определять прошедшего, ничьей не бывает:
+//       – winner === 'DRAW' ⇒ фид кривой ⇒ null;
+//       – решающий счёт (h≠a): winner от FD должен совпадать со стороной счёта
+//         (противоречие ⇒ null); отсутствующий winner выводим из счёта;
+//       – ничейный 120′-счёт легален ТОЛЬКО как серия пенальти
+//         (duration PENALTY_SHOOTOUT) с достоверным winner HOME/AWAY.
+// null ⇒ матч НЕ фиксируется в results, НЕ зачитывается в лидерборд и НЕ
+// показывается завершённым — удерживается как «идёт» до валидных данных от FD
+// либо ручного /score. Возвращает {home, away, ...meta} готовым для settleMatch.
+function extractFinalResult(m) {
+  if (m.status !== 'FINISHED' && m.status !== 'AWARDED') return null
+  const score = settleScore(m.score, m.stage)
+  if (!score) return null
+  const meta = { ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
+  if (!meta.knockout) return { ...score, ...meta }
+
+  if (meta.winner === 'DRAW') return null
+  if (score.home !== score.away) {
+    const bySide = score.home > score.away ? 'HOME_TEAM' : 'AWAY_TEAM'
+    if (meta.winner && meta.winner !== bySide) return null
+    meta.winner = bySide
+  } else {
+    // 120′-ничья: без серии пенальти и известного прошедшего итога нет.
+    if ((m.score && m.score.duration) !== 'PENALTY_SHOOTOUT') return null
+    if (meta.winner !== 'HOME_TEAM' && meta.winner !== 'AWAY_TEAM') return null
+  }
+  return { ...score, ...meta }
+}
+
 module.exports = {
   MATCH_LOOKUP, TLA_ALIASES, normTLA, lookupMatchId,
   isKnockoutStage, isKnockoutMatchId, settleScore, resultMeta, knockoutBreakdown, knockoutResultFields,
+  extractFinalResult,
 }

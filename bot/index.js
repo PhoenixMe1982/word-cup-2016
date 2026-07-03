@@ -4,7 +4,7 @@ const path = require('path')
 const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
-const { MATCH_LOOKUP, lookupMatchId, normTLA, settleScore, resultMeta, knockoutResultFields, isKnockoutMatchId } = require('./match-lookup.js')
+const { MATCH_LOOKUP, lookupMatchId, normTLA, isKnockoutMatchId, extractFinalResult } = require('./match-lookup.js')
 const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
@@ -454,31 +454,29 @@ const FD_STATUS_MAP = {
 
 const liveState = { updated: null, matchResults: {} }
 
-// Гейт фиксации итога: возвращает финальный результат ТОЛЬКО если матч
-// действительно завершён И зачётный счёт достоверно вычисляется. Иначе null —
-// тогда матч не фиксируется в results, не зачитывается в лидерборд и не
-// показывается в карточке как завершённый. Это защищает от ситуаций:
-//   • football-data на миг отдаёт FINISHED, но fullTime ещё null (раньше код
-//     молча подставлял счёт ПЕРВОГО ТАЙМА и фиксировал неверный итог);
-//   • статус «мигает» FINISHED↔SCHEDULED до реального окончания;
-//   • нокаут по пенальти, где fullTime приходит кумулятивом (reg+et+pen).
-// Зачётный счёт и доп. поля (penHome/penAway, winner, duration) считает общий
-// хелпер settleScore/resultMeta (см. match-lookup.js) — единый для поллера и
-// резервного sync-results.js. На групповых матчах поведение не меняется.
-function extractFinalResult(m) {
-  if (m.status !== 'FINISHED' && m.status !== 'AWARDED') return null
-  const score = settleScore(m.score, m.stage)
-  if (!score) return null
-  // knockoutResultFields добавляет {knockout, reg, et} только на плей-офф —
-  // на группе пусто, поведение не меняется.
-  const meta = { ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
-  // Нокаут по пенальти без достоверного победителя НЕ фиксируем: football-data
-  // иногда отдаёт FINISHED с duration PENALTY_SHOOTOUT, но winner ещё null (и
-  // penalties кумулятивом/ничьей). Без winner нельзя начислить балл за серию и
-  // за проход — ждём следующий поллинг. Иначе матч «застрял бы» с пен 1:1 и
-  // недозачётом (как было с m75 NED—MAR). Касается 1/8…финала.
-  if (meta.knockout && m.score?.duration === 'PENALTY_SHOOTOUT' && !meta.winner) return null
-  return { ...score, ...meta }
+// Гейт фиксации итога живёт в match-lookup.js (extractFinalResult) — ЕДИНЫЙ для
+// поллера, резервного sync-results.js и live-data.json. Группа: любой достоверный
+// fullTime за 90′. Нокаут: итог обязан однозначно определять прошедшего (ничьей
+// не бывает; winner=DRAW / противоречие счёту / 120′-ничья без серии ⇒ null) —
+// матч удерживается как «идёт», а админ получает алерт для ручной проверки.
+
+// Счётчик подряд идущих циклов, в которых FD отдаёт нокауту FINISHED, а итог не
+// проходит гейт. Алерт шлём один раз — на ВТОРОМ подряд цикле (разовый «миг»
+// FINISHED без полей — норма стабилизации фида, не спамим).
+const holdAlerted = {}
+function alertKnockoutHold(matchId, m) {
+  holdAlerted[matchId] = (holdAlerted[matchId] || 0) + 1
+  if (holdAlerted[matchId] !== 2 || !ADMIN_ID) return
+  const ft = m.score?.fullTime || {}
+  const ftStr = ft.home != null ? ` (FD fullTime ${ft.home}:${ft.away}, winner: ${m.score?.winner || '—'})` : ''
+  bot.api.sendMessage(ADMIN_ID,
+    `⚠️ *${m.homeTeam?.name} — ${m.awayTeam?.name}* (${matchId})\n` +
+    `FD отдаёт FINISHED, но итог не проходит проверку нокаута — нет однозначного прошедшего${ftStr}.\n` +
+    `Матч удержан как «идёт», очки не зачтены. Проверь реальный итог и зачти вручную:\n` +
+    `/score ${matchId} H:A — победа в 90′\n` +
+    `/score ${matchId} 1:1 дв 2:1 — доп. время\n` +
+    `/score ${matchId} 1:1 TLA — серия пенальти (кто прошёл)`,
+    { parse_mode: 'Markdown' }).catch(() => {})
 }
 
 // Поля карточки завершённого матча из записанного/полученного результата.
@@ -523,6 +521,7 @@ async function pollFootballData() {
 
       if (finalResult) {
         // Итог подтверждён → показываем как завершённый и зачитываем очки.
+        delete holdAlerted[matchId]
         next[matchId] = finishedEntry(finalResult)
         try {
           const { home, away, ...meta } = finalResult
@@ -540,8 +539,12 @@ async function pollFootballData() {
         continue
       }
 
-      // Итог НЕ подтверждён. Если FD уже отдаёт FINISHED, но fullTime ещё нет —
-      // удерживаем матч как 'live', чтобы карточка не показала непроверённый счёт.
+      // Итог НЕ подтверждён. Если FD уже отдаёт FINISHED, но гейт не пропустил
+      // (нет fullTime / нокаут без однозначного прошедшего) — удерживаем матч
+      // как 'live', чтобы карточка не показала непроверённый итог, и алертим
+      // админа (нокаут, второй цикл подряд) — проверить реальный результат.
+      if (rawStatus === 'finished' && isKnockoutMatchId(matchId)) alertKnockoutHold(matchId, m)
+      else delete holdAlerted[matchId]
       const status = rawStatus === 'finished' ? 'live' : rawStatus
       const entry = { status }
       const liveScore = m.score?.fullTime?.home != null ? m.score.fullTime

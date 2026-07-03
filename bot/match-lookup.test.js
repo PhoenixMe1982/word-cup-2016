@@ -1,7 +1,7 @@
 // Проверка settleScore/resultMeta (этап 1: фикс нокаут-зачёта).
 // Запуск: node bot/match-lookup.test.js  (без зависимостей, exit 1 при падении)
 const assert = require('assert')
-const { settleScore, resultMeta, isKnockoutStage, knockoutBreakdown, knockoutResultFields, isKnockoutMatchId } = require('./match-lookup.js')
+const { settleScore, resultMeta, isKnockoutStage, knockoutBreakdown, knockoutResultFields, isKnockoutMatchId, extractFinalResult } = require('./match-lookup.js')
 
 let n = 0
 const eq = (got, exp, msg) => { n++; assert.deepStrictEqual(got, exp, msg) }
@@ -94,5 +94,50 @@ eq(isKnockoutMatchId('m73'), true, 'm73 плей-офф (первый)')
 eq(isKnockoutMatchId('m104'), true, 'm104 плей-офф')
 eq(isKnockoutMatchId(''), false, 'пусто → false')
 eq(isKnockoutMatchId('bogus'), false, 'мусор → false')
+
+// ── extractFinalResult: единый гейт фиксации ───────────────────────────────
+// Группа: любой исход валиден, в т.ч. ничья.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'GROUP_STAGE', score: { fullTime: { home: 1, away: 1 } } }),
+  { home: 1, away: 1 }, 'gate: групповая ничья валидна')
+// Не завершён / нет fullTime → null.
+eq(extractFinalResult({ status: 'IN_PLAY', stage: 'GROUP_STAGE', score: { fullTime: { home: 1, away: 0 } } }),
+  null, 'gate: не FINISHED → null')
+eq(extractFinalResult({ status: 'FINISHED', stage: 'GROUP_STAGE', score: { fullTime: { home: null, away: null } } }),
+  null, 'gate: FINISHED без fullTime → null')
+
+// НОКАУТ, кейс m83: FINISHED + 2:2 + winner=DRAW (отменённый гол у FD) → null.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 2, away: 2 }, regularTime: { home: 2, away: 2 }, winner: 'DRAW' } }),
+  null, 'gate: нокаут winner=DRAW (m83) → null')
+// Нокаут, 120′-ничья БЕЗ серии пенальти → null (ничьей на плей-офф не бывает).
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 1, away: 1 }, regularTime: { home: 1, away: 1 }, duration: 'EXTRA_TIME' } }),
+  null, 'gate: нокаут 120′-ничья без серии → null')
+// Нокаут, решающий счёт, winner ПРОТИВОРЕЧИТ счёту → null (фид кривой).
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 2, away: 1 }, regularTime: { home: 2, away: 1 }, winner: 'AWAY_TEAM' } }),
+  null, 'gate: нокаут winner противоречит счёту → null')
+// Нокаут, решающий счёт, winner отсутствует → выводится из счёта.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 2, away: 1 }, regularTime: { home: 2, away: 1 } } }),
+  { home: 2, away: 1, winner: 'HOME_TEAM', knockout: true, reg: { home: 2, away: 1 } },
+  'gate: нокаут без winner → выведен из счёта')
+// Нокаут, решённый в 90′, согласованный winner → проходит.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'QUARTER_FINALS',
+  score: { fullTime: { home: 2, away: 1 }, regularTime: { home: 2, away: 1 }, winner: 'HOME_TEAM' } }),
+  { home: 2, away: 1, winner: 'HOME_TEAM', knockout: true, reg: { home: 2, away: 1 } },
+  'gate: нокаут 90′ валиден')
+// Серия пенальти с достоверным прошедшим → проходит (счёт = 120′, не кумулятив).
+eq(extractFinalResult({ status: 'FINISHED', stage: 'FINAL',
+  score: { fullTime: { home: 5, away: 4 }, regularTime: { home: 1, away: 1 }, extraTime: { home: 0, away: 0 },
+    penalties: { home: 4, away: 3 }, winner: 'HOME_TEAM', duration: 'PENALTY_SHOOTOUT' } }),
+  { home: 1, away: 1, penHome: 4, penAway: 3, winner: 'HOME_TEAM', duration: 'PENALTY_SHOOTOUT',
+    knockout: true, reg: { home: 1, away: 1 }, et: { home: 1, away: 1 } },
+  'gate: серия с winner валидна, счёт 120′')
+// Серия пенальти БЕЗ winner (кейс m74/m75) → null, ждём.
+eq(extractFinalResult({ status: 'FINISHED', stage: 'LAST_16',
+  score: { fullTime: { home: 1, away: 1 }, regularTime: { home: 1, away: 1 },
+    penalties: { home: 1, away: 1 }, duration: 'PENALTY_SHOOTOUT' } }),
+  null, 'gate: серия без winner (m74/m75) → null')
 
 console.log(`✅ all ${n} assertions passed`)

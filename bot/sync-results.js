@@ -2,7 +2,7 @@
 // Sync WC 2026 match results from football-data.org
 // Runs every 5 min via GitHub Actions cron during the tournament
 
-const { lookupMatchId, normTLA, settleScore, resultMeta, knockoutResultFields } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, extractFinalResult } = require('./match-lookup.js')
 
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const BOT_TOKEN   = (process.env.BOT_TOKEN   || '').trim()
@@ -92,15 +92,15 @@ async function main() {
     // Already in Redis → skip
     if (settled[matchId]) continue
 
-    // Зачётный счёт: группа — fullTime; нокаут по пенальти — 120′ без серии
-    // (общий хелпер, см. match-lookup.js). null ⇒ счёт ещё недостоверен, ждём.
-    const score = settleScore(m.score, m.stage)
-    if (!score) {
-      console.warn(`[sync] ${matchId} has no reliable final score yet, skipping`)
+    // Единый гейт фиксации (match-lookup.js): группа — достоверный fullTime;
+    // нокаут — итог обязан однозначно определять прошедшего (ничьей не бывает).
+    // null ⇒ данные FD недостоверны — НЕ фиксируем, ждём/чиним вручную (/score).
+    const finalResult = extractFinalResult(m)
+    if (!finalResult) {
+      console.warn(`[sync] ${matchId} не проходит гейт фиксации (счёт/победитель недостоверны), skipping`)
       continue
     }
-    const homeScore = score.home, awayScore = score.away
-    const meta = { ...resultMeta(m.score), ...knockoutResultFields(m.score, m.stage) }
+    const { home: homeScore, away: awayScore, ...meta } = finalResult
 
     const penStr = meta.penHome != null ? ` (пен. ${meta.penHome}:${meta.penAway})` : ''
     console.log(`[sync] New result: ${matchId} ${key} → ${homeScore}:${awayScore}${penStr}`)

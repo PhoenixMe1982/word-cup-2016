@@ -6,7 +6,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const { lookupMatchId, normTLA } = require('./match-lookup.js')
+const { lookupMatchId, normTLA, extractFinalResult } = require('./match-lookup.js')
 
 const FDORG_TOKEN = (process.env.FDORG_TOKEN || '').trim()
 const OUT_PATH    = path.join(__dirname, '..', 'public', 'live-data.json')
@@ -74,18 +74,32 @@ async function main() {
     if (!matchId) continue
     mapped++
 
-    const status = STATUS_MAP[m.status] || 'upcoming'
+    // Единый гейт фиксации (match-lookup.js): «завершён» показываем ТОЛЬКО если
+    // итог достоверен (группа — fullTime; нокаут — однозначный прошедший).
+    // FD-статус FINISHED без валидного итога держим как 'live'.
+    const finalResult = extractFinalResult(m)
+    let status = STATUS_MAP[m.status] || 'upcoming'
+    if (status === 'finished' && !finalResult) status = 'live'
     const fullTime = m.score?.fullTime || {}
     const halfTime = m.score?.halfTime || {}
 
     const prev = matchResults[matchId] || {}
     const next = { ...prev, status }
 
-    // For finished matches use fullTime; for live matches try fullTime first, then halfTime
-    const scoreSource = (fullTime.home != null ? fullTime : null) || (halfTime.home != null ? halfTime : null)
-    if (scoreSource) {
-      next.scoreHome = scoreSource.home
-      next.scoreAway = scoreSource.away
+    if (status === 'finished') {
+      // Зачётный счёт из гейта (на серии пенальти fullTime у FD — кумулятив).
+      next.scoreHome = finalResult.home
+      next.scoreAway = finalResult.away
+      if (finalResult.winner) next.winner = finalResult.winner
+      if (finalResult.duration) next.duration = finalResult.duration
+      if (finalResult.penHome != null) { next.penHome = finalResult.penHome; next.penAway = finalResult.penAway }
+    } else {
+      // Live: fullTime, затем halfTime — что уже есть.
+      const scoreSource = (fullTime.home != null ? fullTime : null) || (halfTime.home != null ? halfTime : null)
+      if (scoreSource) {
+        next.scoreHome = scoreSource.home
+        next.scoreAway = scoreSource.away
+      }
     }
     if (status === 'live' && m.minute != null) {
       next.time = String(m.minute)
