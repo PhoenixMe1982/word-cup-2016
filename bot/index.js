@@ -834,8 +834,13 @@ app.get('/api/_debug/bot', async (_, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
-// GET /api/live — live match state polled from football-data.org every 5 min
-app.get('/api/live', (_, res) => res.json(liveState))
+// GET /api/live — live match state polled from football-data.org every 5 min.
+// no-store: живой счёт не должен кэшироваться промежуточными слоями/WebView —
+// иначе клиент «залипал» на старом счёте до полного перезахода в мини-апп.
+app.get('/api/live', (_, res) => {
+  res.set('Cache-Control', 'no-store')
+  res.json(liveState)
+})
 
 // GET /api/results — all settled match results
 app.get('/api/results', async (_, res) => {

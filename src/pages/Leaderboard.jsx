@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { HEADER_BANNER_STYLE, MATCHES, KNOCKOUT_MATCHES, TEAMS, KNOCKOUT_STAGE_LABELS, isKnockoutMatch } from '../data.js'
 import { calcKnockoutBreakdown } from '../utils.js'
+import { resolveTeams } from '../knockout.js'
+import { useLiveData } from '../LiveDataContext.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 
@@ -125,11 +127,20 @@ function RankDelta({ delta }) {
   )
 }
 
-function PredRow({ item }) {
+function PredRow({ item, byId }) {
   const match = MATCH_MAP[item.matchId]
   if (!match) return null
-  const homeTeam = TEAMS[match.home] || { name: match.home, flag: '🏳️' }
-  const awayTeam = TEAMS[match.away] || { name: match.away, flag: '🏳️' }
+  // Команды плей-офф в статике = null (резолвятся по сетке). Берём их через тот
+  // же resolveTeams, что сетка/«Играть» — иначе флаги 1/8+ падали в 🏳️.
+  let homeCode = match.home
+  let awayCode = match.away
+  if ((homeCode == null || awayCode == null) && byId) {
+    const r = resolveTeams(byId[item.matchId] || match, byId)
+    homeCode = homeCode ?? r.home
+    awayCode = awayCode ?? r.away
+  }
+  const homeTeam = TEAMS[homeCode] || { name: homeCode, flag: '🏳️' }
+  const awayTeam = TEAMS[awayCode] || { name: awayCode, flag: '🏳️' }
   const ko = isKnockoutMatch(match)
   const s = ptsScheme(item.pts)
   const pred = item.pred || {}
@@ -199,7 +210,7 @@ function PredRow({ item }) {
   )
 }
 
-function PredictionsList({ preds, loading }) {
+function PredictionsList({ preds, loading, byId }) {
   // Групповой этап схлопнут по умолчанию — у активных игроков это десятки
   // прогнозов; плей-офф (актуальная стадия) показываем сразу.
   const [groupOpen, setGroupOpen] = useState(false)
@@ -237,7 +248,7 @@ function PredictionsList({ preds, loading }) {
           <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#C9A800' }}>
             🏆 Плей-офф · {koPreds.length}
           </div>
-          {koPreds.map(p => <PredRow key={p.matchId} item={p} />)}
+          {koPreds.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
         </>
       )}
 
@@ -261,7 +272,7 @@ function PredictionsList({ preds, loading }) {
                   <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#16a34a' }}>
                     Точный счёт · {gExact.length}
                   </div>
-                  {gExact.map(p => <PredRow key={p.matchId} item={p} />)}
+                  {gExact.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
                 </>
               )}
               {gOut.length > 0 && (
@@ -269,7 +280,7 @@ function PredictionsList({ preds, loading }) {
                   <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#2563eb' }}>
                     Угадан исход · {gOut.length}
                   </div>
-                  {gOut.map(p => <PredRow key={p.matchId} item={p} />)}
+                  {gOut.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
                 </>
               )}
               {gMiss.length > 0 && (
@@ -277,7 +288,7 @@ function PredictionsList({ preds, loading }) {
                   <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#9CA3AF' }}>
                     Мимо · {gMiss.length}
                   </div>
-                  {gMiss.map(p => <PredRow key={p.matchId} item={p} />)}
+                  {gMiss.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
                 </>
               )}
             </div>
@@ -297,6 +308,10 @@ export default function Leaderboard() {
   const [predCache, setPredCache] = useState({})
   const [predLoading, setPredLoading] = useState(null)
   const inTg = isTelegram()
+  // Живые матчи → карта id→match для резолва команд плей-офф в карточках прогнозов.
+  const { matches } = useLiveData()
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
 
   async function togglePredictions(userId) {
     if (expanded === userId) { setExpanded(null); return }
@@ -501,6 +516,7 @@ export default function Leaderboard() {
                     <PredictionsList
                       preds={predCache[entry.userId]}
                       loading={isLoadingThis}
+                      byId={byId}
                     />
                   </div>
                 )}

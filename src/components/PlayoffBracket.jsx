@@ -1,5 +1,6 @@
 import { TEAMS, KNOCKOUT_LAYOUT } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+import { winnerCode, resolveTeams } from '../knockout.js'
 
 // Классическая сетка плей-офф «периферия → центр» (как на афише). Команды — ТОЛЬКО
 // флаги. ВСЕ ячейки одного размера: будущие раунды — такие же пустые ячейки, в
@@ -14,19 +15,6 @@ import { useLiveData } from '../LiveDataContext.jsx'
 
 const CUP = `${import.meta.env.BASE_URL}cup-pic.png`
 const L = KNOCKOUT_LAYOUT
-
-function winnerCode(m) {
-  if (!m || m.home == null || m.away == null) return null
-  if (m.status !== 'finished') return null
-  if (m.winner === 'HOME_TEAM') return m.home
-  if (m.winner === 'AWAY_TEAM') return m.away
-  if (m.winner === 'DRAW') return null
-  if (m.scoreHome == null || m.scoreAway == null) return null
-  if (m.scoreHome > m.scoreAway) return m.home
-  if (m.scoreHome < m.scoreAway) return m.away
-  if (m.penHome != null && m.penAway != null) return m.penHome > m.penAway ? m.home : m.away
-  return null
-}
 
 const flagOf = (code) => (code ? (TEAMS[code]?.flag || '') : '')
 
@@ -70,15 +58,15 @@ function Half({ side, byId }) {
   const lay = L[side]
   const teams = lay.r32.flatMap((id) => {
     const m = byId[id]
-    const w = winnerCode(m)
+    const w = winnerCode(m, byId)
     return [
       { code: m?.home, dim: w && w !== m?.home },
       { code: m?.away, dim: w && w !== m?.away },
     ]
   })
-  const c1 = lay.r32.map((id) => winnerCode(byId[id])) // 8 — участники 1/8
-  const c2 = lay.r16.map((id) => winnerCode(byId[id])) // 4 — участники 1/4
-  const c3 = lay.qf.map((id) => winnerCode(byId[id]))  // 2 — участники 1/2
+  const c1 = lay.r32.map((id) => winnerCode(byId[id], byId)) // 8 — участники 1/8
+  const c2 = lay.r16.map((id) => winnerCode(byId[id], byId)) // 4 — участники 1/4
+  const c3 = lay.qf.map((id) => winnerCode(byId[id], byId))  // 2 — участники 1/2
 
   return (
     <div className={`kb-side ${side === 'right' ? 'kb-mirror' : ''}`}>
@@ -99,10 +87,11 @@ export default function PlayoffBracket({ onOpen }) {
   const byId = {}
   for (const m of matches) byId[m.id] = m
 
-  const leftFinalist = winnerCode(byId[L.left.sf[0]])
-  const rightFinalist = winnerCode(byId[L.right.sf[0]])
-  const champion = winnerCode(byId[L.final])
-  const bronze = byId[L.bronze] || {}
+  const leftFinalist = winnerCode(byId[L.left.sf[0]], byId)
+  const rightFinalist = winnerCode(byId[L.right.sf[0]], byId)
+  const champion = winnerCode(byId[L.final], byId)
+  const bronzeM = byId[L.bronze]
+  const bronze = bronzeM ? resolveTeams(bronzeM, byId) : {}
 
   return (
     <section className="mb-5">

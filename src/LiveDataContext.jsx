@@ -76,11 +76,16 @@ export function LiveDataProvider({ children }) {
     async function load() {
       const liveUrl = import.meta.env.BASE_URL + 'live-data.json?t=' + Date.now()
       const verUrl = import.meta.env.BASE_URL + 'version.json?t=' + Date.now()
+      // Cache-bust всех живых источников: без ?t=… WebView Telegram кэшировал
+      // /api/live и 60-сек. рефреш возвращал устаревший счёт (матч уже кончился,
+      // а карточка «висела» на старом счёте до полного перезахода). Как и для
+      // live-data.json/version.json, добавляем метку времени к каждому запросу.
+      const t = Date.now()
       const [json, apiLive, apiScorers, apiKeepers, ver] = await Promise.all([
         fetch(liveUrl).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API}/api/live`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API}/api/scorers`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API}/api/goalkeepers`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API}/api/live?t=${t}`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API}/api/scorers?t=${t}`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API}/api/goalkeepers?t=${t}`).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(verUrl).then(r => r.ok ? r.json() : null).catch(() => null),
       ])
       if (cancelled) return
