@@ -43,7 +43,9 @@ const MATCH_LOOKUP = {
   'MEX_ENG': 'm92',  // W(m79 MEX-ECU)=MEX vs W(m80 ENG-COD)=ENG
   'USA_BEL': 'm94',  // W(m81 USA-BIH)=USA vs W(m82 BEL-SEN)=BEL
   'POR_ESP': 'm93',  // W(m83 POR-CRO)=POR vs W(m84 ESP-AUT)=ESP
-  // m95 [m86,m88], m96 [m85,m87] — пары ещё не сформированы.
+  'ARG_EGY': 'm95',  // W(m86 ARG-CPV)=ARG vs W(m88 AUS-EGY)=EGY
+  'SUI_COL': 'm96',  // W(m85 SUI-ALG)=SUI vs W(m87 COL-GHA)=COL
+  // Все пары 1/8 сформированы. Пары 1/4 (m97+) — по мере резолва.
 }
 
 // football-data.org TLA → our code (handles any code mismatches)

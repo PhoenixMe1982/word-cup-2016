@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { TEAMS, TOURNAMENT, MATCHES, HEADER_BANNER_STYLE, KNOCKOUT_STAGE_LABELS } from '../data.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 import { toLocalDateTime, matchUTCDate, compareKickoff } from '../utils.js'
+import { resolveTeams } from '../knockout.js'
 import CountdownTimer from '../components/CountdownTimer.jsx'
 import TournamentProgressBar from '../components/TournamentProgressBar.jsx'
 import PlayoffBracket from '../components/PlayoffBracket.jsx'
@@ -387,6 +388,15 @@ function UpcomingMatchRow({ match, isExpanded, onToggle, pred, onSave, onTab, sa
 export default function Home({ onTab }) {
   const { matches, scorers } = useLiveData()
 
+  // Команды нокаута резолвятся по сетке (тот же resolveTeams, что в «Играть» и
+  // разделе ЧМ): в data.js у матчей следующих стадий home/away = null, и без
+  // резолва они выпадали бы из «Ближайших»/«Идут сейчас», хотя пары уже
+  // известны. Показываем матч, только когда известны ОБЕ команды.
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
+  const displayMatches = matches.map((m) =>
+    m.home && m.away ? m : { ...m, ...resolveTeams(m, byId) })
+
   // Если статус из API запаздывает, матч считается live по расписанию —
   // он сразу попадает в «Идут сейчас», а не висит в «Ближайших»
   const MATCH_DURATION_MS = 115 * 60 * 1000
@@ -400,11 +410,11 @@ export default function Home({ onTab }) {
   // Матч с определёнными командами (нокаут-слоты TBD ещё без пар — в списках не показываем)
   const hasTeams = (m) => !!(m.home && m.away)
 
-  const liveMatches = matches
+  const liveMatches = displayMatches
     .filter((m) => hasTeams(m) && (m.status === 'live' || isTimeLive(m)))
     .sort(compareKickoff)
 
-  const allFinished = matches.filter(m => m.status === 'finished' && hasTeams(m))
+  const allFinished = displayMatches.filter(m => m.status === 'finished' && hasTeams(m))
   // Самые свежие результаты сверху: сортируем по дате матча по убыванию
   const finishedMatches = [...allFinished]
     .sort((a, b) => {
@@ -413,12 +423,12 @@ export default function Home({ onTab }) {
       return db - da
     })
     .slice(0, 4)
-  const upcomingMatches = matches
+  const upcomingMatches = displayMatches
     .filter((m) => m.status === 'upcoming' && hasTeams(m) && !isTimeLive(m))
     // Хронологический порядок по времени начала: ближайший — первым
     .sort(compareKickoff)
 
-  const timeBasedFinished = matches.filter(m => {
+  const timeBasedFinished = displayMatches.filter(m => {
     if (m.status !== 'upcoming' || !hasTeams(m)) return false
     const kick = matchUTCDate(m.date, m.time)
     return kick && now >= kick.getTime() + MATCH_DURATION_MS

@@ -284,9 +284,11 @@ export const KNOCKOUT_MATCHES = [
   { id: 'm87', stage: 'r32',   date: '4 июля',  time: '04:30 МСК', status: 'upcoming', home: 'COL', away: 'GHA', venue: 'Arrowhead Stadium, Канзас-Сити',       goals: [] },
   { id: 'm88', stage: 'r32',   date: '3 июля',  time: '21:00 МСК', status: 'upcoming', home: 'AUS', away: 'EGY', venue: 'AT&T Stadium, Арлингтон',              goals: [] },
   // ── 1/8 финала (R16) — команды TBD ──────────────────────────────────────────
-  { id: 'm89', stage: 'r16',   date: '4 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm90', stage: 'r16',   date: '5 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm91', stage: 'r16',   date: '6 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  // Время 1/8: подтверждённые слоты — из фикстур API-Football (UTC→МСК);
+  // остальные пока оценочные, уточняются по мере анонса фикстур.
+  { id: 'm89', stage: 'r16',   date: '5 июля',  time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm90', stage: 'r16',   date: '4 июля',  time: '20:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm91', stage: 'r16',   date: '5 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm92', stage: 'r16',   date: '6 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm93', stage: 'r16',   date: '7 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm94', stage: 'r16',   date: '5 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },

@@ -94,7 +94,7 @@ function fakeSdk() {
   // Гасим разовые попапы, чтобы не перекрывали экран. Попап схемы очков
   // показываем только в состоянии 'scoring'.
   try{
-    localStorage.setItem('wc2026_announce_m65_score_fix','1');
+    localStorage.setItem('wc2026_announce_m83_score_fix','1'); // ключ = ANNOUNCE_KEY в App.jsx (менять при новой коррекции)
     if(${JSON.stringify(tab === 'scoring')}) localStorage.removeItem('wc2026_scoring_scheme_v1');
     else localStorage.setItem('wc2026_scoring_scheme_v1','1');
   }catch(e){}
