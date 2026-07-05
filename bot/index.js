@@ -5,7 +5,7 @@ const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
 const { MATCH_LOOKUP, lookupMatchId, normTLA, isKnockoutMatchId, extractFinalResult, liveDisplayScore } = require('./match-lookup.js')
-const { afEnabled, afGetResult, afAgrees } = require('./af-crosscheck.js')
+const { afEnabled, afGetResult, afAgrees, afStateMap } = require('./af-crosscheck.js')
 const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
@@ -533,6 +533,25 @@ function finishedEntry(r) {
   return entry
 }
 
+// Зачесть валидный итог (идемпотентно/delta-безопасно) + карточка + уведомление
+// админу. Возвращает finishedEntry. Общий для AF-первичного и FD-fallback путей.
+async function settleAndEntry(matchId, result, homeName, awayName, srcNote) {
+  const entry = finishedEntry(result)
+  try {
+    const { home, away, ...meta } = result
+    const count = await settleMatch(matchId, home, away, meta)
+    if (ADMIN_ID) {
+      const pen = result.penHome != null ? ` (пен. ${result.penHome}:${result.penAway})` : ''
+      bot.api.sendMessage(ADMIN_ID,
+        `⚽ *${homeName} ${result.home}:${result.away} ${awayName}*${pen}\nПрогнозов зачтено: ${count}${srcNote || ''}`,
+        { parse_mode: 'Markdown' }).catch(() => {})
+    }
+  } catch (e) {
+    console.error(`[live] settle ${matchId} failed:`, e.message)
+  }
+  return entry
+}
+
 async function pollFootballData() {
   if (!FDORG_TOKEN) return
   try {
@@ -549,6 +568,13 @@ async function pollFootballData() {
     const next = {}
     let liveCount = 0
 
+    // ПЕРВИЧНЫЙ источник — API-Football (подписка Pro, надёжные статус/счёт/итог).
+    // Строим карту состояний по окну [вчера, сегодня, завтра] UTC (охватывает
+    // идущие и только что завершённые). football-data ниже — резерв. При выкл.
+    // AF или сетевой ошибке afMap=null → работает прежняя FD-логика.
+    const dayUTC = (off) => new Date(Date.now() + off * 86400000).toISOString().slice(0, 10)
+    const afMap = await afStateMap([dayUTC(-1), dayUTC(0), dayUTC(1)])
+
     for (const m of matches) {
       const matchId = lookupMatchId(normTLA(m.homeTeam?.tla || ''), normTLA(m.awayTeam?.tla || ''))
       if (!matchId) continue
@@ -560,6 +586,41 @@ async function pollFootballData() {
         continue
       }
 
+      // ── AF-ПЕРВИЧНЫЙ ВЕРДИКТ (если API-Football знает матч) ──────────────────
+      const afs = afMap && afMap[matchId]
+      if (afs) {
+        if (afs.category === 'finished' && afs.result) {
+          // Завершён по AF + валидный итог (через тот же гейт) → зачитываем.
+          delete holdAlerted[matchId]
+          next[matchId] = await settleAndEntry(
+            matchId, afs.result, m.homeTeam?.name, m.awayTeam?.name, '\n✅ Источник: API-Football')
+          continue
+        }
+        if (afs.category === 'live') {
+          // Идёт по AF → live с раздельными фазами (счёт без голов серии).
+          delete holdAlerted[matchId]
+          const entry = { status: 'live' }
+          if (afs.display) {
+            entry.scoreHome = afs.display.home; entry.scoreAway = afs.display.away
+            if (afs.display.penHome != null) { entry.penHome = afs.display.penHome; entry.penAway = afs.display.penAway }
+            if (afs.display.phase !== 'reg') entry.phase = afs.display.phase
+          }
+          if (afs.elapsed != null) entry.time = String(afs.elapsed)
+          liveCount++
+          next[matchId] = entry
+          continue
+        }
+        if (afs.category === 'upcoming') {
+          // AF: ещё не начался. Доверяем AF (надёжные времена) — не даём FD-лагу
+          // раньше времени пометить live. (Если AF ошибётся — подстрахует гейт.)
+          delete holdAlerted[matchId]
+          next[matchId] = { status: 'upcoming' }
+          continue
+        }
+        // finished, но итог не валиден гейтом → падаем в FD/hold ниже.
+      }
+
+      // ── FD-FALLBACK (AF не знает матч / выключен / завершён-без-валид-итога) ──
       // Строгий гейт: «завершён» = только подтверждённый финальный счёт (fullTime).
       let finalResult = extractFinalResult(m)
       const rawStatus = FD_STATUS_MAP[m.status] || 'upcoming'

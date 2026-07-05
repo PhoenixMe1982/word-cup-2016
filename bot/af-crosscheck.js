@@ -106,7 +106,9 @@ function afAgrees(fd, af) {
   return true
 }
 
-// ── Сеть: кэш по дню + дневной бюджет (Free: 100 req/день, держим ≤90) ───────
+// ── Сеть: кэш по дню + дневной бюджет ────────────────────────────────────────
+// Аккаунт api-sports сейчас Pro (7500 req/день). Держим потолок 5000 с запасом
+// (поллер каждые 5 мин × окно 3 дня ≈ 864/день, + сверки/скореры). Кэш 4 мин.
 const dayCache = new Map() // dateStr → { at, fixtures|null }
 const CACHE_MS = 4 * 60 * 1000
 let budget = { date: '', used: 0 }
@@ -114,7 +116,7 @@ let budget = { date: '', used: 0 }
 function takeBudget() {
   const d = new Date().toISOString().slice(0, 10)
   if (budget.date !== d) budget = { date: d, used: 0 }
-  if (budget.used >= 90) return false
+  if (budget.used >= 5000) return false
   budget.used++
   return true
 }
@@ -158,4 +160,68 @@ async function afGetResult(matchId, dateStr) {
   return null
 }
 
-module.exports = { afEnabled, afGetResult, afAgrees, afParseFixture, AF_NAME_TO_TLA }
+// ── AF как ПЕРВИЧНЫЙ источник состояния матча ────────────────────────────────
+// Статусы API-Football (fixture.status.short):
+//   идёт:     1H HT 2H ET BT P LIVE SUSP INT
+//   завершён: FT AET PEN
+//   иначе (NS TBD PST CANC ABD AWD WO) → трактуем как «ещё не идёт» (upcoming).
+const AF_LIVE_ST = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'SUSP', 'INT'])
+const AF_FIN_ST = new Set(['FT', 'AET', 'PEN'])
+
+// Полное состояние матча по одной фикстуре AF (в НАШЕЙ ориентации home/away):
+//   { matchId, category:'live'|'finished'|'upcoming', statusShort, elapsed,
+//     result?  — валидный итог (для finished, через тот же гейт extractFinalResult),
+//     display? — живой счёт {home,away,phase,penHome?,penAway?} (для live) }
+// null — если матч не наш (имена не маппятся). Категория 'finished' без валидного
+// result оставляет result=null → поллер удержит матч (safe, как и для FD).
+function afMatchState(f) {
+  const st = f?.fixture?.status?.short
+  const hTLA = AF_NAME_TO_TLA[f?.teams?.home?.name]
+  const aTLA = AF_NAME_TO_TLA[f?.teams?.away?.name]
+  if (!hTLA || !aTLA) return null
+  let matchId = lookupMatchId(hTLA, aTLA)
+  let swapped = false
+  if (!matchId) { matchId = lookupMatchId(aTLA, hTLA); if (!matchId) return null; swapped = true }
+
+  const category = AF_FIN_ST.has(st) ? 'finished' : AF_LIVE_ST.has(st) ? 'live' : 'upcoming'
+  const out = { matchId, category, statusShort: st, elapsed: f?.fixture?.status?.elapsed ?? null }
+
+  if (category === 'finished') {
+    const parsed = afParseFixture(f) // валидирует тем же гейтом; учитывает swap
+    out.result = parsed ? parsed.result : null
+  } else if (category === 'live') {
+    let home = f.goals?.home, away = f.goals?.away
+    let penHome = f.score?.penalty?.home ?? null, penAway = f.score?.penalty?.away ?? null
+    // Фаза по статусу: серия → pens; доп.время/перерыв ОТ → et; иначе основное.
+    const phase = (st === 'P') ? 'pens' : (st === 'ET' || st === 'BT') ? 'et' : 'reg'
+    if (home != null && away != null) {
+      if (swapped) { const t = home; home = away; away = t; const p = penHome; penHome = penAway; penAway = p }
+      out.display = { home, away, phase }
+      if (penHome != null && penAway != null) { out.display.penHome = penHome; out.display.penAway = penAway }
+    }
+  }
+  return out
+}
+
+// Карта matchId → afMatchState по окну дат (UTC, напр. [вчера, сегодня, завтра]).
+// Кэш внутри afFetchDay (4 мин). null при выключенном AF.
+async function afStateMap(dateStrs) {
+  if (!afEnabled()) return null
+  const map = {}
+  let any = false
+  for (const d of dateStrs) {
+    const fixtures = await afFetchDay(d)
+    if (!fixtures) continue
+    any = true
+    for (const f of fixtures) {
+      const s = afMatchState(f)
+      if (s) map[s.matchId] = s
+    }
+  }
+  return any ? map : null
+}
+
+module.exports = {
+  afEnabled, afGetResult, afAgrees, afParseFixture, AF_NAME_TO_TLA,
+  afMatchState, afStateMap,
+}
