@@ -1,16 +1,30 @@
 name: Deploy to GitHub Pages
 
+# Публикация фронта НАПРЯМУЮ через официальные Pages-экшены (без промежуточной
+# ветки gh-pages). Раньше peaceiris пушил в ветку, а внутренний билд Pages из
+# ветки иногда ЗАВИСАЛ — фикс лежал в ветке, но сайт отдавал старое (инцидент
+# 2026-07-05, ~12ч). Официальная схема upload-pages-artifact→deploy-pages
+# публикует артефакт прямо в Pages, это хрупкое звено убрано.
+#
+# configure-pages@v5 enablement:true — сам переключает Source репозитория на
+# «GitHub Actions» через API (нужны permissions pages:write + id-token:write),
+# так что ручной клик в Settings не требуется.
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
+# Не отменять уже идущую публикацию (иначе гонка деплоев), но и не копить очередь.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +40,23 @@ jobs:
           VITE_BASE_PATH: /word-cup-2016/
           VITE_API_URL: https://word-cup-2016.onrender.com
 
-      - uses: peaceiris/actions-gh-pages@v4
+      - uses: actions/configure-pages@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
