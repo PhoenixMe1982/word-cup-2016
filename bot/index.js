@@ -634,8 +634,8 @@ async function pollFootballData() {
       // непроверённый итог, и алертим админа (второй цикл подряд).
       if (rawStatus === 'finished' && (holdReason || isKnockoutMatchId(matchId))) alertHold(matchId, m, holdReason)
       else delete holdAlerted[matchId]
-      const status = rawStatus === 'finished' ? 'live' : rawStatus
-      const entry = { status }
+      let status = rawStatus === 'finished' ? 'live' : rawStatus
+      const entry = {}
       if (isKnockoutMatchId(matchId)) {
         // Нокаут: раздельные фазы — игровой счёт без голов серии, серия отдельно,
         // маркер фазы (reg/et/pens). Кумулятив «3:5» в карточку не попадает.
@@ -650,6 +650,14 @@ async function pollFootballData() {
           : m.score?.halfTime?.home != null ? m.score.halfTime : null
         if (liveScore) { entry.scoreHome = liveScore.home; entry.scoreAway = liveScore.away }
       }
+      // «Идёт» определяем ПО НАЛИЧИЮ СЧЁТА, а не по ярлыку статуса FD и не по
+      // клиентскому таймеру. Причина: football-data на free-тарифе часто держит
+      // ИДУЩИЙ матч в статусе SCHEDULED/TIMED ('upcoming') и лишь пушит счёт —
+      // тогда матч не попадал в «эфир»; а клиентская эвристика isTimeLive гасла
+      // через фикс. окно 115 мин, и матч «слетал» из эфира, ещё продолжаясь.
+      // Счёт есть + не завершён (гейт не зачёл) ⇒ live. Зачёт/гейт не затронуты.
+      if (status !== 'live' && entry.scoreHome != null) status = 'live'
+      entry.status = status
       if (status === 'live') {
         liveCount++
         if (m.minute != null) entry.time = String(m.minute)

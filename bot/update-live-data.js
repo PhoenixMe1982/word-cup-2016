@@ -83,6 +83,14 @@ async function main() {
     const fullTime = m.score?.fullTime || {}
     const halfTime = m.score?.halfTime || {}
 
+    // ПРАВИЛО: матч «идёт», пока реально не закончился. football-data (free)
+    // часто держит идущий матч в статусе SCHEDULED/TIMED ('upcoming') и лишь
+    // пушит счёт — тогда матч со счётом, который не закрыт гейтом, ИДЁТ.
+    // Определяем live по наличию счёта, не по клиентскому таймеру (окно 115 мин
+    // гасло раньше конца матча → «слетал» из эфира).
+    const hasLiveScore = fullTime.home != null || halfTime.home != null
+    if (status === 'upcoming' && hasLiveScore) status = 'live'
+
     const prev = matchResults[matchId] || {}
     const next = { ...prev, status }
 
