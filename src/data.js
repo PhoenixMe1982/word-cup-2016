@@ -284,15 +284,16 @@ export const KNOCKOUT_MATCHES = [
   { id: 'm87', stage: 'r32',   date: '4 июля',  time: '04:30 МСК', status: 'upcoming', home: 'COL', away: 'GHA', venue: 'Arrowhead Stadium, Канзас-Сити',       goals: [] },
   { id: 'm88', stage: 'r32',   date: '3 июля',  time: '21:00 МСК', status: 'upcoming', home: 'AUS', away: 'EGY', venue: 'AT&T Stadium, Арлингтон',              goals: [] },
   // ── 1/8 финала (R16) — команды TBD ──────────────────────────────────────────
-  // Время 1/8 сверено с реальными фикстурами API-Football (UTC→МСК, +3ч).
-  { id: 'm89', stage: 'r16',   date: '5 июля',  time: '02:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm90', stage: 'r16',   date: '4 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm91', stage: 'r16',   date: '6 июля',  time: '01:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm92', stage: 'r16',   date: '6 июля',  time: '05:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm93', stage: 'r16',   date: '7 июля',  time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm94', stage: 'r16',   date: '7 июля',  time: '05:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm95', stage: 'r16',   date: '7 июля',  time: '21:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm96', stage: 'r16',   date: '8 июля',  time: '01:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  // Время 1/8 — из РЕАЛЬНОГО fixture.timestamp API-Football (UTC→МСК, +3ч).
+  // ВАЖНО: fixture.date у API-Football смещён на +2ч от факта — брать timestamp!
+  { id: 'm89', stage: 'r16',   date: '5 июля',  time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm90', stage: 'r16',   date: '4 июля',  time: '20:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm91', stage: 'r16',   date: '5 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm92', stage: 'r16',   date: '6 июля',  time: '04:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm93', stage: 'r16',   date: '6 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm94', stage: 'r16',   date: '7 июля',  time: '03:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm95', stage: 'r16',   date: '7 июля',  time: '19:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm96', stage: 'r16',   date: '7 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   // ── 1/4 финала (QF) — команды TBD ───────────────────────────────────────────
   { id: 'm97',  stage: 'qf',   date: '9 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm98',  stage: 'qf',   date: '10 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
