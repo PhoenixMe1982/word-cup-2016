@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-07-07T23:32:33.496Z",
+  "_updated": "2026-07-08T07:11:52.188Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
@@ -586,12 +586,14 @@
       "winner": "HOME_TEAM"
     },
     "m96": {
-      "status": "live",
+      "status": "finished",
       "scoreHome": 0,
       "scoreAway": 0,
       "phase": "pens",
-      "penHome": 3,
-      "penAway": 3
+      "penHome": 4,
+      "penAway": 3,
+      "winner": "HOME_TEAM",
+      "duration": "PENALTY_SHOOTOUT"
     }
   }
 }
