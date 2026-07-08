@@ -1,21 +1,29 @@
 import { useMemo } from 'react'
 import { TEAMS } from '../data.js'
 
-// Статистика вратарей группового этапа ЧМ-2026 (на 24 июня 2026).
-// Источник: сводка Opta (Squawka/ESPN), TNT Sports, Goalkeeper Magazine.
+// Статистика вратарей ЧМ-2026 после 1/8 финала (на 8 июля 2026).
+// Источник: сводка Opta/StatsPerform (ESPN, Squawka), Khel Now, TNT Sports.
 // mp — матчи, saves — сейвы, ga — пропущено, savepct — % сейвов, cs — сухие,
 // pom — приз «Игрок матча». «Балл» считается ниже по прозрачной формуле.
 const GK_DATA = [
-  { name: 'Алиреза Бейранванд',    team: 'IRN', mp: 2, saves: 9,  ga: 0, savepct: 100,  cs: 2, pom: true  },
-  { name: 'Элой Рум',              team: 'CUW', mp: 2, saves: 18, ga: 1, savepct: 94.7, cs: 1, pom: true  },
-  { name: 'Мохаммад Аль-Овайс',    team: 'KSA', mp: 2, saves: 13, ga: 2, savepct: 86.7, cs: 0, pom: true  },
-  { name: 'Возинья',               team: 'CPV', mp: 2, saves: 11, ga: 2, savepct: 84.6, cs: 1, pom: true  },
-  { name: 'Алиссон',               team: 'BRA', mp: 2, saves: 6,  ga: 1, savepct: 85.7, cs: 1, pom: false },
-  { name: 'Ян Зоммер',             team: 'SUI', mp: 2, saves: 7,  ga: 1, savepct: 87.5, cs: 1, pom: false },
-  { name: 'Барт Вербрюгген',       team: 'NED', mp: 2, saves: 8,  ga: 2, savepct: 80.0, cs: 1, pom: false },
-  { name: 'Максим Крепо',          team: 'CAN', mp: 2, saves: 7,  ga: 1, savepct: 87.5, cs: 1, pom: false },
-  { name: 'Джордан Пикфорд',       team: 'ENG', mp: 2, saves: 5,  ga: 1, savepct: 83.3, cs: 1, pom: false },
-  { name: 'Мануэль Нойер',         team: 'GER', mp: 2, saves: 6,  ga: 1, savepct: 85.7, cs: 1, pom: false },
+  { name: 'Унай Симон',            team: 'ESP', mp: 5, saves: 14, ga: 0, savepct: 100,  cs: 5, pom: true  },
+  { name: 'Мике Меньян',           team: 'FRA', mp: 5, saves: 15, ga: 2, savepct: 88,   cs: 3, pom: false },
+  { name: 'Камило Варгас',         team: 'COL', mp: 5, saves: 18, ga: 1, savepct: 94.7, cs: 4, pom: true  },
+  { name: 'Ясин Буну',             team: 'MAR', mp: 4, saves: 13, ga: 3, savepct: 81.3, cs: 2, pom: false },
+  { name: 'Эмилиано Мартинес',     team: 'ARG', mp: 5, saves: 12, ga: 6, savepct: 66.7, cs: 1, pom: false },
+  { name: 'Гренель / Зоммер',      team: 'SUI', mp: 5, saves: 16, ga: 3, savepct: 84.2, cs: 2, pom: false },
+  { name: 'Тибо Куртуа',           team: 'BEL', mp: 5, saves: 14, ga: 5, savepct: 73.7, cs: 1, pom: false },
+  { name: 'Джордан Пикфорд',       team: 'ENG', mp: 5, saves: 11, ga: 4, savepct: 73.3, cs: 2, pom: false },
+  { name: 'Элой Рум',              team: 'CUW', mp: 4, saves: 20, ga: 9, savepct: 69.0, cs: 1, pom: true  },
+  { name: 'Орландо Хилл',          team: 'PAR', mp: 5, saves: 19, ga: 3, savepct: 86.4, cs: 2, pom: false },
+  { name: 'Возинья',               team: 'CPV', mp: 4, saves: 18, ga: 5, savepct: 78.3, cs: 1, pom: true  },
+  { name: 'Алиреза Бейранванд',    team: 'IRN', mp: 3, saves: 12, ga: 3, savepct: 80.0, cs: 1, pom: true  },
+  { name: 'Мохаммад Аль-Овайс',    team: 'KSA', mp: 3, saves: 16, ga: 4, savepct: 80.0, cs: 0, pom: true  },
+  { name: 'Рауль Рангель',         team: 'MEX', mp: 5, saves: 13, ga: 3, savepct: 81.3, cs: 4, pom: false },
+  { name: 'Мэтт Фрис',             team: 'USA', mp: 4, saves: 12, ga: 6, savepct: 66.7, cs: 2, pom: false },
+  { name: 'Алиссон',               team: 'BRA', mp: 4, saves: 9,  ga: 3, savepct: 75.0, cs: 1, pom: false },
+  { name: 'Мануэль Нойер',         team: 'GER', mp: 4, saves: 10, ga: 5, savepct: 66.7, cs: 1, pom: false },
+  { name: 'Диогу Кошта',           team: 'POR', mp: 4, saves: 11, ga: 4, savepct: 73.3, cs: 1, pom: false },
 ]
 
 // Сводный балл (0–10): нормируем четыре метрики и берём взвешенное среднее.
@@ -37,6 +45,13 @@ function withScores(data) {
   })
 }
 
+// Карточки-выделения над таблицей.
+const HIGHLIGHTS = [
+  { label: 'Лидер Golden Glove', title: 'Унай Симон', caption: 'Испания · 5 сухих из 5 · рекорд 609 мин без пропущенных' },
+  { label: 'Больше всех сейвов', title: 'Элой Рум · 20', caption: 'Кюрасао · рекорд 15 за матч (сухой), выбыл в 1/8' },
+  { label: 'Символ турнира', title: 'Возинья · 40 лет', caption: 'Кабо-Верде · 18 сейвов, довёл Аргентину до доп. времени' },
+]
+
 function scoreColor(score, maxScore) {
   if (score >= maxScore - 0.01) return '#C9A800'
   if (score >= 8.5) return '#16A34A'
@@ -55,16 +70,30 @@ export default function Goalkeepers() {
 
   return (
     <div className="page-content">
-      {/* Info strip (заголовок раздела уже в шапке ЧМ) */}
+      {/* Заголовок + карточки-выделения */}
       <div className="px-4 pt-4 pb-3">
-        <p className="text-xs uppercase tracking-wider" style={{ color: '#6B7280' }}>
-          Топ-10 вратарей · групповой этап
+        <p className="text-xs uppercase tracking-wider font-black" style={{ color: '#6B7280' }}>
+          Топ 10 вратарей
         </p>
-        <p className="text-[11px] mt-1.5 leading-snug" style={{ color: '#9CA3AF' }}>
-          «Балл» — сводная оценка по формуле: % сейвов (35%), сейвы за матч (25%),
-          сухие матчи (25%), пропущено за матч (15%). Сопоставим внутри этой выборки
-          на отрезке 1–2 матчей. <span style={{ color: '#C9A800' }}>★</span> — приз «Игрок матча».
-        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {HIGHLIGHTS.map((c) => (
+            <div
+              key={c.label}
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}
+              className="px-3.5 py-2.5"
+            >
+              <p className="text-[10px] uppercase tracking-wider font-black" style={{ color: '#9CA3AF' }}>
+                {c.label}
+              </p>
+              <p className="text-[15px] font-black mt-0.5" style={{ color: '#111827' }}>
+                {c.title}
+              </p>
+              <p className="text-[11px] mt-0.5 leading-snug" style={{ color: '#6B7280' }}>
+                {c.caption}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Таблица */}
@@ -75,17 +104,19 @@ export default function Goalkeepers() {
           <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontVariantNumeric: 'tabular-nums' }}>
             <colgroup>
               <col />
-              <col style={{ width: 30 }} />
-              <col style={{ width: 42 }} />
-              <col style={{ width: 34 }} />
-              <col style={{ width: 42 }} />
-              <col style={{ width: 52 }} />
+              <col style={{ width: 28 }} />
+              <col style={{ width: 40 }} />
+              <col style={{ width: 46 }} />
+              <col style={{ width: 32 }} />
+              <col style={{ width: 40 }} />
+              <col style={{ width: 50 }} />
             </colgroup>
             <thead>
               <tr style={{ background: 'rgba(201,168,0,0.08)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
                 <th className="text-left text-[10px] font-black uppercase tracking-wide pl-3 pr-1 py-2.5" style={{ color: '#6B7280' }}>Вратарь</th>
                 <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Игры">И</th>
                 <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Сейвы">Сейв</th>
+                <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="% сейвов">%&nbsp;Сейв</th>
                 <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Сухие матчи">Сух</th>
                 <th className="text-center text-[10px] font-black uppercase py-2.5" style={{ color: '#6B7280' }} title="Пропущено">Проп</th>
                 <th className="text-center text-[10px] font-black uppercase pr-2 py-2.5" style={{ color: '#111827' }} title="Средний балл">Балл</th>
@@ -116,6 +147,7 @@ export default function Goalkeepers() {
                     </td>
                     <td className="text-center text-[13px] py-2" style={{ color: '#6B7280' }}>{gk.mp}</td>
                     <td className="text-center text-[13px] font-bold py-2" style={{ color: '#111827' }}>{gk.saves}</td>
+                    <td className="text-center text-[12px] py-2" style={{ color: '#6B7280' }}>{gk.savepct % 1 ? gk.savepct.toFixed(1) : gk.savepct}%</td>
                     <td className="text-center text-[13px] py-2" style={{ color: gk.cs > 0 ? '#16A34A' : '#9CA3AF' }}>{gk.cs}</td>
                     <td className="text-center text-[13px] py-2" style={{ color: '#6B7280' }}>{gk.ga}</td>
                     <td className="text-center pr-2 py-2">
