@@ -56,13 +56,10 @@ function ConnCol({ count }) {
 
 function Half({ side, byId }) {
   const lay = L[side]
+  // Флаги всех команд — с обычной непрозрачностью (проигравших не приглушаем).
   const teams = lay.r32.flatMap((id) => {
     const m = byId[id]
-    const w = winnerCode(m, byId)
-    return [
-      { code: m?.home, dim: w && w !== m?.home },
-      { code: m?.away, dim: w && w !== m?.away },
-    ]
+    return [{ code: m?.home }, { code: m?.away }]
   })
   const c1 = lay.r32.map((id) => winnerCode(byId[id], byId)) // 8 — участники 1/8
   const c2 = lay.r16.map((id) => winnerCode(byId[id], byId)) // 4 — участники 1/4

@@ -48,12 +48,31 @@ export const TOURNAMENT_STAGES = [
 // Туры группового этапа в MATCHES идут подряд по 24 матча (12 групп × 2 игры за тур).
 const GROUP_STAGE_ROUNDS = { r1: [0, 24], r2: [24, 48], r3: [48, 72] };
 
-// Доля пройденного пути по стадиям турнира (0..1), на текущий момент.
-// Внутри тура группового этапа доля считается по факту сыгранных матчей
-// (live-матч даёт половину веса) — так заполнение бара отражает реальный
-// ход турнира, а не только календарь. Для отрезков без данных о матчах
-// (предстарт и стадии плей-офф) используется доля прошедшего времени.
-// Между стадиями (выходные дни) — предыдущая стадия считается завершённой.
+// Доля сыгранных матчей одной стадии (0..1): finished=1, live=0.5, upcoming=0.
+// Групповые туры — по срезу MATCHES; стадии плей-офф — по matches с этим stage
+// (матч за 3-е место относим к стадии финала). Если матчей стадии в данных ещё
+// нет (пары не заведены) — фолбэк на долю прошедшего времени по календарю.
+function stageFraction(stage, now, matches) {
+  const gr = GROUP_STAGE_ROUNDS[stage.id];
+  let list;
+  if (gr) list = matches.slice(gr[0], gr[1]);
+  else if (stage.id === 'final') list = matches.filter((m) => m.stage === 'final' || m.stage === 'bronze');
+  else list = matches.filter((m) => m.stage === stage.id);
+  if (list.length > 0) {
+    const w = list.reduce((s, m) => s + (m.status === 'finished' ? 1 : m.status === 'live' ? 0.5 : 0), 0);
+    return w / list.length;
+  }
+  const s = new Date(`${stage.start}T00:00:00Z`).getTime();
+  const e = new Date(`${stage.end}T23:59:59Z`).getTime();
+  const t = now.getTime();
+  return t < s ? 0 : t > e ? 1 : (t - s) / Math.max(1, e - s);
+}
+
+// Доля пройденного пути по стадиям турнира (0..1) для прогресс-бара.
+// Модель «достигнутой стадии»: как только все матчи предыдущих стадий сыграны,
+// индикатор встаёт на метку ТЕКУЩЕЙ стадии (напр. перед 1/4 — ровно на «1/4»),
+// и дальше заполняется к следующей метке по мере сыгранности её матчей.
+// Заполнение управляется РЕАЛЬНЫМИ матчами (finished/live), а не календарём.
 export function tournamentProgress(stages = TOURNAMENT_STAGES, now = new Date(), matches = MATCHES) {
   const t = now.getTime();
   const first = new Date(`${stages[0].start}T00:00:00Z`).getTime();
@@ -61,27 +80,11 @@ export function tournamentProgress(stages = TOURNAMENT_STAGES, now = new Date(),
   const lastEnd = new Date(`${stages[stages.length - 1].end}T23:59:59Z`).getTime();
   if (t >= lastEnd) return 1;
 
+  // Первая недоигранная стадия = текущая. Метка стадии i стоит на точке (i+1)
+  // шкалы (нулевая точка — «Старт»), поэтому база = (i+1), плюс доля её матчей.
   for (let i = 0; i < stages.length; i++) {
-    const stage = stages[i];
-    const start = new Date(`${stage.start}T00:00:00Z`).getTime();
-    const end = new Date(`${stage.end}T23:59:59Z`).getTime();
-    if (t < start) return i / stages.length;
-    if (t <= end) {
-      const round = GROUP_STAGE_ROUNDS[stage.id];
-      let withinFraction
-      if (round) {
-        const roundMatches = matches.slice(round[0], round[1])
-        const playedWeight = roundMatches.reduce((sum, m) => {
-          if (m.status === 'finished') return sum + 1
-          if (m.status === 'live') return sum + 0.5
-          return sum
-        }, 0)
-        withinFraction = playedWeight / roundMatches.length
-      } else {
-        withinFraction = (t - start) / Math.max(1, end - start)
-      }
-      return (i + withinFraction) / stages.length;
-    }
+    const f = stageFraction(stages[i], now, matches);
+    if (f < 1) return Math.min(1, ((i + 1) + f) / stages.length);
   }
   return 1;
 }

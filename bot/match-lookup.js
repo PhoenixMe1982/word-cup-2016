@@ -45,7 +45,12 @@ const MATCH_LOOKUP = {
   'POR_ESP': 'm93',  // W(m83 POR-CRO)=POR vs W(m84 ESP-AUT)=ESP
   'ARG_EGY': 'm95',  // W(m86 ARG-CPV)=ARG vs W(m88 AUS-EGY)=EGY
   'SUI_COL': 'm96',  // W(m85 SUI-ALG)=SUI vs W(m87 COL-GHA)=COL
-  // Все пары 1/8 сформированы. Пары 1/4 (m97+) — по мере резолва.
+  // ── 1/4 финала (QF) — пары резолвнуты по итогам 1/8 ──────────────────────
+  'FRA_MAR': 'm97',  // W(m89)=FRA vs W(m90)=MAR
+  'ESP_BEL': 'm98',  // W(m93)=ESP vs W(m94)=BEL
+  'NOR_ENG': 'm99',  // W(m91)=NOR vs W(m92)=ENG
+  'ARG_SUI': 'm100', // W(m95)=ARG vs W(m96)=SUI
+  // Все пары 1/4 сформированы. Пары 1/2 (m101+) — по мере резолва.
 }
 
 // football-data.org TLA → our code (handles any code mismatches)
