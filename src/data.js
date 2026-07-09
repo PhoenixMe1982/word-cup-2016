@@ -298,15 +298,15 @@ export const KNOCKOUT_MATCHES = [
   { id: 'm95', stage: 'r16',   date: '7 июля',  time: '19:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm96', stage: 'r16',   date: '7 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   // ── 1/4 финала (QF) — команды TBD ───────────────────────────────────────────
-  { id: 'm97',  stage: 'qf',   date: '9 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm98',  stage: 'qf',   date: '10 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm99',  stage: 'qf',   date: '12 июля', time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm100', stage: 'qf',   date: '12 июля', time: '04:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm97',  stage: 'qf',   date: '9 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Gillette Stadium, Бостон',        goals: [] },
+  { id: 'm98',  stage: 'qf',   date: '10 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'SoFi Stadium, Инглвуд',           goals: [] },
+  { id: 'm99',  stage: 'qf',   date: '12 июля', time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Hard Rock Stadium, Майами',       goals: [] },
+  { id: 'm100', stage: 'qf',   date: '12 июля', time: '04:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Arrowhead Stadium, Канзас-Сити',  goals: [] },
   // ── 1/2 финала (SF) — команды TBD ───────────────────────────────────────────
-  { id: 'm101', stage: 'sf',   date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm102', stage: 'sf',   date: '15 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm101', stage: 'sf',   date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'AT&T Stadium, Арлингтон',         goals: [] },
+  { id: 'm102', stage: 'sf',   date: '15 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Mercedes-Benz Stadium, Атланта',  goals: [] },
   // ── За 3-е место и финал — команды TBD ──────────────────────────────────────
-  { id: 'm103', stage: 'bronze', date: '18 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Hard Rock Stadium, Майами',  goals: [] },
+  { id: 'm103', stage: 'bronze', date: '19 июля', time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Hard Rock Stadium, Майами',  goals: [] },
   { id: 'm104', stage: 'final',  date: '19 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
 ];
 
