@@ -89,17 +89,40 @@ function UserAvatar({ onTab }) {
 }
 
 // Минуту матча free-тариф football-data.org не отдаёт — показываем её,
-// только если она реально пришла (числовая строка), иначе просто LIVE
+// только если она реально пришла (числовая строка), иначе просто LIVE.
+//
+// Минута ПРИВЯЗАНА К РЕАЛЬНОМУ ВРЕМЕНИ: якорь = серверная минута + момент её
+// получения (Date.now). Показанное значение = якорь + прошедшие реальные минуты.
+// Ключевые отличия от прежней версии (которая «залипала» до перезахода):
+//  1) ре-синхронизация при КАЖДОМ новом значении с сервера (base меняется раз в
+//     ~60с из /api/live) — счётчик не уезжает от истины между обновлениями;
+//  2) счёт от Date.now(), а не накоплением setInterval — не врёт, когда вкладку
+//     тормозит фон (Telegram/сон): при возврате минута сразу корректна;
+//  3) за 90′ показываем «90+», а не молча упираемся в 90.
 function LiveMinute({ base }) {
   const hasRealMinute = /^\d+$/.test(String(base))
-  const [min, setMin] = useState(hasRealMinute ? parseInt(base) : 0)
+  const anchorRef = useRef({ min: null, at: 0 })
+  const [, forceTick] = useState(0)
+
+  // Ре-синхронизация якоря на новое серверное значение минуты.
+  useEffect(() => {
+    if (hasRealMinute) anchorRef.current = { min: parseInt(base), at: Date.now() }
+  }, [base, hasRealMinute])
+
+  // Перерисовка раз в 15с — минута пересчитывается от якоря по реальным часам.
   useEffect(() => {
     if (!hasRealMinute) return
-    const t = setInterval(() => setMin((m) => Math.min(m + 1, 90)), 60000)
+    const t = setInterval(() => forceTick((x) => x + 1), 15000)
     return () => clearInterval(t)
   }, [hasRealMinute])
+
   if (!hasRealMinute) return <span className="font-bold text-live animate-pulse2">●</span>
-  return <span className="font-bold text-live">{min}'</span>
+
+  const a = anchorRef.current
+  const anchorMin = a.min ?? parseInt(base)
+  const elapsed = a.at ? Math.max(0, Math.floor((Date.now() - a.at) / 60000)) : 0
+  const shown = anchorMin + elapsed
+  return <span className="font-bold text-live">{shown > 90 ? '90+' : shown}&#39;</span>
 }
 
 function LiveMatchCard({ match }) {
