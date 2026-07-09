@@ -298,10 +298,10 @@ export const KNOCKOUT_MATCHES = [
   { id: 'm95', stage: 'r16',   date: '7 июля',  time: '19:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm96', stage: 'r16',   date: '7 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   // ── 1/4 финала (QF) — команды TBD ───────────────────────────────────────────
-  { id: 'm97',  stage: 'qf',   date: '9 июля',  time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm97',  stage: 'qf',   date: '9 июля',  time: '23:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm98',  stage: 'qf',   date: '10 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm99',  stage: 'qf',   date: '11 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
-  { id: 'm100', stage: 'qf',   date: '11 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm99',  stage: 'qf',   date: '12 июля', time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
+  { id: 'm100', stage: 'qf',   date: '12 июля', time: '04:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   // ── 1/2 финала (SF) — команды TBD ───────────────────────────────────────────
   { id: 'm101', stage: 'sf',   date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
   { id: 'm102', stage: 'sf',   date: '15 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'США / Канада / Мексика', goals: [] },
