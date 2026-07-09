@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HEADER_BANNER_STYLE, MATCHES, KNOCKOUT_MATCHES, TEAMS, KNOCKOUT_STAGE_LABELS, isKnockoutMatch } from '../data.js'
-import { calcKnockoutBreakdown } from '../utils.js'
+import { calcKnockoutBreakdown, matchUTCDate } from '../utils.js'
 import { resolveTeams } from '../knockout.js'
 import { useLiveData } from '../LiveDataContext.jsx'
 
@@ -8,8 +8,6 @@ const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com
 
 // Группа + плей-офф: матч-карточкам в лидерборде нужны команды/стадия и для нокаута.
 const MATCH_MAP = Object.fromEntries([...MATCHES, ...KNOCKOUT_MATCHES].map(m => [m.id, m]))
-
-const STAGE_RANK = { r32: 0, r16: 1, qf: 2, sf: 3, bronze: 4, final: 5 }
 
 // Подкраска плашки прогноза (едина с экраном «Играть»): зелёная — точный счёт
 // (pts ≥ 3), синяя — частично угадано (исход/стадии), красная — мимо.
@@ -210,11 +208,79 @@ function PredRow({ item, byId }) {
   )
 }
 
-function PredictionsList({ preds, loading, byId }) {
-  // Групповой этап схлопнут по умолчанию — у активных игроков это десятки
-  // прогнозов; плей-офф (актуальная стадия) показываем сразу.
-  const [groupOpen, setGroupOpen] = useState(false)
+// Хронологический порядок стадий + подписи/цвета секций.
+const STAGE_SEQ = ['group', 'r32', 'r16', 'qf', 'sf', 'bronze', 'final']
+const STAGE_META = {
+  group:  { label: 'Групповой этап',                 color: '#374151', open: false },
+  r32:    { label: KNOCKOUT_STAGE_LABELS.r32 || '1/16 финала', color: '#C9A800', open: true },
+  r16:    { label: KNOCKOUT_STAGE_LABELS.r16 || '1/8 финала',  color: '#C9A800', open: true },
+  qf:     { label: KNOCKOUT_STAGE_LABELS.qf  || '1/4 финала',  color: '#C9A800', open: true },
+  sf:     { label: KNOCKOUT_STAGE_LABELS.sf  || 'Полуфинал',   color: '#C9A800', open: true },
+  bronze: { label: KNOCKOUT_STAGE_LABELS.bronze || 'За 3-е место', color: '#C9A800', open: true },
+  final:  { label: KNOCKOUT_STAGE_LABELS.final || 'Финал',     color: '#C9A800', open: true },
+}
 
+const kickoffMs = (matchId) => {
+  const m = MATCH_MAP[matchId]
+  return m ? (matchUTCDate(m.date, m.time)?.getTime() ?? Infinity) : Infinity
+}
+
+// Точный счёт / угадан исход / мимо по одному прогнозу. Для нокаута «точный» —
+// угаданный счёт основного времени (p90 === 3 в разбивке), иначе — исход.
+function classifyPred(p) {
+  const m = MATCH_MAP[p.matchId]
+  if (!m) return null
+  if ((p.pts || 0) === 0) return 'miss'
+  if (isKnockoutMatch(m)) {
+    const b = p.result ? calcKnockoutBreakdown(p.pred || {}, p.result) : null
+    return b && b.p90 === 3 ? 'exact' : 'outcome'
+  }
+  return p.pts >= 3 ? 'exact' : 'outcome'
+}
+
+// Сворачиваемая секция одной стадии — хронологически внутри.
+function StageSection({ stage, preds, byId }) {
+  const meta = STAGE_META[stage]
+  const [open, setOpen] = useState(meta?.open ?? true)
+  const total = preds.reduce((s, p) => s + (p.pts || 0), 0)
+  return (
+    <div className="mt-2 first:mt-0">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-2xl select-none"
+        style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
+      >
+        <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: meta?.color || '#374151' }}>
+          {stage !== 'group' && '🏆 '}{meta?.label || stage}
+        </span>
+        <span className="text-[10px] font-bold" style={{ color: '#9CA3AF' }}>· {preds.length} · +{total}</span>
+        <span className="ml-auto text-xs transition-transform duration-200" style={{ color: '#9CA3AF', transform: open ? 'rotate(180deg)' : 'none' }}>▾</span>
+      </button>
+      {open && <div className="mt-2">{preds.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}</div>}
+    </div>
+  )
+}
+
+// Плашка сводной статистики игрока: точные / исход / мимо.
+function StatChips({ exact, outcome, miss }) {
+  const cells = [
+    { v: exact,   l: 'Точные',      col: '#16a34a', bg: 'rgba(34,197,94,0.12)',  bdr: 'rgba(34,197,94,0.30)' },
+    { v: outcome, l: 'Угадан исход', col: '#2563eb', bg: 'rgba(37,99,235,0.08)',  bdr: 'rgba(37,99,235,0.28)' },
+    { v: miss,    l: 'Мимо',        col: '#ef4444', bg: 'rgba(239,68,68,0.07)',  bdr: 'rgba(239,68,68,0.20)' },
+  ]
+  return (
+    <div className="grid grid-cols-3 gap-1.5 mb-2">
+      {cells.map(c => (
+        <div key={c.l} className="text-center py-1.5 rounded-2xl" style={{ background: c.bg, border: `1px solid ${c.bdr}` }}>
+          <div className="text-base font-black leading-none" style={{ color: c.col }}>{c.v}</div>
+          <div className="text-[8px] uppercase tracking-wide mt-0.5" style={{ color: '#9CA3AF' }}>{c.l}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PredictionsList({ preds, loading, byId }) {
   if (loading) {
     return (
       <div className="px-3 py-3 text-center text-xs" style={{ color: '#9CA3AF' }}>
@@ -230,71 +296,31 @@ function PredictionsList({ preds, loading, byId }) {
     )
   }
 
-  const koPreds = preds.filter(p => isKnockoutMatch(MATCH_MAP[p.matchId]))
-  const groupPreds = preds.filter(p => MATCH_MAP[p.matchId] && !isKnockoutMatch(MATCH_MAP[p.matchId]))
-  koPreds.sort((a, b) =>
-    (STAGE_RANK[MATCH_MAP[a.matchId].stage] - STAGE_RANK[MATCH_MAP[b.matchId].stage]) || (b.pts - a.pts))
+  // Сводная статистика по всем засчитанным прогнозам.
+  let exact = 0, outcome = 0, miss = 0
+  for (const p of preds) {
+    const k = classifyPred(p)
+    if (k === 'exact') exact++
+    else if (k === 'outcome') outcome++
+    else if (k === 'miss') miss++
+  }
 
-  const gExact = groupPreds.filter(p => p.pts >= 3)
-  const gOut   = groupPreds.filter(p => p.pts >= 1 && p.pts < 3)
-  const gMiss  = groupPreds.filter(p => p.pts === 0)
-  const groupTotal = groupPreds.reduce((sum, p) => sum + (p.pts || 0), 0)
+  // Группировка по стадии, внутри стадии — строго по времени начала матча.
+  const byStage = {}
+  for (const p of preds) {
+    const m = MATCH_MAP[p.matchId]
+    if (!m) continue
+    const stage = isKnockoutMatch(m) ? m.stage : 'group'
+    ;(byStage[stage] ||= []).push(p)
+  }
+  for (const s of Object.keys(byStage)) byStage[s].sort((a, b) => kickoffMs(a.matchId) - kickoffMs(b.matchId))
 
   return (
     <div className="px-3 pt-2 pb-3">
-      {/* Плей-офф — развёрнуто, по стадиям */}
-      {koPreds.length > 0 && (
-        <>
-          <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#C9A800' }}>
-            🏆 Плей-офф · {koPreds.length}
-          </div>
-          {koPreds.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
-        </>
-      )}
-
-      {/* Групповой этап — схлопнутая группа */}
-      {groupPreds.length > 0 && (
-        <div className={koPreds.length > 0 ? 'mt-2' : ''}>
-          <button
-            onClick={() => setGroupOpen(o => !o)}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-2xl select-none"
-            style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
-          >
-            <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: '#374151' }}>Групповой этап</span>
-            <span className="text-[10px] font-bold" style={{ color: '#9CA3AF' }}>· {groupPreds.length} прогн. · +{groupTotal}</span>
-            <span className="ml-auto text-xs transition-transform duration-200" style={{ color: '#9CA3AF', transform: groupOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
-          </button>
-
-          {groupOpen && (
-            <div className="mt-2">
-              {gExact.length > 0 && (
-                <>
-                  <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1" style={{ color: '#16a34a' }}>
-                    Точный счёт · {gExact.length}
-                  </div>
-                  {gExact.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
-                </>
-              )}
-              {gOut.length > 0 && (
-                <>
-                  <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#2563eb' }}>
-                    Угадан исход · {gOut.length}
-                  </div>
-                  {gOut.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
-                </>
-              )}
-              {gMiss.length > 0 && (
-                <>
-                  <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1 mt-2" style={{ color: '#9CA3AF' }}>
-                    Мимо · {gMiss.length}
-                  </div>
-                  {gMiss.map(p => <PredRow key={p.matchId} item={p} byId={byId} />)}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      <StatChips exact={exact} outcome={outcome} miss={miss} />
+      {STAGE_SEQ.filter(s => byStage[s]?.length > 0).map(s => (
+        <StageSection key={s} stage={s} preds={byStage[s]} byId={byId} />
+      ))}
     </div>
   )
 }

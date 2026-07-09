@@ -1,6 +1,40 @@
 import { useState, useMemo } from 'react'
 import { ALL_TIME_TEAMS, SQUADS } from '../data/teamsData.js'
+import { KNOCKOUT_MATCHES, knockoutEnabled, isKnockoutMatch } from '../data.js'
+import { loserCode } from '../knockout.js'
 import { useLiveData } from '../LiveDataContext.jsx'
+
+// Множество кодов сборных, выбывших из ЧМ-2026:
+//  · не попавшие в 1/16 (плей-офф запущен ⇒ групповой этап сыгран): все команды
+//    ЧМ-2026, которых нет среди участников R32;
+//  · проигравшие любой сыгранный матч плей-офф (loserCode по сетке).
+function computeEliminated(matches, teams) {
+  const eliminated = new Set()
+  if (!knockoutEnabled()) return eliminated
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
+
+  // Участники 1/16 = прошедшие группу (в статике R32 команды проставлены явно).
+  const qualified = new Set()
+  for (const m of KNOCKOUT_MATCHES) {
+    if (m.stage !== 'r32') continue
+    if (m.home) qualified.add(m.home)
+    if (m.away) qualified.add(m.away)
+  }
+  if (qualified.size > 0) {
+    for (const t of teams) {
+      if (t.in2026 && !t.defunct && !qualified.has(t.id)) eliminated.add(t.id)
+    }
+  }
+
+  // Проигравшие завершённых матчей плей-офф.
+  for (const m of matches) {
+    if (!isKnockoutMatch(m) || m.status !== 'finished') continue
+    const l = loserCode(m, byId)
+    if (l) eliminated.add(l)
+  }
+  return eliminated
+}
 
 function pts(t) { return t.wc.w * 3 + t.wc.d }
 
@@ -182,6 +216,7 @@ export default function Teams() {
   const [selectedTeam, setSelectedTeam] = useState(null)
 
   const allTeams = useMemo(() => applyCurrentResults(matches), [matches])
+  const eliminatedIds = useMemo(() => computeEliminated(matches, allTeams), [matches, allTeams])
 
   const sorted = useMemo(() => {
     return [...allTeams].sort((a, b) => {
@@ -280,6 +315,9 @@ export default function Teams() {
         {filtered.map((team) => {
           const rank = sorted.indexOf(team) + 1
           const isActive = team.in2026 && !team.defunct
+          // Выбывшие из ЧМ-2026: приглушаем как непопавших, но карточку оставляем
+          // кликабельной (у сборной есть состав/история).
+          const eliminated = isActive && eliminatedIds.has(team.id)
           const matches = team.wc.w + team.wc.d + team.wc.l
           const teamPts = pts(team)
 
@@ -290,10 +328,10 @@ export default function Teams() {
               className="grid items-center px-2 py-2 rounded-2xl"
               style={{
                 gridTemplateColumns: '24px 1fr 36px 24px 36px 36px 36px 40px',
-                background: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.03)',
-                border: isActive ? '1px solid rgba(0,0,0,0.07)' : '1px solid rgba(0,0,0,0.04)',
-                boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
-                opacity: isActive ? 1 : 0.5,
+                background: isActive && !eliminated ? '#FFFFFF' : 'rgba(0,0,0,0.03)',
+                border: isActive && !eliminated ? '1px solid rgba(0,0,0,0.07)' : '1px solid rgba(0,0,0,0.04)',
+                boxShadow: isActive && !eliminated ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+                opacity: isActive && !eliminated ? 1 : 0.5,
                 cursor: isActive ? 'pointer' : 'default',
               }}
             >
@@ -304,10 +342,11 @@ export default function Teams() {
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-base leading-none flex-shrink-0">{team.flag}</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-medium truncate" style={{ color: isActive ? '#111827' : '#9CA3AF' }}>
+                  <div className="text-xs font-medium truncate" style={{ color: isActive && !eliminated ? '#111827' : '#9CA3AF' }}>
                     {team.name}{team.defunct && <span className="ml-1 text-[9px]" style={{ color: '#9CA3AF' }}>†</span>}
                   </div>
-                  {team.debut2026 && <span className="text-[8px] font-bold" style={{ color: '#16A34A' }}>ДЕБЮТ</span>}
+                  {team.debut2026 && !eliminated && <span className="text-[8px] font-bold" style={{ color: '#16A34A' }}>ДЕБЮТ</span>}
+                  {eliminated && <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: '#DC2626' }}>Выбыл</span>}
                 </div>
               </div>
               <span className="text-[11px] font-semibold text-center score-number" style={{ color: '#9CA3AF' }}>{team.wc.p}</span>

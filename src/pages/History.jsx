@@ -2,6 +2,26 @@ import { useState } from 'react'
 import { HISTORY, HEADER_BANNER_STYLE } from '../data.js'
 import { SQUADS } from '../data/squads.js'
 
+// Кол-во матчей по турнирам (общеизвестные факты) — для «голов за матч».
+const MATCHES_BY_YEAR = {
+  1930: 18, 1934: 17, 1938: 18, 1950: 22, 1954: 26, 1958: 35, 1962: 32,
+  1966: 32, 1970: 32, 1974: 38, 1978: 38, 1982: 52, 1986: 52, 1990: 52,
+  1994: 52, 1998: 64, 2002: 64, 2006: 64, 2010: 64, 2014: 64, 2018: 64,
+  2022: 64, 2026: 104,
+}
+
+// Формат турнира по эпохе (без выдуманных данных — по известным правилам ФИФА).
+function tournamentFormat(year) {
+  if (year <= 1938) return 'Плей-офф на выбывание'
+  if (year === 1950) return 'Группы + финальная группа'
+  if (year <= 1970) return 'Группы + плей-офф'
+  if (year <= 1978) return 'Два групповых раунда'
+  if (year === 1982) return 'Группы + 2-й групповой раунд'
+  if (year <= 1994) return 'Группы + 1/8 финала'
+  if (year <= 2022) return '8 групп + 1/8 финала'
+  return '12 групп + 1/16 финала'
+}
+
 function SquadPanel({ squad }) {
   return (
     <div className="ml-5 mt-1.5 p-2.5 rounded-2xl space-y-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
@@ -103,6 +123,22 @@ function HistoryCard({ wc, onClick, isSelected }) {
       {/* Expanded details */}
       {isSelected && (
         <div className="px-4 pb-4 space-y-3">
+          {/* Финал + формат турнира — краткая сводка сверху */}
+          <div className="rounded-2xl p-3" style={{ background: 'linear-gradient(135deg, rgba(201,168,0,0.12), rgba(201,168,0,0.04))', border: '1px solid rgba(201,168,0,0.2)' }}>
+            <div className="text-[10px] font-black tracking-widest mb-1.5" style={{ color: '#C9A800' }}>ФИНАЛ · {wc.host} {wc.year}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{wc.winnerFlag}</span>
+              <span className="text-sm font-black" style={{ color: '#111827' }}>{wc.winner}</span>
+              <span className="text-sm font-mono font-black px-1.5 rounded" style={{ color: '#C9A800', background: 'rgba(201,168,0,0.12)' }}>{wc.score}</span>
+              <span className="text-sm font-black" style={{ color: '#111827' }}>{wc.runnerUp}</span>
+              <span className="text-lg">{wc.runnerUpFlag}</span>
+            </div>
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="text-[9px]">🗺️</span>
+              <span className="text-[10px]" style={{ color: '#6B7280' }}>Формат: <b style={{ color: '#374151' }}>{tournamentFormat(wc.year)}</b></span>
+            </div>
+          </div>
+
           {/* Podium with squad taps */}
           <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,0,0.07)' }}>
             <div className="text-[10px] font-bold mb-2" style={{ color: '#9CA3AF' }}>ИТОГОВЫЕ МЕСТА</div>
@@ -157,7 +193,9 @@ function HistoryCard({ wc, onClick, isSelected }) {
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: 'Команды', value: wc.teams },
+              { label: 'Матчей', value: MATCHES_BY_YEAR[wc.year] ?? '—' },
               { label: 'Голов', value: wc.goals },
+              ...(MATCHES_BY_YEAR[wc.year] ? [{ label: 'Гол/матч', value: (wc.goals / MATCHES_BY_YEAR[wc.year]).toFixed(1) }] : []),
               { label: 'Зрителей', value: wc.attendance },
             ].map((s) => (
               <div

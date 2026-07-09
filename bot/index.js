@@ -5,7 +5,18 @@ const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
 const { MATCH_LOOKUP, lookupMatchId, normTLA, isKnockoutMatchId, extractFinalResult, liveDisplayScore } = require('./match-lookup.js')
-const { afEnabled, afGetResult, afAgrees, afStateMap } = require('./af-crosscheck.js')
+const { afEnabled, afGetResult, afAgrees, afStateMap, afGetGoals } = require('./af-crosscheck.js')
+
+// Best-effort: подмешать авторов голов (игрок+минута) в entry завершённого
+// матча ПЛЕЙ-ОФФ из API-Football. Не влияет на зачёт/гейт (тот уже отработал);
+// при любой ошибке просто не добавляем goals. Durable-заполнение — bot/sync-goals.js.
+async function attachGoals(entry, matchId, kickDay) {
+  if (!entry || !isKnockoutMatchId(matchId)) return
+  try {
+    const g = await afGetGoals(matchId, kickDay)
+    if (g && g.length > 0) entry.goals = g
+  } catch { /* нет данных — карточка покажет «уточняются» */ }
+}
 const { calcPointsKnockout } = require('./scoring.js')
 const { toRussianName } = require('./names-ru.js')
 
@@ -646,6 +657,7 @@ async function pollFootballData() {
           // Итог подтверждён → показываем как завершённый и зачитываем очки.
           delete holdAlerted[matchId]
           next[matchId] = finishedEntry(finalResult)
+          await attachGoals(next[matchId], matchId, kickDay)
           try {
             const { home, away, ...meta } = finalResult
             const count = await settleMatch(matchId, home, away, meta)
@@ -673,6 +685,7 @@ async function pollFootballData() {
         if (af) {
           delete holdAlerted[matchId]
           next[matchId] = finishedEntry(af)
+          await attachGoals(next[matchId], matchId, kickDay)
           try {
             const { home, away, ...meta } = af
             const count = await settleMatch(matchId, home, away, meta)

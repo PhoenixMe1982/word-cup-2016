@@ -447,6 +447,7 @@ export default function PlayPage() {
   const [filter, setFilter] = useState('all')
   const [groupsExpanded, setGroupsExpanded] = useState(false) // показ подпунктов A…L в субпанели
   const [groupSectionOpen, setGroupSectionOpen] = useState(false) // развёрнут ли блок групповых прогнозов в режиме «Все»
+  const [openStages, setOpenStages] = useState({}) // stage → bool; отсутствие ключа = развёрнут по умолчанию
   const [stats, setStats] = useState(null)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -743,15 +744,24 @@ export default function PlayPage() {
             </button>
             {groupSectionOpen && <div className="mb-3">{groupMatches.map(renderMatch)}</div>}
 
-            {hasKnockout && koStages.map((s) => (
-              <div key={s} className="mb-1">
-                <div className="flex items-center gap-2 mt-3 mb-2">
-                  <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#C9A800' }}>🏆 {KNOCKOUT_STAGE_LABELS[s]}</span>
-                  <div className="flex-1 h-px" style={{ background: 'rgba(201,168,0,0.25)' }} />
+            {hasKnockout && koStages.map((s) => {
+              const stageMatches = koMatches.filter((m) => m.stage === s)
+              const open = openStages[s] !== false // по умолчанию раскрыто
+              return (
+                <div key={s} className="mb-1">
+                  <button
+                    onClick={() => setOpenStages((o) => ({ ...o, [s]: !(o[s] !== false) }))}
+                    className="w-full flex items-center gap-2 mt-3 mb-2"
+                  >
+                    <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#C9A800' }}>🏆 {KNOCKOUT_STAGE_LABELS[s]}</span>
+                    <span className="text-[10px] font-bold" style={{ color: '#9CA3AF' }}>· {stageMatches.length}</span>
+                    <div className="flex-1 h-px" style={{ background: 'rgba(201,168,0,0.25)' }} />
+                    <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: '#C9A800' }}>{open ? 'Свернуть ▲' : 'Развернуть ▼'}</span>
+                  </button>
+                  {open && stageMatches.map(renderMatch)}
                 </div>
-                {koMatches.filter((m) => m.stage === s).map(renderMatch)}
-              </div>
-            ))}
+              )
+            })}
           </>
         )}
       </div>

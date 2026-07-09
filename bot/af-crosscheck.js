@@ -18,6 +18,7 @@
 //   teams.home/away.winner: true у прошедшего (null:null при ничьей в группе)
 
 const { lookupMatchId, isKnockoutMatchId, extractFinalResult } = require('./match-lookup.js')
+const { toRussianName } = require('./names-ru.js')
 
 const AF_LEAGUE_WC = 1
 const AF_KEY = () => (process.env.APIFOOTBALL_KEY || '').trim()
@@ -221,7 +222,76 @@ async function afStateMap(dateStrs) {
   return any ? map : null
 }
 
+// ── Авторы голов матча (для деталей карточки плей-офф) ────────────────────────
+// API-Football /fixtures/events отдаёт по каждому голу игрока + минуту. Дневной
+// фид (/fixtures?date=) событий НЕ содержит — нужен отдельный запрос по fixture.id.
+// Кэш событий по fixtureId (события завершённого матча неизменны).
+const eventsCache = new Map() // fixtureId → { at, events }
+const EVENTS_TTL = 30 * 60 * 1000
+
+async function afFetchEvents(fixtureId) {
+  if (fixtureId == null) return null
+  const cached = eventsCache.get(fixtureId)
+  if (cached && Date.now() - cached.at < EVENTS_TTL) return cached.events
+  if (!takeBudget()) return cached ? cached.events : null
+  try {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
+      { headers: { 'x-apisports-key': AF_KEY() } },
+    )
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    const errs = data.errors
+    if (errs && !Array.isArray(errs) && Object.keys(errs).length > 0) throw new Error(JSON.stringify(errs))
+    const events = data.response || []
+    eventsCache.set(fixtureId, { at: Date.now(), events })
+    return events
+  } catch (e) {
+    console.error(`[af] events fixture=${fixtureId} failed:`, e.message)
+    return cached ? cached.events : null
+  }
+}
+
+// Голы матча в НАШЕЙ модели: [{ team:TLA, player:'Имя', minute:Number }],
+// отсортированы по минуте. Автогол засчитывается СОПЕРНИКУ забившего (пометка «аг»),
+// пенальти помечается «пен». Имена — кириллицей через names-ru. null, если фидов нет.
+async function afGetGoals(matchId, dateStr) {
+  if (!afEnabled() || !dateStr) return null
+  const fixtures = await afFetchDay(dateStr)
+  if (!fixtures) return null
+
+  let target = null
+  for (const f of fixtures) {
+    const hTLA = AF_NAME_TO_TLA[f?.teams?.home?.name]
+    const aTLA = AF_NAME_TO_TLA[f?.teams?.away?.name]
+    if (!hTLA || !aTLA) continue
+    if (lookupMatchId(hTLA, aTLA) === matchId || lookupMatchId(aTLA, hTLA) === matchId) {
+      target = { f, hTLA, aTLA }
+      break
+    }
+  }
+  if (!target) return null
+
+  const events = await afFetchEvents(target.f?.fixture?.id)
+  if (!events) return null
+
+  const goals = []
+  for (const ev of events) {
+    if (ev.type !== 'Goal') continue
+    if (ev.detail === 'Missed Penalty') continue
+    let teamTLA = AF_NAME_TO_TLA[ev.team?.name]
+    if (!teamTLA) continue
+    if (ev.detail === 'Own Goal') teamTLA = teamTLA === target.hTLA ? target.aTLA : target.hTLA
+    const minute = (ev.time?.elapsed ?? 0) + (ev.time?.extra ?? 0)
+    const { name } = toRussianName(ev.player?.name || '—')
+    const player = ev.detail === 'Own Goal' ? `${name} (аг)` : ev.detail === 'Penalty' ? `${name} (пен)` : name
+    goals.push({ team: teamTLA, player, minute })
+  }
+  goals.sort((a, b) => a.minute - b.minute)
+  return goals
+}
+
 module.exports = {
   afEnabled, afGetResult, afAgrees, afParseFixture, AF_NAME_TO_TLA,
-  afMatchState, afStateMap,
+  afMatchState, afStateMap, afGetGoals,
 }
