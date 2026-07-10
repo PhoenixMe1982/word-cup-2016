@@ -22,5 +22,24 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Самолечение от «застрявшего» старого index.html из кэша Telegram-webview.
+      // После редеплоя бандл получает новый хэш, а старый удаляется. Если webview
+      // отдаёт КЭШИРОВАННЫЙ index.html, он ссылается на уже удалённый бандл → 404 →
+      // React не монтируется, #root пуст, юзер видит серую заглушку Telegram.
+      // Тогда один раз жёстко перезагружаемся с cache-bust (СОХРАНЯЯ hash c initData
+      // Telegram — иначе потеряется авторизация), чтобы подтянуть свежий index.html.
+      (function () {
+        var KEY = 'wc_boot_reloaded';
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          if (root && root.childElementCount > 0) { sessionStorage.removeItem(KEY); return; }
+          if (sessionStorage.getItem(KEY)) return; // уже перезагружались — не зацикливаемся
+          sessionStorage.setItem(KEY, '1');
+          var sep = location.search ? '&' : '?';
+          location.replace(location.pathname + location.search + sep + 'cb=' + Date.now() + location.hash);
+        }, 10000);
+      })();
+    </script>
   </body>
 </html>
