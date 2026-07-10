@@ -1138,8 +1138,18 @@ app.post('/api/score', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
+// URL мини-аппа со свежей меткой версии на КАЖДОЕ открытие. Зачем: Telegram-webview
+// (особенно iOS/WKWebView) кэширует index.html по URL. После редеплоя старый бандл
+// удаляется — кэшированный index.html ссылается на 404 → серый экран, и «Очистить
+// кэш» в Telegram (чистит медиа, не webview-кэш) не помогает. Разный ?v= = новый URL
+// = свежий index.html (бандлы всё равно кэшируются по хэшу — быстро).
+function appUrlV() {
+  const sep = APP_URL.includes('?') ? '&' : '?'
+  return `${APP_URL}${sep}v=${Date.now()}`
+}
+
 const appKeyboard = (label = '📊 Открыть приложение') => ({
-  reply_markup: { inline_keyboard: [[{ text: label, web_app: { url: APP_URL } }]] }
+  reply_markup: { inline_keyboard: [[{ text: label, web_app: { url: appUrlV() } }]] }
 })
 
 // ── Bot commands ───────────────────────────────────────────────────────────
@@ -1570,6 +1580,11 @@ async function startBot() {
   } catch (e) {
     console.error('[bot] webhook check/delete failed:', e.message)
   }
+  // Кнопка-меню мини-аппа с меткой версии (обновляется на каждом рестарте/деплое),
+  // чтобы webview не переиспользовал старый index.html при открытии из меню.
+  bot.api.setChatMenuButton({
+    menu_button: { type: 'web_app', text: 'Играть', web_app: { url: appUrlV() } },
+  }).catch((e) => console.warn('[bot] setChatMenuButton failed:', e.message))
   bot.start({
     drop_pending_updates: true,
     onStart: () => { botPollingStarted = true; console.log(`✅ WC2026 Bot running | App: ${APP_URL} | Storage: ${REDIS_URL ? 'Redis' : 'file'}`) },
