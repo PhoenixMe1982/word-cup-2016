@@ -50,7 +50,10 @@ const MATCH_LOOKUP = {
   'ESP_BEL': 'm98',  // W(m93)=ESP vs W(m94)=BEL
   'NOR_ENG': 'm99',  // W(m91)=NOR vs W(m92)=ENG
   'ARG_SUI': 'm100', // W(m95)=ARG vs W(m96)=SUI
-  // Все пары 1/4 сформированы. Пары 1/2 (m101+) — по мере резолва.
+  // ── 1/2 финала (SF) — пары резолвнуты по итогам 1/4 ──────────────────────
+  'FRA_ESP': 'm101', // W(m97)=FRA vs W(m98)=ESP
+  'ENG_ARG': 'm102', // W(m99)=ENG vs W(m100)=ARG
+  // Пары финала/за 3-е (m103/m104) — по мере резолва 1/2.
 }
 
 // football-data.org TLA → our code (handles any code mismatches)
