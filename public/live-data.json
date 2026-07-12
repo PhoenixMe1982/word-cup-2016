@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-07-12T04:42:22.527Z",
+  "_updated": "2026-07-12T07:18:49.288Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
@@ -562,7 +562,7 @@
       "winner": "AWAY_TEAM"
     },
     "m92": {
-      "status": "live",
+      "status": "finished",
       "scoreHome": 2,
       "scoreAway": 3,
       "winner": "AWAY_TEAM"
@@ -608,16 +608,26 @@
       "winner": "HOME_TEAM"
     },
     "m99": {
-      "status": "live",
+      "status": "finished",
       "scoreHome": 1,
       "scoreAway": 2,
-      "phase": "et"
+      "phase": "et",
+      "winner": "AWAY_TEAM",
+      "duration": "EXTRA_TIME"
     },
     "m100": {
-      "status": "live",
+      "status": "finished",
       "scoreHome": 3,
       "scoreAway": 1,
-      "phase": "et"
+      "phase": "et",
+      "winner": "HOME_TEAM",
+      "duration": "EXTRA_TIME"
+    },
+    "m101": {
+      "status": "upcoming"
+    },
+    "m102": {
+      "status": "upcoming"
     }
   }
 }
