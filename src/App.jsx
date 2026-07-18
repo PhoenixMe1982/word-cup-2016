@@ -11,7 +11,10 @@ import VisitSummary from './components/VisitSummary.jsx'
 import AnnouncementModal from './components/AnnouncementModal.jsx'
 import ScoringModal from './components/ScoringModal.jsx'
 import PointsPopup from './components/PointsPopup.jsx'
-import { knockoutEnabled } from './data.js'
+import StandingsReveal from './components/StandingsReveal.jsx'
+import { knockoutEnabled, TEAMS } from './data.js'
+import { winnerCode, loserCode } from './knockout.js'
+import { matchUTCDate } from './utils.js'
 import { LiveDataProvider, useLiveData } from './LiveDataContext.jsx'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
@@ -65,6 +68,59 @@ function computeVisitSummary(me, settled) {
     rankDelta,
     celebrate: ptsGained > 0 || rankDelta > 0,
   }
+}
+
+// ── Сценарий показа финальных мест ────────────────────────────────────────
+// Матч за 3-е место (m103) и финал (m104). Места считаем из живых данных теми
+// же winnerCode/loserCode, что и сетка. Окно показа: сцена живёт 1 день после
+// (приблизительного) окончания матча — дальше турнир «остывает».
+const REVEAL_TTL_MS = 24 * 3600 * 1000         // сутки после матча — потом не показываем
+const MATCH_MAX_MS = 3 * 3600 * 1000           // запас на 120′ + пенальти + задержки
+
+function teamRow(rank, code) {
+  const t = code && TEAMS[code]
+  return t ? { rank, code, name: t.name, flag: t.flag } : null
+}
+
+// Возвращает { variant, stage, matchId, rows } активной сцены или null.
+// rows — в порядке отображения сверху вниз (bronze: 4,3 / champion: 1,2,3,4).
+function computeReveal(matches) {
+  if (!knockoutEnabled()) return null
+  const byId = {}
+  for (const m of matches) byId[m.id] = m
+  const m103 = byId.m103
+  const m104 = byId.m104
+
+  // Матч ещё «свежий»? (в пределах суток после ориентировочного финального свистка)
+  // __REVEAL_FORCE__ — тест-хук скриншот-скрипта: снимает окно, чтобы съёмка не
+  // зависела от даты прогона (в прод-сборку не инъектится).
+  const forceFresh = typeof window !== 'undefined' && window.__REVEAL_FORCE__
+  const fresh = (m) => {
+    if (forceFresh) return true
+    const k = matchUTCDate(m?.date, m?.time)
+    if (!k) return true // не смогли распарсить время — не режем показ
+    return Date.now() < k.getTime() + MATCH_MAX_MS + REVEAL_TTL_MS
+  }
+
+  // Финал сыгран → сцена чемпиона со всеми 4 местами (3-е/4-е из m103, если есть).
+  if (m104?.status === 'finished') {
+    const first = teamRow(1, winnerCode(m104, byId))
+    const second = teamRow(2, loserCode(m104, byId))
+    const third = m103?.status === 'finished' ? teamRow(3, winnerCode(m103, byId)) : null
+    const fourth = m103?.status === 'finished' ? teamRow(4, loserCode(m103, byId)) : null
+    const rows = [first, second, third, fourth].filter(Boolean)
+    if (first && second && fresh(m104)) return { variant: 'champion', stage: 'm104', matchId: 'm104', rows }
+  }
+
+  // Иначе, если сыгран матч за 3-е место → бронзовая сцена (3-е сверху, 4-е снизу).
+  if (m103?.status === 'finished') {
+    const fourth = teamRow(4, loserCode(m103, byId))
+    const third = teamRow(3, winnerCode(m103, byId))
+    if (fourth && third && fresh(m103)) {
+      return { variant: 'bronze', stage: 'm103', matchId: 'm103', rows: [third, fourth] }
+    }
+  }
+  return null
 }
 
 // Мягкая плашка обновления: появляется, когда задеплоена сборка новее открытой
@@ -121,6 +177,10 @@ function AppShell() {
   const [showScoring, setShowScoring] = useState(() => {
     try { return !localStorage.getItem(SCORING_KEY) } catch { return false }
   })
+  // Сцену показа мест закрыли в этой сессии (по «Далее») — до следующего входа
+  // не показываем повторно. Храним stage, чтобы новая стадия (бронза→чемпион)
+  // всё равно показалась.
+  const [revealDismissed, setRevealDismissed] = useState(null)
   const enteredRef = useRef(false)
   const mountedAt = useRef(Date.now())
 
@@ -207,12 +267,46 @@ function AppShell() {
     setShowAnnounce(false)
   }
 
-  // Приоритет попапов после входа (строго по одному, не внахлёст):
-  // 1) разъяснение про исправление счёта m83 → 2) итоги визита → 3) схема очков.
-  const showAnnouncement = entered && showAnnounce
-  const showVisit = entered && !showAnnouncement && visit
+  // Активная сцена показа мест (или null). Пересчитывается на каждом обновлении
+  // live-данных → при live-финише матча появляется сама; при холодном входе,
+  // пока сцена «свежая» (сутки), показывается снова (реплей).
+  const revealDesc = computeReveal(live.matches)
+  const showReveal = entered && !!revealDesc && revealDismissed !== revealDesc.stage
+
+  // «Далее» в сцене: закрываем её на сессию и, один раз, показываем личный попап
+  // очков за прогноз на этот матч (если прогноз был и уже засчитан).
+  async function handleRevealNext() {
+    const desc = revealDesc
+    setRevealDismissed(desc?.stage || 'closed')
+    if (!inTg || !desc?.matchId || !desc?.stage) return
+    const key = `wc2026_placePts_${desc.stage}`
+    try { if (localStorage.getItem(key)) return } catch { /* приватный режим */ }
+    try {
+      const headers = { 'x-telegram-init-data': window.Telegram.WebApp.initData }
+      const me = await fetch(API + '/api/me', { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      if (!me?.userId) return
+      const preds = await fetch(API + `/api/predictions/${me.userId}`, { headers })
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      const rows = (Array.isArray(preds) ? preds : []).filter((p) => String(p.matchId) === desc.matchId)
+      if (rows.length === 0) return // ещё не засчитано / прогноза не было — не ставим флаг, покажем позже
+      setLivePoints({
+        count: rows.length,
+        ptsGained: rows.reduce((s, p) => s + (p.pts || 0), 0),
+        exactCount: rows.filter((p) => p.pts >= 3).length,
+      })
+      try { localStorage.setItem(key, '1') } catch { /* noop */ }
+    } catch { /* noop */ }
+  }
+
+  // Приоритет попапов после входа (строго по одному, не внахлёст). Сцена показа
+  // мест — верхний приоритет; остальные ждут её закрытия.
+  // 1) сцена мест → 2) разъяснение m83 → 3) итоги визита → 4) схема очков.
+  const showAnnouncement = entered && !showReveal && showAnnounce
+  // Пока сцена мест доступна (турнир на финише), «итоги визита» не показываем —
+  // сцена и попап очков заменяют собой обычный recap, чтобы не двоить очки.
+  const showVisit = entered && !showReveal && !revealDesc && !showAnnouncement && visit
   // Схема очков — разово, с запуском плей-офф. Ждём закрытия предыдущих окон.
-  const showScoringModal = entered && !showAnnouncement && !showVisit && showScoring && knockoutEnabled()
+  const showScoringModal = entered && !showReveal && !showAnnouncement && !showVisit && showScoring && knockoutEnabled()
 
   const handleCloseScoring = () => {
     try { localStorage.setItem(SCORING_KEY, '1') } catch { /* приватный режим */ }
@@ -237,8 +331,14 @@ function AppShell() {
         {/* Схема начисления очков (после закрытия итогов визита) */}
         {showScoringModal && <ScoringModal onClose={handleCloseScoring} />}
 
-        {/* Живой зачёт очков, пока приложение открыто (попап + салют от SaluteWatcher) */}
-        {entered && livePoints && <PointsPopup summary={livePoints} onClose={() => setLivePoints(null)} />}
+        {/* Живой зачёт очков, пока приложение открыто (попап + салют от SaluteWatcher).
+            За сценой мест не показываем — там очки идут по «Далее». */}
+        {entered && !showReveal && livePoints && <PointsPopup summary={livePoints} onClose={() => setLivePoints(null)} />}
+
+        {/* Сценарий показа финальных мест (осыпающиеся частицы) — верхний слой */}
+        {showReveal && (
+          <StandingsReveal variant={revealDesc.variant} rows={revealDesc.rows} onNext={handleRevealNext} />
+        )}
 
         {/* Мягкая плашка обновления — когда задеплоена новая сборка */}
         {entered && live.updateAvailable && <UpdateToast />}

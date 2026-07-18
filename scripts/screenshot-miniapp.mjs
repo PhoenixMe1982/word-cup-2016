@@ -99,6 +99,8 @@ function fakeSdk() {
     else localStorage.setItem('wc2026_scoring_scheme_v1','1');
   }catch(e){}
   var noop=function(){}, RANK=${rank}, PTS=${pts}, STATE=${JSON.stringify(tab)}, KO=${ko};
+  // Сцены показа мест: снимаем окно «свежести» (иначе съёмка зависела бы от даты).
+  try{ if(STATE==='bronze'||STATE==='champion') window.__REVEAL_FORCE__=true; }catch(e){}
   // Плей-офф: включаем тест-флаг фичи. Туториал показываем только в режиме kotut,
   // иначе помечаем как закрытый, чтобы попап не перекрывал страницу прогнозов.
   try{ if(KO) localStorage.setItem('wc2026_knockoutTest','1'); else localStorage.removeItem('wc2026_knockoutTest'); }catch(e){}
@@ -154,6 +156,14 @@ function fakeSdk() {
   // m73 — открытый матч с прогнозом на чистую победу 90′.
   var KO_PREDS = {m75:{home:1,away:1,et:{home:2,away:2},penWinner:'HOME'}, m73:{home:2,away:0}, m74:{home:1,away:1,et:{home:1,away:1},penWinner:'AWAY'}};
   var KO_RESULTS = {m75:{home:2,away:2,knockout:true,reg:{home:1,away:1},et:{home:2,away:2},penHome:4,penAway:3,winner:'HOME_TEAM'}};
+  // Сцены показа мест: замоканный /api/live с завершёнными m103/m104.
+  // m103 — Франция 0:4 Англия (Англия 3-е, Франция 4-е); m104 (champion) —
+  // Испания 2:1 Аргентина (Испания чемпион, Аргентина 2-е).
+  var LIVE = {matchResults:{}};
+  if(STATE==='bronze'||STATE==='champion'){
+    LIVE.matchResults.m103 = {status:'finished', scoreHome:0, scoreAway:4, winner:'AWAY_TEAM'};
+    if(STATE==='champion') LIVE.matchResults.m104 = {status:'finished', scoreHome:2, scoreAway:1, winner:'HOME_TEAM'};
+  }
   window.fetch=function(url,opts){ var u=String(url);
     if(u.indexOf('/api/leaderboard')!==-1) return J(LB);
     // 'splash': задерживаем /api/me, чтобы экран загрузки не исчезал до съёмки
@@ -163,7 +173,7 @@ function fakeSdk() {
     if(u.indexOf('/api/my-predictions')!==-1) return J(KO ? KO_PREDS : {});
     if(u.indexOf('/api/scorers')!==-1) return J([]);
     if(u.indexOf('/api/goalkeepers')!==-1) return J([]);
-    if(u.indexOf('/api/live')!==-1) return J({});
+    if(u.indexOf('/api/live')!==-1) return J(LIVE);
     if(u.indexOf('live-data.json')!==-1) return J({matchResults:{},scorers:[],goalkeepers:[],news:[],ticker:[]});
     if(orig) return orig(url,opts); return J({});
   };
@@ -212,9 +222,13 @@ async function main() {
   await sleep(2500)
 
   let file = `${tab}-rank${rank}.png`
-  // splash/visit/kotut стартуют на home; имена файлов фиксированные
-  if (tab === 'splash' || tab === 'visit' || tab === 'kotut') {
+  // splash/visit/kotut/bronze/champion стартуют на home; имена файлов фиксированные
+  if (tab === 'splash' || tab === 'visit' || tab === 'kotut' || tab === 'bronze' || tab === 'champion') {
     file = `${tab}.png`
+  }
+  // Сцена показа мест проявляет строки поэтапно (~0.45s + N×0.95s) — ждём финала.
+  if (tab === 'bronze' || tab === 'champion') {
+    await sleep(tab === 'champion' ? 5200 : 3200)
   }
   // Навигация по нижним вкладкам: home остаётся стартовым, для остальных
   // кликаем кнопку в nav по тексту (cm → ЧМ).

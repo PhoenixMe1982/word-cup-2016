@@ -61,6 +61,39 @@ export function fireSalute(level = 'outcome', fire = confetti) {
   }
 }
 
+// Падающие кружащиеся частицы для сцены показа финальных мест. В отличие от
+// cannons (залпы снизу вверх), эмиттер идёт вдоль ВЕРХНЕЙ кромки, а частицы
+// медленно оседают вниз с боковым дрейфом и кувырком — «осыпающееся» конфетти.
+// Рисуем на переданном canvas (свой слой, как в VisitSummary), чтобы управлять
+// z-index. Возвращаем { stop, reset }: эмиссия идёт до stop(), уже рождённые
+// частицы дозавершают падение сами; reset() мгновенно очищает canvas.
+export function startFallingParticles(canvasEl, { colors = FIFA } = {}) {
+  const fire = confetti.create(canvasEl, { resize: true, useWorker: true })
+  let running = true
+  ;(function frame() {
+    if (!running) return
+    fire({
+      particleCount: 2,                    // тонкий непрерывный поток
+      startVelocity: 8,
+      angle: 270,                          // вниз
+      spread: 70,
+      ticks: 380,                          // хватает долететь до низа экрана
+      gravity: 0.55,                       // мягкое, «парящее» падение
+      drift: (Math.random() - 0.5) * 3,    // боковой снос = кружение потока
+      scalar: 0.75 + Math.random() * 0.85,
+      decay: 0.92,
+      origin: { x: Math.random(), y: -0.06 },
+      colors,
+      flat: false,                         // кувырок частиц
+    })
+    requestAnimationFrame(frame)
+  })()
+  return {
+    stop() { running = false },
+    reset() { running = false; try { fire.reset() } catch { /* noop */ } },
+  }
+}
+
 // Только в dev: вызвать салют из консоли браузера — fireSalute('exact') / fireSalute('outcome').
 // В прод-сборку не попадает (Vite вырезает блок по import.meta.env.DEV).
 if (import.meta.env.DEV) {

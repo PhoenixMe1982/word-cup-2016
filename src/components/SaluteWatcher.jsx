@@ -4,6 +4,9 @@ import { fireSalute } from '../salute.js'
 
 const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com').replace(/\/$/, '')
 const CELEBRATED_KEY = 'wc2026_celebrated' // matchId -> true для уже отпразднованных
+// Матч за 3-е место и финал празднует отдельная сцена показа мест (StandingsReveal)
+// со своим попапом очков по «Далее» — watcher их НЕ трогает, чтобы не двоить салют/попап.
+const REVEAL_MATCHES = new Set(['m103', 'm104'])
 
 // Единый детектор «угаданных» прогнозов. Смонтирован на уровне App, поэтому
 // срабатывает и при заходе на любой экран (догоняющий салют), и при live-зачёте
@@ -38,7 +41,7 @@ export default function SaluteWatcher({ onFreshPoints }) {
         .then(r => r.ok ? r.json() : null).catch(() => null)
       if (!Array.isArray(preds)) return
 
-      const correct = preds.filter(p => p.pts >= 1)
+      const correct = preds.filter(p => p.pts >= 1 && !REVEAL_MATCHES.has(String(p.matchId)))
       const celebrated = loadCelebrated()
 
       // Baseline при входе: помечаем все уже засчитанные исходы как
