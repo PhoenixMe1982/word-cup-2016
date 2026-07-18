@@ -306,8 +306,8 @@ export const KNOCKOUT_MATCHES = [
   { id: 'm101', stage: 'sf',   date: '14 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'AT&T Stadium, Арлингтон',         goals: [] },
   { id: 'm102', stage: 'sf',   date: '15 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Mercedes-Benz Stadium, Атланта',  goals: [] },
   // ── За 3-е место и финал — команды TBD ──────────────────────────────────────
-  { id: 'm103', stage: 'bronze', date: '19 июля', time: '00:00 МСК', status: 'upcoming', home: null, away: null, venue: 'Hard Rock Stadium, Майами',  goals: [] },
-  { id: 'm104', stage: 'final',  date: '19 июля', time: '22:00 МСК', status: 'upcoming', home: null, away: null, venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
+  { id: 'm103', stage: 'bronze', date: '19 июля', time: '00:00 МСК', status: 'upcoming', home: 'FRA', away: 'ENG', venue: 'Hard Rock Stadium, Майами',  goals: [] },
+  { id: 'm104', stage: 'final',  date: '19 июля', time: '22:00 МСК', status: 'upcoming', home: 'ESP', away: 'ARG', venue: 'MetLife Stadium, Нью-Джерси', goals: [] },
 ];
 
 // Дерево плей-офф: matchId → [feederA, feederB] — победители этих двух матчей
