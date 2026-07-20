@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-07-19T22:05:26.443Z",
+  "_updated": "2026-07-20T07:30:08.737Z",
   "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
   "matchResults": {
     "m01": {
@@ -642,10 +642,12 @@
       "winner": "AWAY_TEAM"
     },
     "m104": {
-      "status": "live",
+      "status": "finished",
       "scoreHome": 1,
       "scoreAway": 0,
-      "phase": "et"
+      "phase": "et",
+      "winner": "HOME_TEAM",
+      "duration": "EXTRA_TIME"
     }
   }
 }
