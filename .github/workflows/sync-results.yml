@@ -1,9 +1,11 @@
 name: Sync WC 2026 Results
 
 on:
-  schedule:
-    # Every 5 minutes — catches results within minutes of final whistle
-    - cron: '*/5 * * * *'
+  # ОТКЛЮЧЁН 2026-07-21 (консервация). Резервный путь автозачёта: все матчи
+  # турнира завершены и зачтены, будить им спящий Render каждые 5 минут незачем.
+  # schedule:
+  #   # Every 5 minutes — catches results within minutes of final whistle
+  #   - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:

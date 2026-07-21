@@ -11,6 +11,12 @@ const API = (import.meta.env.VITE_API_URL || 'https://word-cup-2016.onrender.com
 // бэкенд сам опрашивает football-data.org каждые 5 минут.
 const REFRESH_MS = 60 * 1000
 
+// Потолок ожидания Render. Сервис живёт на free-плане: после 15 минут простоя
+// он засыпает и первый запрос висит ~50 с, пока поднимается контейнер (молча —
+// это не ошибка, .catch такое не ловит). Даём ему проснуться, но не бесконечно,
+// чтобы висящие запросы не копились от рефреша к рефрешу.
+const API_TIMEOUT_MS = 60 * 1000
+
 // Сборка, на которой реально работает открытая вкладка (подставляется Vite-define
 // на билде). В dev/тестах константы нет → 'dev', проверку обновлений пропускаем.
 const RUNNING_BUILD = (typeof __BUILD_ID__ !== 'undefined') ? __BUILD_ID__ : 'dev'
@@ -62,9 +68,10 @@ const LiveDataCtx = createContext(FALLBACK)
 
 export function LiveDataProvider({ children }) {
   const [data, setData] = useState(FALLBACK)
-  // ready — первая загрузка завершена (свежие результаты/таблицы готовы).
+  // ready — статика (live-data.json) загружена, показывать уже есть что.
   // Сплэш на уровне App держит вход, пока это false, чтобы не показывать
-  // нули из FALLBACK до резолва /api/live.
+  // пустые счета из FALLBACK (в data.js результатов нет вообще). На ответы
+  // Render НЕ завязано — см. loadApi ниже.
   const [ready, setReady] = useState(false)
   // updateAvailable — задеплоена сборка новее текущей открытой вкладки; App
   // показывает мягкую плашку «Обновить». Взводится один раз и не сбрасывается.
@@ -73,32 +80,17 @@ export function LiveDataProvider({ children }) {
   useEffect(() => {
     let cancelled = false
 
-    async function load() {
-      const liveUrl = import.meta.env.BASE_URL + 'live-data.json?t=' + Date.now()
-      const verUrl = import.meta.env.BASE_URL + 'version.json?t=' + Date.now()
-      // Cache-bust всех живых источников: без ?t=… WebView Telegram кэшировал
-      // /api/live и 60-сек. рефреш возвращал устаревший счёт (матч уже кончился,
-      // а карточка «висела» на старом счёте до полного перезахода). Как и для
-      // live-data.json/version.json, добавляем метку времени к каждому запросу.
-      const t = Date.now()
-      const [json, apiLive, apiScorers, apiKeepers, ver] = await Promise.all([
-        fetch(liveUrl).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API}/api/live?t=${t}`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API}/api/scorers?t=${t}`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API}/api/goalkeepers?t=${t}`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(verUrl).then(r => r.ok ? r.json() : null).catch(() => null),
-      ])
+    // Последние успешные ответы каждого источника. Держим отдельно и рендерим
+    // из объединения, чтобы медленный Render не затирал уже показанную статику,
+    // а неудачный запрос не обнулял то, что пользователь уже видит.
+    const snap = { json: null, apiLive: null, apiScorers: null, apiKeepers: null }
+
+    function apply() {
       if (cancelled) return
-
-      // Новая сборка на сервере → плашка «Обновить» (только в собранном приложении).
-      if (RUNNING_BUILD !== 'dev' && ver?.build && ver.build !== RUNNING_BUILD) {
-        setUpdateAvailable(true)
-      }
-
       // Приоритет: /api/live (свежее, раз в 5 мин) → live-data.json (GitHub Actions) → статика
-      const staticResults = json?.matchResults || {}
-      const liveResults = apiLive?.matchResults && Object.keys(apiLive.matchResults).length > 0
-        ? apiLive.matchResults
+      const staticResults = snap.json?.matchResults || {}
+      const liveResults = snap.apiLive?.matchResults && Object.keys(snap.apiLive.matchResults).length > 0
+        ? snap.apiLive.matchResults
         : null
 
       const matches = SOURCE_MATCHES.map(m => ({
@@ -109,17 +101,60 @@ export function LiveDataProvider({ children }) {
 
       setData({
         matches,
-        scorers:     apiScorers  || json?.scorers     || [],
-        goalkeepers: apiKeepers  || json?.goalkeepers || GOALKEEPERS,
+        scorers:     snap.apiScorers  || snap.json?.scorers     || [],
+        goalkeepers: snap.apiKeepers  || snap.json?.goalkeepers || GOALKEEPERS,
         groups:      computeGroups(matches),
-        news:        json?.news    || NEWS,
-        ticker:      json?.ticker  || TICKER_ITEMS,
+        news:        snap.json?.news    || NEWS,
+        ticker:      snap.json?.ticker  || TICKER_ITEMS,
       })
-      setReady(true)
     }
 
-    load()
-    const t = setInterval(load, REFRESH_MS)
+    // (1) Статика лежит на тех же GitHub Pages, что и сам фронт: отвечает
+    // мгновенно, даже когда Render спит. Именно она снимает сплэш — результаты
+    // матчей полные, так что входу больше не нужно ждать бэкенд.
+    async function loadStatic() {
+      const t = Date.now()
+      const [json, ver] = await Promise.all([
+        fetch(import.meta.env.BASE_URL + 'live-data.json?t=' + t).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(import.meta.env.BASE_URL + 'version.json?t=' + t).then(r => r.ok ? r.json() : null).catch(() => null),
+      ])
+      if (cancelled) return
+
+      if (json) snap.json = json
+      // Новая сборка на сервере → плашка «Обновить» (только в собранном приложении).
+      if (RUNNING_BUILD !== 'dev' && ver?.build && ver.build !== RUNNING_BUILD) {
+        setUpdateAvailable(true)
+      }
+      apply()
+      setReady(true) // даже если статика не пришла — дальше держать сплэш нечем
+    }
+
+    // (2) Render. Ответы домешиваются поверх статики, когда придут: на free-плане
+    // холодный старт занимает ~50 с, и блокировать на это вход нельзя.
+    // Cache-bust обязателен: без ?t=… WebView Telegram кэшировал /api/live и
+    // 60-сек. рефреш возвращал устаревший счёт.
+    async function loadApi() {
+      const ctl = new AbortController()
+      const kill = setTimeout(() => ctl.abort(), API_TIMEOUT_MS)
+      const t = Date.now()
+      const get = (path) => fetch(`${API}${path}?t=${t}`, { signal: ctl.signal })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null) // сюда же попадает abort по таймауту
+      const [apiLive, apiScorers, apiKeepers] = await Promise.all([
+        get('/api/live'), get('/api/scorers'), get('/api/goalkeepers'),
+      ])
+      clearTimeout(kill)
+      if (cancelled) return
+
+      if (apiLive)    snap.apiLive    = apiLive
+      if (apiScorers) snap.apiScorers = apiScorers
+      if (apiKeepers) snap.apiKeepers = apiKeepers
+      if (apiLive || apiScorers || apiKeepers) apply()
+    }
+
+    loadStatic()
+    loadApi()
+    const t = setInterval(() => { loadStatic(); loadApi() }, REFRESH_MS)
     return () => { cancelled = true; clearInterval(t) }
   }, [])
 

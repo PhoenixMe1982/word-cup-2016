@@ -1,240 +1,211 @@
 {
-  "_updated": "2026-07-20T07:30:08.737Z",
-  "_note": "Автогенерируется bot/update-live-data.js из football-data.org. Не редактировать вручную во время турнира — изменения будут перезаписаны.",
+  "_updated": "2026-07-21T17:29:17.308Z",
+  "_note": "Финальный снимок турнира из /api/live (с ручными коррекциями счетов). Кроны update-live-data/sync-results отключены — файл больше не автогенерируется.",
   "matchResults": {
     "m01": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m02": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m03": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
     },
     "m04": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m05": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
     },
     "m06": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
     },
     "m07": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 1
     },
     "m08": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m09": {
       "status": "finished",
       "scoreHome": 7,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m10": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 2,
-      "winner": "DRAW"
+      "scoreAway": 2
     },
     "m11": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m12": {
       "status": "finished",
       "scoreHome": 5,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m13": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0,
-      "winner": "DRAW"
+      "scoreAway": 0
     },
     "m14": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
+    },
+    "m15": {
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 1
     },
     "m16": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 2,
-      "winner": "DRAW"
+      "scoreAway": 2
     },
     "m17": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m18": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 4,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 4
     },
     "m19": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m20": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m21": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
     },
     "m22": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 2,
-      "winner": "HOME_TEAM"
+      "scoreAway": 2
     },
     "m23": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m24": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 3,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 3
     },
     "m25": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
     },
     "m26": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m27": {
       "status": "finished",
       "scoreHome": 6,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m28": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m29": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m30": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 1
     },
     "m31": {
       "status": "finished",
       "scoreHome": 3,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m32": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 1,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 1
     },
     "m33": {
       "status": "finished",
       "scoreHome": 5,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m34": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 1,
-      "winner": "HOME_TEAM"
+      "scoreAway": 1
     },
     "m35": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0,
-      "winner": "DRAW"
+      "scoreAway": 0
     },
     "m36": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 4,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 4
     },
     "m37": {
       "status": "finished",
       "scoreHome": 4,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m38": {
       "status": "finished",
       "scoreHome": 0,
-      "scoreAway": 0,
-      "winner": "DRAW"
+      "scoreAway": 0
+    },
+    "m39": {
+      "status": "finished",
+      "scoreHome": 2,
+      "scoreAway": 2
     },
     "m40": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 3,
-      "winner": "AWAY_TEAM"
+      "scoreAway": 3
     },
     "m41": {
       "status": "finished",
       "scoreHome": 2,
-      "scoreAway": 0,
-      "winner": "HOME_TEAM"
+      "scoreAway": 0
     },
     "m42": {
       "status": "finished",
@@ -362,6 +333,12 @@
       "scoreAway": 0,
       "winner": "HOME_TEAM"
     },
+    "m64": {
+      "status": "finished",
+      "scoreHome": 0,
+      "scoreAway": 1,
+      "winner": "AWAY_TEAM"
+    },
     "m63": {
       "status": "finished",
       "scoreHome": 0,
@@ -377,8 +354,7 @@
     "m65": {
       "status": "finished",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
+      "scoreAway": 1
     },
     "m67": {
       "status": "finished",
@@ -416,24 +392,6 @@
       "scoreAway": 3,
       "winner": "DRAW"
     },
-    "m15": {
-      "status": "finished",
-      "scoreHome": 1,
-      "scoreAway": 1,
-      "winner": "DRAW"
-    },
-    "m39": {
-      "status": "finished",
-      "scoreHome": 2,
-      "scoreAway": 2,
-      "winner": "DRAW"
-    },
-    "m64": {
-      "status": "finished",
-      "scoreHome": 0,
-      "scoreAway": 1,
-      "winner": "AWAY_TEAM"
-    },
     "m73": {
       "status": "finished",
       "scoreHome": 0,
@@ -450,19 +408,19 @@
       "status": "finished",
       "scoreHome": 1,
       "scoreAway": 1,
-      "winner": "AWAY_TEAM",
-      "duration": "PENALTY_SHOOTOUT",
       "penHome": 3,
-      "penAway": 4
+      "penAway": 4,
+      "winner": "AWAY_TEAM",
+      "duration": "PENALTY_SHOOTOUT"
     },
     "m75": {
       "status": "finished",
       "scoreHome": 1,
       "scoreAway": 1,
-      "winner": "AWAY_TEAM",
-      "duration": "PENALTY_SHOOTOUT",
       "penHome": 2,
-      "penAway": 3
+      "penAway": 3,
+      "winner": "AWAY_TEAM",
+      "duration": "PENALTY_SHOOTOUT"
     },
     "m78": {
       "status": "finished",
@@ -525,7 +483,6 @@
       "scoreAway": 1,
       "penHome": 2,
       "penAway": 4,
-      "phase": "pens",
       "winner": "AWAY_TEAM",
       "duration": "PENALTY_SHOOTOUT"
     },
@@ -533,7 +490,6 @@
       "status": "finished",
       "scoreHome": 3,
       "scoreAway": 2,
-      "phase": "et",
       "winner": "HOME_TEAM",
       "duration": "EXTRA_TIME"
     },
@@ -567,16 +523,16 @@
       "scoreAway": 3,
       "winner": "AWAY_TEAM"
     },
-    "m94": {
-      "status": "finished",
-      "scoreHome": 1,
-      "scoreAway": 4,
-      "winner": "AWAY_TEAM"
-    },
     "m93": {
       "status": "finished",
       "scoreHome": 0,
       "scoreAway": 1,
+      "winner": "AWAY_TEAM"
+    },
+    "m94": {
+      "status": "finished",
+      "scoreHome": 1,
+      "scoreAway": 4,
       "winner": "AWAY_TEAM"
     },
     "m95": {
@@ -589,7 +545,6 @@
       "status": "finished",
       "scoreHome": 0,
       "scoreAway": 0,
-      "phase": "pens",
       "penHome": 4,
       "penAway": 3,
       "winner": "HOME_TEAM",
@@ -611,7 +566,6 @@
       "status": "finished",
       "scoreHome": 1,
       "scoreAway": 2,
-      "phase": "et",
       "winner": "AWAY_TEAM",
       "duration": "EXTRA_TIME"
     },
@@ -619,7 +573,6 @@
       "status": "finished",
       "scoreHome": 3,
       "scoreAway": 1,
-      "phase": "et",
       "winner": "HOME_TEAM",
       "duration": "EXTRA_TIME"
     },
@@ -645,9 +598,2259 @@
       "status": "finished",
       "scoreHome": 1,
       "scoreAway": 0,
-      "phase": "et",
       "winner": "HOME_TEAM",
       "duration": "EXTRA_TIME"
     }
-  }
+  },
+  "scorers": [
+    {
+      "rank": 1,
+      "name": "Килиан Мбаппе",
+      "team": "FRA",
+      "club": "Real Madrid",
+      "goals": 10,
+      "assists": 4,
+      "matches": 8,
+      "avatar": "⚡",
+      "fdId": 3374
+    },
+    {
+      "rank": 2,
+      "name": "Лионель Месси",
+      "team": "ARG",
+      "club": "Inter Miami",
+      "goals": 8,
+      "assists": 4,
+      "matches": 8,
+      "avatar": "🐐",
+      "fdId": 3218
+    },
+    {
+      "rank": 3,
+      "name": "Джуд Беллингем",
+      "team": "ENG",
+      "club": "",
+      "goals": 7,
+      "assists": 1,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 125010
+    },
+    {
+      "rank": 4,
+      "name": "Эрлинг Холанд",
+      "team": "NOR",
+      "club": "Man City",
+      "goals": 7,
+      "assists": 0,
+      "matches": 6,
+      "avatar": "💥",
+      "fdId": 38101
+    },
+    {
+      "rank": 5,
+      "name": "Усман Дембеле",
+      "team": "FRA",
+      "club": "",
+      "goals": 6,
+      "assists": 2,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 3373
+    },
+    {
+      "rank": 6,
+      "name": "Харри Кейн",
+      "team": "ENG",
+      "club": "Bayern Munich",
+      "goals": 6,
+      "assists": 1,
+      "matches": 8,
+      "avatar": "👑",
+      "fdId": 8004
+    },
+    {
+      "rank": 7,
+      "name": "Микель Оярсабаль",
+      "team": "ESP",
+      "club": "",
+      "goals": 5,
+      "assists": 1,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 180137
+    },
+    {
+      "rank": 8,
+      "name": "Виниций Жуниор",
+      "team": "BRA",
+      "club": "Real Madrid",
+      "goals": 4,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "🔥",
+      "fdId": 1556
+    },
+    {
+      "rank": 9,
+      "name": "Исмаила Сарр",
+      "team": "SEN",
+      "club": "",
+      "goals": 4,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 3638
+    },
+    {
+      "rank": 10,
+      "name": "Хулиан Киньонес",
+      "team": "MEX",
+      "club": "",
+      "goals": 4,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 39237
+    },
+    {
+      "rank": 11,
+      "name": "Букайо Сака",
+      "team": "ENG",
+      "club": "Arsenal",
+      "goals": 3,
+      "assists": 3,
+      "matches": 8,
+      "avatar": "⭐",
+      "fdId": 99813
+    },
+    {
+      "rank": 12,
+      "name": "Дениз Ундав",
+      "team": "GER",
+      "club": "",
+      "goals": 3,
+      "assists": 2,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 6928
+    },
+    {
+      "rank": 13,
+      "name": "Джохан Манзамби",
+      "team": "SUI",
+      "club": "",
+      "goals": 3,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 212309
+    },
+    {
+      "rank": 14,
+      "name": "Промис Дэвид",
+      "team": "CAN",
+      "club": "",
+      "goals": 3,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 8924
+    },
+    {
+      "rank": 15,
+      "name": "Коди Гакпо",
+      "team": "NED",
+      "club": "",
+      "goals": 3,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 7459
+    },
+    {
+      "rank": 16,
+      "name": "Ромелу Лукаку",
+      "team": "BEL",
+      "club": "Napoli",
+      "goals": 3,
+      "assists": 1,
+      "matches": 6,
+      "avatar": "🏋️",
+      "fdId": 3662
+    },
+    {
+      "rank": 17,
+      "name": "Шарль Де Кетеларе",
+      "team": "BEL",
+      "club": "",
+      "goals": 3,
+      "assists": 1,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 129947
+    },
+    {
+      "rank": 18,
+      "name": "Лаутаро Мартинес",
+      "team": "ARG",
+      "club": "Inter Milan",
+      "goals": 3,
+      "assists": 1,
+      "matches": 8,
+      "avatar": "🐂",
+      "fdId": 3220
+    },
+    {
+      "rank": 19,
+      "name": "Брэдли Барколя",
+      "team": "FRA",
+      "club": "",
+      "goals": 3,
+      "assists": 1,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 172762
+    },
+    {
+      "rank": 20,
+      "name": "Исмаел Сайбари",
+      "team": "MAR",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 130173
+    },
+    {
+      "rank": 21,
+      "name": "Матеус Кунья",
+      "team": "BRA",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 30842
+    },
+    {
+      "rank": 22,
+      "name": "Бриан Броббей",
+      "team": "NED",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 97535
+    },
+    {
+      "rank": 23,
+      "name": "Елиджах Джуст",
+      "team": "NZL",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 118981
+    },
+    {
+      "rank": 24,
+      "name": "Йоан Висса",
+      "team": "COD",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 612
+    },
+    {
+      "rank": 25,
+      "name": "Кай Хаверц",
+      "team": "GER",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 171
+    },
+    {
+      "rank": 26,
+      "name": "Фоларин Балогун",
+      "team": "USA",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 131040
+    },
+    {
+      "rank": 27,
+      "name": "Криштиану Роналду",
+      "team": "POR",
+      "club": "Al-Nassr",
+      "goals": 3,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "🦁",
+      "fdId": 44
+    },
+    {
+      "rank": 28,
+      "name": "Рауль Хименес",
+      "team": "MEX",
+      "club": "",
+      "goals": 3,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 3305
+    },
+    {
+      "rank": 29,
+      "name": "Рияд Марез",
+      "team": "ALG",
+      "club": "",
+      "goals": 2,
+      "assists": 2,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 8069
+    },
+    {
+      "rank": 30,
+      "name": "Брель Эмболо",
+      "team": "SUI",
+      "club": "",
+      "goals": 2,
+      "assists": 2,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 3483
+    },
+    {
+      "rank": 31,
+      "name": "Леандро Троссард",
+      "team": "BEL",
+      "club": "",
+      "goals": 2,
+      "assists": 2,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 8984
+    },
+    {
+      "rank": 32,
+      "name": "Аясэ Уэда",
+      "team": "JPN",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 119460
+    },
+    {
+      "rank": 33,
+      "name": "Максимилиано Арауджо",
+      "team": "URU",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 28770
+    },
+    {
+      "rank": 34,
+      "name": "Крйсенкио Суммервилье",
+      "team": "NED",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 102193
+    },
+    {
+      "rank": 35,
+      "name": "Рубен Варгас",
+      "team": "SUI",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 31913
+    },
+    {
+      "rank": 36,
+      "name": "Рамин Резаейан",
+      "team": "IRN",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 3804
+    },
+    {
+      "rank": 37,
+      "name": "Николас Пепе",
+      "team": "CIV",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 8412
+    },
+    {
+      "rank": 38,
+      "name": "Папе Гуее",
+      "team": "SEN",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 633
+    },
+    {
+      "rank": 39,
+      "name": "Суфьян Рахими",
+      "team": "MAR",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 130502
+    },
+    {
+      "rank": 40,
+      "name": "Мостафа Зико",
+      "team": "EGY",
+      "club": "",
+      "goals": 2,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 295848
+    },
+    {
+      "rank": 41,
+      "name": "Ясин Аяри",
+      "team": "SWE",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 145613
+    },
+    {
+      "rank": 42,
+      "name": "Сайл Ларин",
+      "team": "CAN",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 15958
+    },
+    {
+      "rank": 43,
+      "name": "Дайчи Камада",
+      "team": "JPN",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 6716
+    },
+    {
+      "rank": 44,
+      "name": "Даниел Муньоз",
+      "team": "COL",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 22010
+    },
+    {
+      "rank": 45,
+      "name": "Ермин Махмик",
+      "team": "BIH",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 221764
+    },
+    {
+      "rank": 46,
+      "name": "Антонй Еланга",
+      "team": "SWE",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 166376
+    },
+    {
+      "rank": 47,
+      "name": "Марко Арнаутовик",
+      "team": "AUT",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 8223
+    },
+    {
+      "rank": 48,
+      "name": "Амад Диальо",
+      "team": "CIV",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 133584
+    },
+    {
+      "rank": 49,
+      "name": "Хабиб Диарра",
+      "team": "SEN",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 171876
+    },
+    {
+      "rank": 50,
+      "name": "Йоури Тиелеманс",
+      "team": "BEL",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 3658
+    },
+    {
+      "rank": 51,
+      "name": "Емам Ашур",
+      "team": "EGY",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 191972
+    },
+    {
+      "rank": 52,
+      "name": "Аззедине Унахи",
+      "team": "MAR",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 122511
+    },
+    {
+      "rank": 53,
+      "name": "Малик Тильман",
+      "team": "USA",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 144470
+    },
+    {
+      "rank": 54,
+      "name": "Микел Мерино",
+      "team": "ESP",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 7935
+    },
+    {
+      "rank": 55,
+      "name": "Дан Ндой",
+      "team": "SUI",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 77641
+    },
+    {
+      "rank": 56,
+      "name": "Педро Порро",
+      "team": "ESP",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 81037
+    },
+    {
+      "rank": 57,
+      "name": "Ензо Фернандез",
+      "team": "ARG",
+      "club": "",
+      "goals": 2,
+      "assists": 0,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 102603
+    },
+    {
+      "rank": 58,
+      "name": "Александер Исак",
+      "team": "SWE",
+      "club": "",
+      "goals": 1,
+      "assists": 3,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 6486
+    },
+    {
+      "rank": 59,
+      "name": "Виктор Дьёкереш",
+      "team": "SWE",
+      "club": "",
+      "goals": 1,
+      "assists": 2,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 8279
+    },
+    {
+      "rank": 60,
+      "name": "Мохамед Салах",
+      "team": "EGY",
+      "club": "",
+      "goals": 1,
+      "assists": 2,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 3754
+    },
+    {
+      "rank": 61,
+      "name": "Натан-Дйлан Салиба",
+      "team": "CAN",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 171216
+    },
+    {
+      "rank": 62,
+      "name": "Луис Диас",
+      "team": "COL",
+      "club": "Liverpool",
+      "goals": 1,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "🐆",
+      "fdId": 22396
+    },
+    {
+      "rank": 63,
+      "name": "Ин-Беом Хванг",
+      "team": "KOR",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 170561
+    },
+    {
+      "rank": 64,
+      "name": "Натаниел Бровн",
+      "team": "GER",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 184533
+    },
+    {
+      "rank": 65,
+      "name": "Мемфис Депай",
+      "team": "NED",
+      "club": "Atlético",
+      "goals": 1,
+      "assists": 1,
+      "matches": 2,
+      "avatar": "🦁",
+      "fdId": 8472
+    },
+    {
+      "rank": 66,
+      "name": "Феликс Калу Нмеча",
+      "team": "GER",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 101074
+    },
+    {
+      "rank": 67,
+      "name": "Промисе Акинпелу",
+      "team": "CAN",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 260992
+    },
+    {
+      "rank": 68,
+      "name": "Луис Ромо",
+      "team": "MEX",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 39927
+    },
+    {
+      "rank": 69,
+      "name": "Кейто Накамура",
+      "team": "JPN",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 48595
+    },
+    {
+      "rank": 70,
+      "name": "Алекс Фриман",
+      "team": "USA",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 177823
+    },
+    {
+      "rank": 71,
+      "name": "Ашраф Хакими",
+      "team": "MAR",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 72,
+      "name": "Виргил Ван Диджк",
+      "team": "NED",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 7869
+    },
+    {
+      "rank": 73,
+      "name": "Матиас Галарза",
+      "team": "PAR",
+      "club": "",
+      "goals": 1,
+      "assists": 1,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 165622
+    },
+    {
+      "rank": 74,
+      "name": "Гио Рейна",
+      "team": "USA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 136733
+    },
+    {
+      "rank": 75,
+      "name": "Ладислав Креджки",
+      "team": "CZE",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 1878
+    },
+    {
+      "rank": 76,
+      "name": "Хюн-Гю Ох",
+      "team": "KOR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 191295
+    },
+    {
+      "rank": 77,
+      "name": "Джово Лукик",
+      "team": "BIH",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 17767
+    },
+    {
+      "rank": 78,
+      "name": "Маурикио",
+      "team": "PAR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 119594
+    },
+    {
+      "rank": 79,
+      "name": "Джон Макгинн",
+      "team": "SCO",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 34646
+    },
+    {
+      "rank": 80,
+      "name": "Нестор Иранкунда",
+      "team": "AUS",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 176991
+    },
+    {
+      "rank": 81,
+      "name": "Коннор Меткалфе",
+      "team": "AUS",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 4635
+    },
+    {
+      "rank": 82,
+      "name": "Ливано Комененкиа",
+      "team": "CUW",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 166156
+    },
+    {
+      "rank": 83,
+      "name": "Нико Шлоттербек",
+      "team": "GER",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 2,
+      "avatar": "⚽",
+      "fdId": 75539
+    },
+    {
+      "rank": 84,
+      "name": "Джамал Мусиала",
+      "team": "GER",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 144393
+    },
+    {
+      "rank": 85,
+      "name": "Омар Рекик",
+      "team": "TUN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 144669
+    },
+    {
+      "rank": 86,
+      "name": "Маттиас Сванберг",
+      "team": "SWE",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 15354
+    },
+    {
+      "rank": 87,
+      "name": "Абдулелах Ал Амри",
+      "team": "KSA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 103094
+    },
+    {
+      "rank": 88,
+      "name": "Мохаммад Мохеби",
+      "team": "IRN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 172641
+    },
+    {
+      "rank": 89,
+      "name": "Ибрахим М'бае",
+      "team": "SEN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 265040
+    },
+    {
+      "rank": 90,
+      "name": "Аймен Хусейн",
+      "team": "IRQ",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 117153
+    },
+    {
+      "rank": 91,
+      "name": "Лео Øстигард",
+      "team": "NOR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 44032
+    },
+    {
+      "rank": 92,
+      "name": "Романо Шмид",
+      "team": "AUT",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 16346
+    },
+    {
+      "rank": 93,
+      "name": "Али Олван",
+      "team": "JOR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 244174
+    },
+    {
+      "rank": 94,
+      "name": "Джоао Невес",
+      "team": "POR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 5,
+      "avatar": "⚽",
+      "fdId": 190877
+    },
+    {
+      "rank": 95,
+      "name": "Мартин Батурина",
+      "team": "CRO",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 156912
+    },
+    {
+      "rank": 96,
+      "name": "Петар Муса",
+      "team": "CRO",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 56589
+    },
+    {
+      "rank": 97,
+      "name": "Маркус Рашфорд",
+      "team": "ENG",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 8,
+      "avatar": "⚽",
+      "fdId": 3331
+    },
+    {
+      "rank": 98,
+      "name": "Калеб Йиренкйи",
+      "team": "GHA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 262187
+    },
+    {
+      "rank": 99,
+      "name": "Аббосбек Файзуллаев",
+      "team": "UZB",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 214531
+    },
+    {
+      "rank": 100,
+      "name": "Джаминтон Кампаз",
+      "team": "COL",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 170245
+    },
+    {
+      "rank": 101,
+      "name": "Мичал Садилек",
+      "team": "CZE",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 67970
+    },
+    {
+      "rank": 102,
+      "name": "Тебохо Мокоена",
+      "team": "RSA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 34012
+    },
+    {
+      "rank": 103,
+      "name": "Гранит Джака",
+      "team": "SUI",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 6,
+      "avatar": "⚽",
+      "fdId": 3477
+    },
+    {
+      "rank": 104,
+      "name": "Франк Кессье",
+      "team": "CIV",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 1747
+    },
+    {
+      "rank": 105,
+      "name": "Джуня Ито",
+      "team": "JPN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 49080
+    },
+    {
+      "rank": 106,
+      "name": "Ламин Ямаль",
+      "team": "ESP",
+      "club": "Barcelona",
+      "goals": 1,
+      "assists": 0,
+      "matches": 7,
+      "avatar": "🌟",
+      "fdId": 202283
+    },
+    {
+      "rank": 107,
+      "name": "Кевин Пина",
+      "team": "CPV",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 40121
+    },
+    {
+      "rank": 108,
+      "name": "Агустин Каноббио",
+      "team": "URU",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 28614
+    },
+    {
+      "rank": 109,
+      "name": "Хелио Варела",
+      "team": "CPV",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 213119
+    },
+    {
+      "rank": 110,
+      "name": "Финн Сурман",
+      "team": "NZL",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 176993
+    },
+    {
+      "rank": 111,
+      "name": "Трезегует",
+      "team": "EGY",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 180952
+    },
+    {
+      "rank": 112,
+      "name": "Маркус Педерсен",
+      "team": "NOR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 4,
+      "avatar": "⚽",
+      "fdId": 38548
+    },
+    {
+      "rank": 113,
+      "name": "Низар Ал Рашдан",
+      "team": "JOR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 231890
+    },
+    {
+      "rank": 114,
+      "name": "Надхир Бенбуали",
+      "team": "ALG",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 192676
+    },
+    {
+      "rank": 115,
+      "name": "Амин Гуири",
+      "team": "ALG",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 8476
+    },
+    {
+      "rank": 116,
+      "name": "Нуно Мендес",
+      "team": "POR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 144570
+    },
+    {
+      "rank": 117,
+      "name": "Рафаэл Леан",
+      "team": "POR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 2,
+      "avatar": "⚽",
+      "fdId": 15892
+    },
+    {
+      "rank": 118,
+      "name": "Анте Будимир",
+      "team": "CRO",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 1,
+      "avatar": "⚽",
+      "fdId": 2237
+    },
+    {
+      "rank": 119,
+      "name": "Керим Аладжбеговик",
+      "team": "BIH",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 3,
+      "avatar": "⚽",
+      "fdId": 272213
+    },
+    {
+      "rank": 120,
+      "name": "Хасан Аль-Хайдос",
+      "team": "QAT",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 121,
+      "name": "Вилсон Изидор",
+      "team": "HAI",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 122,
+      "name": "Альваро Фидальго",
+      "team": "MEX",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 123,
+      "name": "Нильсон Ангуло",
+      "team": "ECU",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 124,
+      "name": "Гонсало Плата",
+      "team": "ECU",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 125,
+      "name": "Лерой Сане",
+      "team": "GER",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 126,
+      "name": "Дайзен Маэда",
+      "team": "JPN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 127,
+      "name": "Жессим Яссин",
+      "team": "MAR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 128,
+      "name": "Матео Чавес",
+      "team": "MEX",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 129,
+      "name": "Тапело Масеко",
+      "team": "RSA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 130,
+      "name": "Хазем Мастури",
+      "team": "TUN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 131,
+      "name": "Каан Айхан",
+      "team": "TUR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 132,
+      "name": "Арда Гюлер",
+      "team": "TUR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 133,
+      "name": "Барыш Альпер Йылмаз",
+      "team": "TUR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 134,
+      "name": "Себастьян Берхалтер",
+      "team": "USA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 135,
+      "name": "Остон Трасти",
+      "team": "USA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 136,
+      "name": "Кевин Де Брёйне",
+      "team": "BEL",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 137,
+      "name": "Алексис Салемакерс",
+      "team": "BEL",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 138,
+      "name": "Махмуд Сабер",
+      "team": "EGY",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 139,
+      "name": "Алекс Баэна",
+      "team": "ESP",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 140,
+      "name": "Дезире Дуэ",
+      "team": "FRA",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 141,
+      "name": "Тело Осгор",
+      "team": "NOR",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 142,
+      "name": "Илиман Ндиай",
+      "team": "SEN",
+      "club": "",
+      "goals": 1,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 143,
+      "name": "Майкл Олисе",
+      "team": "FRA",
+      "club": "",
+      "goals": 0,
+      "assists": 3,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 144,
+      "name": "Бруно Гимарайнс",
+      "team": "BRA",
+      "club": "",
+      "goals": 0,
+      "assists": 3,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 145,
+      "name": "Йозуа Киммих",
+      "team": "GER",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 146,
+      "name": "Райан Гравенберх",
+      "team": "NED",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 147,
+      "name": "Крис Вуд",
+      "team": "NZL",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 148,
+      "name": "Браим Диас",
+      "team": "MAR",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 149,
+      "name": "Хулио Энсио",
+      "team": "PAR",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 150,
+      "name": "Дензел Думфрис",
+      "team": "NED",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 151,
+      "name": "Мартин Эдигор",
+      "team": "NOR",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 152,
+      "name": "Роберто Альварадо",
+      "team": "MEX",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 153,
+      "name": "Флориан Вирц",
+      "team": "GER",
+      "club": "",
+      "goals": 0,
+      "assists": 2,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 154,
+      "name": "Эрик Лира",
+      "team": "MEX",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 155,
+      "name": "Владимир Цоуфал",
+      "team": "CZE",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 156,
+      "name": "Ли Кан Ин",
+      "team": "KOR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 157,
+      "name": "Сеад Колашинац",
+      "team": "BIH",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 158,
+      "name": "Кристиан Пулишич",
+      "team": "USA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 159,
+      "name": "Малик Тельман",
+      "team": "USA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 160,
+      "name": "Пол Окон-Энгстлер",
+      "team": "AUS",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 161,
+      "name": "Коики Огава",
+      "team": "JPN",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 162,
+      "name": "Уилфрид Синго",
+      "team": "CIV",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 163,
+      "name": "Лукас Бергваль",
+      "team": "SWE",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 164,
+      "name": "Ханнибал Межбри",
+      "team": "TUN",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 165,
+      "name": "Адриен Рабьо",
+      "team": "FRA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 166,
+      "name": "Амир Аль-Аммари",
+      "team": "IRQ",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 167,
+      "name": "Давид Мёллер Вольфе",
+      "team": "NOR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 168,
+      "name": "Родриго де Пауль",
+      "team": "ARG",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 169,
+      "name": "Николас Гонсалес",
+      "team": "ARG",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 170,
+      "name": "Нур Аль-Равабдех",
+      "team": "JOR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 171,
+      "name": "Ксавер Шлагер",
+      "team": "AUT",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 172,
+      "name": "Артур Масуаку",
+      "team": "COD",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 173,
+      "name": "Педру Нету",
+      "team": "POR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 174,
+      "name": "Деклан Райс",
+      "team": "ENG",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 175,
+      "name": "Эллиот Андерсон",
+      "team": "ENG",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 176,
+      "name": "Петар Сучич",
+      "team": "CRO",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 177,
+      "name": "Иван Перишич",
+      "team": "CRO",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 178,
+      "name": "Брендон Томас-Асанте",
+      "team": "GHA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 179,
+      "name": "Густаво Пуэрта",
+      "team": "COL",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 180,
+      "name": "Кучо Эрнандес",
+      "team": "COL",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 181,
+      "name": "Александр Сойка",
+      "team": "CZE",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 182,
+      "name": "Лукас Пакета",
+      "team": "BRA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 183,
+      "name": "Надим Амири",
+      "team": "GER",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 184,
+      "name": "Эмерик Лапорт",
+      "team": "ESP",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 185,
+      "name": "Дани Ольмо",
+      "team": "ESP",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 186,
+      "name": "Тим Пэйн",
+      "team": "NZL",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 187,
+      "name": "Мохамед Хани",
+      "team": "EGY",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 188,
+      "name": "Факундо Медина",
+      "team": "ARG",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 189,
+      "name": "Патрик Берг",
+      "team": "NOR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 190,
+      "name": "Садио Мане",
+      "team": "SEN",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 191,
+      "name": "Николас Джексон",
+      "team": "SEN",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 192,
+      "name": "Мусса Аль-Тамари",
+      "team": "JOR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 193,
+      "name": "Бруну Фернандеш",
+      "team": "POR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 194,
+      "name": "Жоау Канселу",
+      "team": "POR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 195,
+      "name": "Йосип Станишич",
+      "team": "CRO",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 196,
+      "name": "Хуан Кинтеро",
+      "team": "COL",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 197,
+      "name": "Иван Башич",
+      "team": "BIH",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 198,
+      "name": "Деннис Хаджикадунич",
+      "team": "BIH",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 199,
+      "name": "Эдмилсон Жуниор",
+      "team": "QAT",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 200,
+      "name": "Шади Риад",
+      "team": "MAR",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 201,
+      "name": "Жан-Кевин Дюверн",
+      "team": "HAI",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 202,
+      "name": "Райан",
+      "team": "BRA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 203,
+      "name": "Хорхе Санчес",
+      "team": "MEX",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 204,
+      "name": "Чепанг Мореми",
+      "team": "RSA",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 205,
+      "name": "Ян Дьоманд",
+      "team": "CIV",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 206,
+      "name": "Ибрагим Сангаре",
+      "team": "CIV",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 207,
+      "name": "Кевин Родригес",
+      "team": "ECU",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 208,
+      "name": "Педро Вите",
+      "team": "ECU",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 209,
+      "name": "Рицу Доан",
+      "team": "JPN",
+      "club": "",
+      "goals": 0,
+      "assists": 1,
+      "matches": 0,
+      "avatar": "⚽"
+    },
+    {
+      "rank": 210,
+      "name": "Ферран Торрес",
+      "team": "ESP",
+      "club": "",
+      "goals": 0,
+      "assists": 0,
+      "matches": 2,
+      "avatar": "⚽",
+      "fdId": 33154
+    },
+    {
+      "rank": 211,
+      "name": "Бернарду Силва",
+      "team": "POR",
+      "club": "Man City",
+      "goals": 0,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "🎯"
+    },
+    {
+      "rank": 212,
+      "name": "Дарвин Нуньес",
+      "team": "URU",
+      "club": "Liverpool",
+      "goals": 0,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "🔫"
+    },
+    {
+      "rank": 213,
+      "name": "Ришарлисон",
+      "team": "BRA",
+      "club": "Tottenham",
+      "goals": 0,
+      "assists": 0,
+      "matches": 0,
+      "avatar": "🕊️"
+    }
+  ]
 }

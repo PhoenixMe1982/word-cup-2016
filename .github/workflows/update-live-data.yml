@@ -1,9 +1,12 @@
 name: Update Live Data
 
 on:
-  schedule:
-    # Every 5 minutes — keeps live-data.json in sync with football-data.org
-    - cron: '*/5 * * * *'
+  # ОТКЛЮЧЁН 2026-07-21 (консервация). Турнир сыгран, все 104 матча finished:
+  # public/live-data.json залит финальным снимком из /api/live (там ручные
+  # коррекции m37/m65/m83, которых нет в football-data) и правится теперь руками.
+  # schedule:
+  #   # Every 5 minutes — keeps live-data.json in sync with football-data.org
+  #   - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:

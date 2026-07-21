@@ -164,7 +164,6 @@ function AppShell() {
 
   // ── Splash / readiness ───────────────────────────────────────────────
   const inTg = !!window.Telegram?.WebApp?.initData
-  const [meDone, setMeDone] = useState(!inTg) // вне Telegram /api/me не ждём
   const [hidingSplash, setHidingSplash] = useState(false)
   const [entered, setEntered] = useState(false)
   const [visit, setVisit] = useState(null)
@@ -198,9 +197,7 @@ function AppShell() {
           : null
         if (cancelled) return
         if (me) setVisit(computeVisitSummary(me, Array.isArray(settled) ? settled : []))
-      } finally {
-        if (!cancelled) setMeDone(true)
-      }
+      } catch { /* бэкенд спит или недоступен — визит просто не показываем */ }
     })()
     return () => { cancelled = true }
   }, [inTg])
@@ -212,8 +209,11 @@ function AppShell() {
     setTimeout(() => setEntered(true), 450)      // длительность совпадает с CSS transition
   }
 
-  // Готовность: первая загрузка live-данных + резолв /api/me, но не быстрее MIN.
-  const dataReady = live.ready && meDone
+  // Готовность: загружена статика с результатами, но не быстрее MIN. На Render
+  // (/api/me, /api/live) вход НЕ завязан — на free-плане он спит и будится ~50 с;
+  // его ответы догоняют уже открытое приложение. Попап итогов визита реактивен
+  // (showVisit ниже), поэтому спокойно появляется позже, когда /api/me ответит.
+  const dataReady = live.ready
   useEffect(() => {
     if (!dataReady) return
     const wait = Math.max(0, SPLASH_MIN_MS - (Date.now() - mountedAt.current))

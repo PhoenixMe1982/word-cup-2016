@@ -8,6 +8,8 @@
 //   node scripts/screenshot-miniapp.mjs home 1       # home header, leaderboard rank 1
 //   node scripts/screenshot-miniapp.mjs home 2
 //   node scripts/screenshot-miniapp.mjs leaderboard  # leaderboard tab, top-3 decorated
+//   node scripts/screenshot-miniapp.mjs cold         # Render «спит»: /api/* висят, живём на статике
+//   node scripts/screenshot-miniapp.mjs splash       # экран загрузки (задержан live-data.json)
 //
 // Chrome path: auto-detected, or set CHROME_PATH env. Output: ./screenshots/*.png
 //
@@ -136,6 +138,9 @@ function fakeSdk() {
   var orig = window.fetch ? window.fetch.bind(window) : null;
   function J(o){ return Promise.resolve(new Response(JSON.stringify(o),{status:200,headers:{'Content-Type':'application/json'}})); }
   function D(o,ms){ return new Promise(function(res){ setTimeout(function(){ res(new Response(JSON.stringify(o),{status:200,headers:{'Content-Type':'application/json'}})); }, ms); }); }
+  // Спящий Render на free-плане: запрос не падает, а молча висит, пока
+  // поднимается контейнер (~50 с). Именно это, а не ошибку, надо эмулировать.
+  function HANG(){ return new Promise(function(){}); }
   // /api/me и засчитанные прогнозы — зависят от состояния
   var ME = STATE==='visit'
     ? {userId:'777', pts:42, rank:2, rankDelta:3, predictions:12, exact:3, outcome:2}
@@ -165,16 +170,25 @@ function fakeSdk() {
     if(STATE==='champion') LIVE.matchResults.m104 = {status:'finished', scoreHome:2, scoreAway:1, winner:'HOME_TEAM'};
   }
   window.fetch=function(url,opts){ var u=String(url);
+    // 'cold': весь Render «спит» — ни один /api/ не отвечает. Приложение обязано
+    // открыться на одной статике, с полными счетами и таблицами.
+    if(STATE==='cold' && u.indexOf('/api/')!==-1) return HANG();
     if(u.indexOf('/api/leaderboard')!==-1) return J(LB);
-    // 'splash': задерживаем /api/me, чтобы экран загрузки не исчезал до съёмки
-    if(u.indexOf('/api/me')!==-1) return STATE==='splash' ? D(ME, 6000) : J(ME);
+    if(u.indexOf('/api/me')!==-1) return J(ME);
     if(u.indexOf('/api/results')!==-1) return J(KO ? KO_RESULTS : {});
     if(u.indexOf('/api/predictions/')!==-1) return J(SETTLED);
     if(u.indexOf('/api/my-predictions')!==-1) return J(KO ? KO_PREDS : {});
     if(u.indexOf('/api/scorers')!==-1) return J([]);
     if(u.indexOf('/api/goalkeepers')!==-1) return J([]);
     if(u.indexOf('/api/live')!==-1) return J(LIVE);
-    if(u.indexOf('live-data.json')!==-1) return J({matchResults:{},scorers:[],goalkeepers:[],news:[],ticker:[]});
+    // 'cold' — отдаём НАСТОЯЩИЙ live-data.json с раздачи, чтобы проверить, что на
+    // одной статике видны реальные счета. 'splash' — задерживаем именно его: с тех
+    // пор как вход перестал ждать Render, только он и держит экран загрузки.
+    if(u.indexOf('live-data.json')!==-1) {
+      if(STATE==='cold' && orig) return orig(url,opts);
+      if(STATE==='splash') return D({matchResults:{},scorers:[],goalkeepers:[],news:[],ticker:[]}, 6000);
+      return J({matchResults:{},scorers:[],goalkeepers:[],news:[],ticker:[]});
+    }
     if(orig) return orig(url,opts); return J({});
   };
 })();`
@@ -223,7 +237,7 @@ async function main() {
 
   let file = `${tab}-rank${rank}.png`
   // splash/visit/kotut/bronze/champion стартуют на home; имена файлов фиксированные
-  if (tab === 'splash' || tab === 'visit' || tab === 'kotut' || tab === 'bronze' || tab === 'champion') {
+  if (tab === 'splash' || tab === 'cold' || tab === 'visit' || tab === 'kotut' || tab === 'bronze' || tab === 'champion') {
     file = `${tab}.png`
   }
   // Сцена показа мест проявляет строки поэтапно (~0.45s + N×0.95s) — ждём финала.
